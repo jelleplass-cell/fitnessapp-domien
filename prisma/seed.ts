@@ -1308,6 +1308,24 @@ async function main() {
   console.log("Created welcome notification");
 
   // ============================================================
+  // DEFAULT COMMUNITY
+  // ============================================================
+  const defaultCommunity = await prisma.community.upsert({
+    where: { id: "community-default" },
+    update: {},
+    create: {
+      id: "community-default",
+      name: "Algemeen",
+      description: "De algemene community voor alle klanten",
+      color: "#3B82F6",
+      isDefault: true,
+      order: 0,
+      creatorId: instructor.id,
+    },
+  });
+  console.log("Created default community:", defaultCommunity.name);
+
+  // ============================================================
   // COMMUNITY POST
   // ============================================================
   await prisma.communityPost.upsert({
@@ -1316,6 +1334,7 @@ async function main() {
     create: {
       id: "community-post-1",
       authorId: instructor.id,
+      communityId: defaultCommunity.id,
       title: "Welkom bij FitTrack Pro!",
       content: "Welkom allemaal! Dit is onze nieuwe fitness community. Hier deel ik tips, updates over programma's en motivatie. We hebben nu meer dan 100 oefeningen en 25 verschillende programma's beschikbaar in de bibliotheek. Van yoga tot HIIT, van beginner tot gevorderd - er is voor ieder wat wils!\n\nTips voor beginners:\n- Start rustig en bouw langzaam op\n- Focus eerst op techniek, dan op gewicht\n- Rust is net zo belangrijk als training\n- Drink voldoende water\n\nLaten we samen fit worden!",
       isPinned: true,

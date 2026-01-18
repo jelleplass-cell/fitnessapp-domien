@@ -126,6 +126,10 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
             href: "/instructor/community",
             label: "Community",
             icon: MessageSquare,
+            subLinks: [
+              { href: "/instructor/community", label: "Alle berichten" },
+              { href: "/instructor/community/beheer", label: "Communities beheren" },
+            ],
           },
         ]
       : []),
