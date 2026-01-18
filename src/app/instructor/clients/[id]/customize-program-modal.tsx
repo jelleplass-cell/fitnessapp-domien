@@ -15,14 +15,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Settings2, Save, Plus, Trash2, RotateCcw, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Settings2, Save, Plus, Trash2, RotateCcw, GripVertical, ChevronUp, ChevronDown, ChevronsUpDown, Check, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface Exercise {
   id: string;
@@ -51,6 +58,14 @@ interface CustomItem {
   order?: number;
 }
 
+// Internal item with unique key for tracking
+interface OrderedItem {
+  key: string; // Unique key (e.g., "program-0", "program-1", "added-exerciseId")
+  exerciseId: string;
+  isAdded: boolean;
+  originalIndex: number; // For program items, the original index in programItems
+}
+
 interface CustomizeProgramModalProps {
   clientProgramId: string;
   programName: string;
@@ -69,11 +84,13 @@ export function CustomizeProgramModal({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // State for ordered items (combines program items + added items)
-  const [orderedItems, setOrderedItems] = useState<{ exerciseId: string; isAdded: boolean }[]>([]);
+  // State for ordered items with unique keys
+  const [orderedItems, setOrderedItems] = useState<OrderedItem[]>([]);
 
-  // State for customizations
+  // State for customizations - keyed by unique key, not exerciseId
   const [customizations, setCustomizations] = useState<Record<string, {
     customSets: string;
     customReps: string;
@@ -97,37 +114,59 @@ export function CustomizeProgramModal({
     const initial: typeof customizations = {};
     const addedIds: string[] = [];
 
+    // Build ordered items list with unique keys
+    const programOrder: OrderedItem[] = programItems.map((item, index) => ({
+      key: `program-${index}`,
+      exerciseId: item.exerciseId,
+      isAdded: false,
+      originalIndex: index,
+    }));
+
+    // Load existing custom items
     existingCustomItems.forEach((item) => {
-      initial[item.exerciseId] = {
-        customSets: item.customSets?.toString() || "",
-        customReps: item.customReps?.toString() || "",
-        customDuration: item.customDuration?.toString() || "",
-        notes: item.notes || "",
-        isRemoved: item.isRemoved,
-        isAdded: item.isAdded,
-      };
       if (item.isAdded) {
         addedIds.push(item.exerciseId);
+        const key = `added-${item.exerciseId}`;
+        initial[key] = {
+          customSets: item.customSets?.toString() || "",
+          customReps: item.customReps?.toString() || "",
+          customDuration: item.customDuration?.toString() || "",
+          notes: item.notes || "",
+          isRemoved: item.isRemoved,
+          isAdded: item.isAdded,
+        };
+      } else {
+        // Find matching program item(s) by exerciseId and apply customizations
+        // For now, apply to all instances (can be improved later)
+        programOrder.forEach((orderedItem) => {
+          if (orderedItem.exerciseId === item.exerciseId) {
+            initial[orderedItem.key] = {
+              customSets: item.customSets?.toString() || "",
+              customReps: item.customReps?.toString() || "",
+              customDuration: item.customDuration?.toString() || "",
+              notes: item.notes || "",
+              isRemoved: item.isRemoved,
+              isAdded: item.isAdded,
+            };
+          }
+        });
       }
     });
 
-    setCustomizations(initial);
-    setAddedExercises(addedIds);
-
-    // Build ordered items list
-    const programOrder = programItems.map((item) => ({
-      exerciseId: item.exerciseId,
-      isAdded: false,
-    }));
-    const addedOrder = addedIds.map((id) => ({
+    const addedOrder: OrderedItem[] = addedIds.map((id) => ({
+      key: `added-${id}`,
       exerciseId: id,
       isAdded: true,
+      originalIndex: -1,
     }));
+
+    setCustomizations(initial);
+    setAddedExercises(addedIds);
     setOrderedItems([...programOrder, ...addedOrder]);
   }, [existingCustomItems, programItems]);
 
-  const getCustomization = (exerciseId: string) => {
-    return customizations[exerciseId] || {
+  const getCustomization = (key: string) => {
+    return customizations[key] || {
       customSets: "",
       customReps: "",
       customDuration: "",
@@ -137,40 +176,46 @@ export function CustomizeProgramModal({
     };
   };
 
-  const updateCustomization = (exerciseId: string, field: string, value: string | boolean) => {
+  const updateCustomization = (key: string, field: string, value: string | boolean) => {
     setCustomizations((prev) => ({
       ...prev,
-      [exerciseId]: {
-        ...getCustomization(exerciseId),
+      [key]: {
+        ...getCustomization(key),
         [field]: value,
       },
     }));
   };
 
-  const toggleRemoved = (exerciseId: string) => {
-    const current = getCustomization(exerciseId);
-    updateCustomization(exerciseId, "isRemoved", !current.isRemoved);
+  const toggleRemoved = (key: string) => {
+    const current = getCustomization(key);
+    updateCustomization(key, "isRemoved", !current.isRemoved);
   };
 
-  const resetCustomization = (exerciseId: string) => {
+  const resetCustomization = (key: string) => {
     setCustomizations((prev) => {
       const newState = { ...prev };
-      delete newState[exerciseId];
+      delete newState[key];
       return newState;
     });
   };
 
-  const addExercise = () => {
-    if (!selectedExercise || addedExercises.includes(selectedExercise)) return;
+  const addExercise = (exerciseId: string) => {
+    if (!exerciseId || addedExercises.includes(exerciseId)) return;
 
-    const exercise = allExercises.find((e) => e.id === selectedExercise);
+    const exercise = allExercises.find((e) => e.id === exerciseId);
     if (!exercise) return;
 
-    setAddedExercises((prev) => [...prev, selectedExercise]);
-    setOrderedItems((prev) => [...prev, { exerciseId: selectedExercise, isAdded: true }]);
+    const key = `added-${exerciseId}`;
+    setAddedExercises((prev) => [...prev, exerciseId]);
+    setOrderedItems((prev) => [...prev, {
+      key,
+      exerciseId,
+      isAdded: true,
+      originalIndex: -1,
+    }]);
     setCustomizations((prev) => ({
       ...prev,
-      [selectedExercise]: {
+      [key]: {
         customSets: exercise.sets.toString(),
         customReps: exercise.reps?.toString() || "",
         customDuration: exercise.durationMinutes.toString(),
@@ -180,14 +225,16 @@ export function CustomizeProgramModal({
       },
     }));
     setSelectedExercise("");
+    setSearchQuery("");
+    setComboboxOpen(false);
   };
 
-  const removeAddedExercise = (exerciseId: string) => {
+  const removeAddedExercise = (key: string, exerciseId: string) => {
     setAddedExercises((prev) => prev.filter((id) => id !== exerciseId));
-    setOrderedItems((prev) => prev.filter((item) => item.exerciseId !== exerciseId));
+    setOrderedItems((prev) => prev.filter((item) => item.key !== key));
     setCustomizations((prev) => {
       const newState = { ...prev };
-      delete newState[exerciseId];
+      delete newState[key];
       return newState;
     });
   };
@@ -207,7 +254,6 @@ export function CustomizeProgramModal({
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = "move";
-    // Add dragging style after a small delay
     setTimeout(() => {
       if (draggedItemRef.current) {
         draggedItemRef.current.style.opacity = "0.5";
@@ -245,43 +291,67 @@ export function CustomizeProgramModal({
     setSaving(true);
     try {
       // Prepare items to save with order
-      const items = orderedItems
-        .map((orderedItem, index) => {
-          const data = customizations[orderedItem.exerciseId];
-          if (!data && !orderedItem.isAdded) {
-            // Check if order changed from original
-            const originalIndex = programItems.findIndex(
-              (p) => p.exerciseId === orderedItem.exerciseId
-            );
-            if (originalIndex === index) {
-              return null; // No changes
-            }
-            // Order changed, create entry
-            return {
-              exerciseId: orderedItem.exerciseId,
-              customSets: null,
-              customReps: null,
-              customDuration: null,
-              notes: null,
-              isRemoved: false,
-              isAdded: false,
-              order: index,
-            };
-          }
-          if (!data) return null;
+      // We need to save per unique position, so we'll group by exerciseId for the API
+      const itemsMap = new Map<string, {
+        exerciseId: string;
+        customSets: number | null;
+        customReps: number | null;
+        customDuration: number | null;
+        notes: string | null;
+        isRemoved: boolean;
+        isAdded: boolean;
+        order: number;
+      }[]>();
 
-          return {
+      orderedItems.forEach((orderedItem, index) => {
+        const data = customizations[orderedItem.key];
+
+        // Check if we need to save this item
+        const hasCustomization = data && (
+          data.customSets !== "" ||
+          data.customReps !== "" ||
+          data.customDuration !== "" ||
+          data.notes !== "" ||
+          data.isRemoved ||
+          data.isAdded
+        );
+
+        // Check if order changed for program items
+        const orderChanged = !orderedItem.isAdded && orderedItem.originalIndex !== index;
+
+        if (hasCustomization || orderChanged) {
+          const item = {
             exerciseId: orderedItem.exerciseId,
-            customSets: data.customSets ? parseInt(data.customSets) : null,
-            customReps: data.customReps ? parseInt(data.customReps) : null,
-            customDuration: data.customDuration ? parseInt(data.customDuration) : null,
-            notes: data.notes || null,
-            isRemoved: data.isRemoved,
-            isAdded: data.isAdded,
+            customSets: data?.customSets ? parseInt(data.customSets) : null,
+            customReps: data?.customReps ? parseInt(data.customReps) : null,
+            customDuration: data?.customDuration ? parseInt(data.customDuration) : null,
+            notes: data?.notes || null,
+            isRemoved: data?.isRemoved || false,
+            isAdded: orderedItem.isAdded,
             order: index,
           };
-        })
-        .filter(Boolean);
+
+          const existing = itemsMap.get(orderedItem.exerciseId) || [];
+          existing.push(item);
+          itemsMap.set(orderedItem.exerciseId, existing);
+        }
+      });
+
+      // Flatten the map to array
+      const items: {
+        exerciseId: string;
+        customSets: number | null;
+        customReps: number | null;
+        customDuration: number | null;
+        notes: string | null;
+        isRemoved: boolean;
+        isAdded: boolean;
+        order: number;
+      }[] = [];
+
+      itemsMap.forEach((itemList) => {
+        items.push(...itemList);
+      });
 
       const response = await fetch("/api/client-program-items", {
         method: "POST",
@@ -307,10 +377,7 @@ export function CustomizeProgramModal({
   };
 
   const hasCustomizations = Object.keys(customizations).length > 0 ||
-    orderedItems.some((item, idx) => {
-      const originalIdx = programItems.findIndex((p) => p.exerciseId === item.exerciseId);
-      return originalIdx !== -1 && originalIdx !== idx;
-    });
+    orderedItems.some((item, idx) => !item.isAdded && item.originalIndex !== idx);
 
   // Get exercises not in the program and not already added
   const programExerciseIds = programItems.map((item) => item.exerciseId);
@@ -318,8 +385,13 @@ export function CustomizeProgramModal({
     (e) => !programExerciseIds.includes(e.id) && !addedExercises.includes(e.id)
   );
 
+  // Filter exercises based on search
+  const filteredExercises = availableExercises.filter((exercise) =>
+    exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   // Helper to get exercise data
-  const getExerciseData = (exerciseId: string, isAdded: boolean): Exercise | null => {
+  const getExerciseData = (exerciseId: string, isAdded: boolean, originalIndex: number): Exercise | null => {
     if (isAdded) {
       const ex = allExercises.find((e) => e.id === exerciseId);
       return ex ? {
@@ -331,7 +403,8 @@ export function CustomizeProgramModal({
         durationMinutes: ex.durationMinutes,
       } : null;
     }
-    const item = programItems.find((p) => p.exerciseId === exerciseId);
+    // For program items, use the original index to get the correct item
+    const item = programItems[originalIndex];
     return item?.exercise || null;
   };
 
@@ -367,17 +440,17 @@ export function CustomizeProgramModal({
             <p className="text-xs text-gray-500">Sleep of gebruik de pijltjes om de volgorde te wijzigen</p>
 
             {orderedItems.map((orderedItem, index) => {
-              const exercise = getExerciseData(orderedItem.exerciseId, orderedItem.isAdded);
+              const exercise = getExerciseData(orderedItem.exerciseId, orderedItem.isAdded, orderedItem.originalIndex);
               if (!exercise) return null;
 
-              const customization = getCustomization(orderedItem.exerciseId);
+              const customization = getCustomization(orderedItem.key);
               const hasChanges = customization.customSets || customization.customReps ||
                 customization.customDuration || customization.notes || customization.isRemoved;
               const isAdded = orderedItem.isAdded;
 
               return (
                 <div
-                  key={orderedItem.exerciseId}
+                  key={orderedItem.key}
                   ref={draggedIndex === index ? draggedItemRef : null}
                   draggable
                   onDragStart={(e) => handleDragStart(e, index)}
@@ -450,7 +523,7 @@ export function CustomizeProgramModal({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => resetCustomization(orderedItem.exerciseId)}
+                          onClick={() => resetCustomization(orderedItem.key)}
                           title="Reset naar standaard"
                           className="h-8 w-8 p-0"
                         >
@@ -461,7 +534,7 @@ export function CustomizeProgramModal({
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => removeAddedExercise(orderedItem.exerciseId)}
+                          onClick={() => removeAddedExercise(orderedItem.key, orderedItem.exerciseId)}
                           className="h-8 w-8 p-0"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -470,7 +543,7 @@ export function CustomizeProgramModal({
                         <Button
                           variant={customization.isRemoved ? "destructive" : "outline"}
                           size="sm"
-                          onClick={() => toggleRemoved(orderedItem.exerciseId)}
+                          onClick={() => toggleRemoved(orderedItem.key)}
                           className="h-8"
                         >
                           {customization.isRemoved ? "Terugzetten" : <Trash2 className="w-4 h-4" />}
@@ -490,7 +563,7 @@ export function CustomizeProgramModal({
                             min={1}
                             placeholder={exercise.sets.toString()}
                             value={customization.customSets}
-                            onChange={(e) => updateCustomization(orderedItem.exerciseId, "customSets", e.target.value)}
+                            onChange={(e) => updateCustomization(orderedItem.key, "customSets", e.target.value)}
                             className="h-8 text-sm"
                           />
                         </div>
@@ -501,7 +574,7 @@ export function CustomizeProgramModal({
                             min={1}
                             placeholder={exercise.reps?.toString() || "-"}
                             value={customization.customReps}
-                            onChange={(e) => updateCustomization(orderedItem.exerciseId, "customReps", e.target.value)}
+                            onChange={(e) => updateCustomization(orderedItem.key, "customReps", e.target.value)}
                             className="h-8 text-sm"
                             disabled={!exercise.reps}
                           />
@@ -513,7 +586,7 @@ export function CustomizeProgramModal({
                             min={1}
                             placeholder={exercise.durationMinutes.toString()}
                             value={customization.customDuration}
-                            onChange={(e) => updateCustomization(orderedItem.exerciseId, "customDuration", e.target.value)}
+                            onChange={(e) => updateCustomization(orderedItem.key, "customDuration", e.target.value)}
                             className="h-8 text-sm"
                           />
                         </div>
@@ -525,7 +598,7 @@ export function CustomizeProgramModal({
                         <Textarea
                           placeholder="Voeg hier speciale instructies, aanpassingen of begeleiding toe voor deze klant bij deze oefening..."
                           value={customization.notes}
-                          onChange={(e) => updateCustomization(orderedItem.exerciseId, "notes", e.target.value)}
+                          onChange={(e) => updateCustomization(orderedItem.key, "notes", e.target.value)}
                           className="text-sm min-h-[80px] resize-y"
                           rows={3}
                         />
@@ -537,28 +610,72 @@ export function CustomizeProgramModal({
             })}
           </div>
 
-          {/* Add exercise */}
+          {/* Add exercise with searchable combobox */}
           {availableExercises.length > 0 && (
             <div className="space-y-2 pt-4 border-t">
               <h3 className="font-medium text-sm text-gray-700">Oefening toevoegen</h3>
               <div className="flex gap-2">
-                <Select value={selectedExercise} onValueChange={setSelectedExercise}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Selecteer een oefening..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableExercises.map((exercise) => (
-                      <SelectItem key={exercise.id} value={exercise.id}>
-                        {exercise.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={addExercise} disabled={!selectedExercise}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Toevoegen
-                </Button>
+                <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={comboboxOpen}
+                      className="flex-1 justify-between"
+                    >
+                      {selectedExercise
+                        ? allExercises.find((e) => e.id === selectedExercise)?.name
+                        : "Zoek een oefening..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <div className="flex items-center border-b px-3">
+                        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                        <input
+                          placeholder="Zoek oefening..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                      </div>
+                      <CommandList>
+                        <CommandEmpty>Geen oefeningen gevonden.</CommandEmpty>
+                        <CommandGroup className="max-h-[300px] overflow-y-auto">
+                          {filteredExercises.map((exercise) => (
+                            <CommandItem
+                              key={exercise.id}
+                              value={exercise.id}
+                              onSelect={() => {
+                                setSelectedExercise(exercise.id);
+                                addExercise(exercise.id);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedExercise === exercise.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span>{exercise.name}</span>
+                                <span className="text-xs text-gray-500">
+                                  {exercise.sets} sets, {exercise.reps ? `${exercise.reps} reps` : `${exercise.holdSeconds}s`}, {exercise.durationMinutes} min
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
+              <p className="text-xs text-gray-500">
+                Typ om te zoeken tussen {availableExercises.length} beschikbare oefeningen
+              </p>
             </div>
           )}
         </div>
