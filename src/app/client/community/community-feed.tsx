@@ -39,7 +39,7 @@ import {
 
 interface Author {
   id: string;
-  name: string;
+  name: string | null;
   role: string;
 }
 

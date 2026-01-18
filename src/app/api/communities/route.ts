@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, description, color, icon } = body;
+  const { name, description, color, icon, clientsCanPost } = body;
 
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -139,6 +139,7 @@ export async function POST(req: NextRequest) {
       description,
       color: color || "#3B82F6",
       icon,
+      clientsCanPost: clientsCanPost ?? false,
       isDefault: !existingDefault, // First community becomes default
       order: (maxOrder._max.order ?? -1) + 1,
       creatorId: session.user.id,

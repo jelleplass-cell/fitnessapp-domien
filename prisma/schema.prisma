@@ -311,16 +311,17 @@ model Notification {
 
 // Community groups - instructors can create multiple communities (General, Mastermind, VIP, etc.)
 model Community {
-  id           String   @id @default(cuid())
-  name         String   // e.g., "Algemeen", "Mastermind", "VIP"
-  description  String?
-  color        String   @default("#3B82F6") // For visual distinction
-  icon         String?  // Icon name
-  isDefault    Boolean  @default(false) // The main/general community everyone has access to
-  isArchived   Boolean  @default(false)
-  order        Int      @default(0) // For ordering in sidebar
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String   // e.g., "Algemeen", "Mastermind", "VIP"
+  description     String?
+  color           String   @default("#3B82F6") // For visual distinction
+  icon            String?  // Icon name
+  isDefault       Boolean  @default(false) // The main/general community everyone has access to
+  isArchived      Boolean  @default(false)
+  clientsCanPost  Boolean  @default(false) // Whether clients can create posts in this community
+  order           Int      @default(0) // For ordering in sidebar
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
   creatorId    String

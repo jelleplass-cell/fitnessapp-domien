@@ -36,21 +36,6 @@ export default async function CommunityManagementPage() {
     orderBy: [{ isDefault: "desc" }, { order: "asc" }],
   });
 
-  // Get all clients for this instructor (for adding to communities)
-  const clients = await db.user.findMany({
-    where: {
-      instructorId: session.user.id,
-      role: "CLIENT",
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      avatarUrl: true,
-    },
-    orderBy: { name: "asc" },
-  });
-
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto">
       <div className="mb-6">
@@ -68,10 +53,10 @@ export default async function CommunityManagementPage() {
           color: c.color,
           icon: c.icon,
           isDefault: c.isDefault,
+          clientsCanPost: c.clientsCanPost,
           order: c.order,
           _count: c._count,
         }))}
-        clients={clients}
       />
     </div>
   );

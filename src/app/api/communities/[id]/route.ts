@@ -56,7 +56,7 @@ export async function PUT(
   }
 
   const body = await req.json();
-  const { name, description, color, icon, order } = body;
+  const { name, description, color, icon, order, clientsCanPost } = body;
 
   // Check ownership
   const existing = await db.community.findUnique({
@@ -75,6 +75,7 @@ export async function PUT(
       color: color ?? existing.color,
       icon: icon !== undefined ? icon : existing.icon,
       order: order ?? existing.order,
+      clientsCanPost: clientsCanPost !== undefined ? clientsCanPost : existing.clientsCanPost,
     },
   });
 
