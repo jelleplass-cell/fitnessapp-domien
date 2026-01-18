@@ -1,9 +1,7 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Dumbbell, ClipboardList, Activity } from "lucide-react";
-import Link from "next/link";
+import { DashboardClient } from "./dashboard-client";
 
 export default async function InstructorDashboard() {
   const session = await auth();
@@ -12,129 +10,262 @@ export default async function InstructorDashboard() {
     redirect("/login");
   }
 
-  // Get stats
-  const [clientCount, exerciseCount, programCount, recentSessions] =
-    await Promise.all([
-      db.user.count({ where: { role: "CLIENT" } }),
-      db.exercise.count({ where: { creatorId: session.user.id } }),
-      db.program.count({ where: { creatorId: session.user.id } }),
-      db.session.findMany({
-        where: {
-          status: "COMPLETED",
-          finishedAt: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
-          },
-        },
-        include: {
-          user: true,
-          clientProgram: {
-            include: { program: true },
-          },
-        },
-        orderBy: { finishedAt: "desc" },
-        take: 5,
-      }),
-    ]);
+  const instructorId = session.user.id;
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-  const stats = [
-    {
-      title: "Klanten",
-      value: clientCount,
-      icon: Users,
-      href: "/instructor/clients",
-      color: "text-blue-600",
+  // Get all data in parallel
+  const [
+    clients,
+    exerciseCount,
+    programCount,
+    recentSessions,
+    newClients,
+    upcomingEvents,
+    recentComments,
+    scheduledPrograms,
+  ] = await Promise.all([
+    // All clients of this instructor
+    db.user.findMany({
+      where: {
+        instructorId: instructorId,
+        role: "CLIENT"
+      },
+      include: {
+        clientPrograms: {
+          where: { isActive: true },
+          include: {
+            program: true,
+            sessions: {
+              where: { status: "COMPLETED" },
+              orderBy: { finishedAt: "desc" },
+              take: 5,
+            },
+          },
+        },
+        sessions: {
+          where: {
+            status: "COMPLETED",
+            finishedAt: { gte: fourteenDaysAgo },
+          },
+          orderBy: { finishedAt: "desc" },
+        },
+        scheduledPrograms: {
+          where: {
+            scheduledDate: { gte: sevenDaysAgo },
+            completed: false,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    // Exercise count
+    db.exercise.count({ where: { creatorId: instructorId } }),
+    // Program count
+    db.program.count({ where: { creatorId: instructorId, isArchived: false } }),
+    // Recent completed sessions (all clients) with kudos
+    db.session.findMany({
+      where: {
+        status: "COMPLETED",
+        finishedAt: { gte: sevenDaysAgo },
+        user: { instructorId: instructorId },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, firstName: true, avatarUrl: true },
+        },
+        clientProgram: {
+          include: { program: { select: { id: true, name: true } } },
+        },
+        kudos: {
+          where: { instructorId: instructorId },
+        },
+        completedItems: true,
+      },
+      orderBy: { finishedAt: "desc" },
+      take: 20,
+    }),
+    // New clients (joined last 7 days)
+    db.user.findMany({
+      where: {
+        instructorId: instructorId,
+        role: "CLIENT",
+        createdAt: { gte: sevenDaysAgo },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    // Upcoming events
+    db.event.findMany({
+      where: {
+        creatorId: instructorId,
+        startDate: { gte: now },
+      },
+      include: {
+        registrations: {
+          where: { status: "REGISTERED" },
+          include: {
+            user: { select: { id: true, name: true, firstName: true } },
+          },
+        },
+      },
+      orderBy: { startDate: "asc" },
+      take: 5,
+    }),
+    // Recent comments on instructor's posts
+    db.postComment.findMany({
+      where: {
+        post: { authorId: instructorId },
+        authorId: { not: instructorId },
+      },
+      include: {
+        author: { select: { id: true, name: true, firstName: true, avatarUrl: true } },
+        post: { select: { id: true, title: true, content: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    // Scheduled but not completed programs in the past 7 days
+    db.scheduledProgram.findMany({
+      where: {
+        client: { instructorId: instructorId },
+        scheduledDate: {
+          gte: sevenDaysAgo,
+          lte: now,
+        },
+        completed: false,
+      },
+      include: {
+        client: { select: { id: true, name: true, firstName: true } },
+        clientProgram: {
+          include: { program: { select: { name: true } } },
+        },
+      },
+      orderBy: { scheduledDate: "desc" },
+    }),
+  ]);
+
+  // Calculate client activity metrics
+  const clientMetrics = clients.map((client) => {
+    const completedSessionsLast7Days = client.sessions.filter(
+      (s) => s.finishedAt && new Date(s.finishedAt) >= sevenDaysAgo
+    ).length;
+    const completedSessionsLast14Days = client.sessions.length;
+    const lastSession = client.sessions[0];
+    const scheduledNotCompleted = client.scheduledPrograms.length;
+    const daysSinceLastSession = lastSession?.finishedAt
+      ? Math.floor((now.getTime() - new Date(lastSession.finishedAt).getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+
+    // Activity status: active (trained in last 3 days), moderate (3-7 days), inactive (7+ days or never)
+    let activityStatus: "active" | "moderate" | "inactive" = "inactive";
+    if (daysSinceLastSession !== null) {
+      if (daysSinceLastSession <= 3) activityStatus = "active";
+      else if (daysSinceLastSession <= 7) activityStatus = "moderate";
+    }
+
+    return {
+      id: client.id,
+      name: client.firstName || client.name,
+      email: client.email,
+      avatarUrl: client.avatarUrl,
+      completedSessionsLast7Days,
+      completedSessionsLast14Days,
+      scheduledNotCompleted,
+      lastSessionDate: lastSession?.finishedAt?.toISOString() || null,
+      daysSinceLastSession,
+      activityStatus,
+      activePrograms: client.clientPrograms.length,
+      createdAt: client.createdAt.toISOString(),
+    };
+  });
+
+  // Stats
+  const totalClients = clients.length;
+  const activeClients = clientMetrics.filter((c) => c.activityStatus === "active").length;
+  const inactiveClients = clientMetrics.filter((c) => c.activityStatus === "inactive").length;
+  const totalSessionsThisWeek = recentSessions.length;
+
+  // Transform data for client component
+  const transformedSessions = recentSessions.map((s) => ({
+    id: s.id,
+    finishedAt: s.finishedAt?.toISOString() || null,
+    durationMinutes: s.durationMinutes,
+    caloriesBurned: s.caloriesBurned,
+    exerciseCount: s.completedItems.length,
+    user: {
+      id: s.user.id,
+      name: s.user.firstName || s.user.name,
+      avatarUrl: s.user.avatarUrl,
     },
-    {
-      title: "Oefeningen",
-      value: exerciseCount,
-      icon: Dumbbell,
-      href: "/instructor/exercises",
-      color: "text-green-600",
+    program: {
+      id: s.clientProgram.program.id,
+      name: s.clientProgram.program.name,
     },
-    {
-      title: "Programma's",
-      value: programCount,
-      icon: ClipboardList,
-      href: "/instructor/programs",
-      color: "text-purple-600",
+    hasKudos: s.kudos.length > 0,
+    kudos: s.kudos[0] || null,
+  }));
+
+  const transformedEvents = upcomingEvents.map((e) => ({
+    id: e.id,
+    title: e.title,
+    startDate: e.startDate.toISOString(),
+    endDate: e.endDate?.toISOString() || null,
+    maxAttendees: e.maxAttendees,
+    registrationCount: e.registrations.length,
+    eventType: e.eventType,
+    location: e.location,
+  }));
+
+  const transformedComments = recentComments.map((c) => ({
+    id: c.id,
+    content: c.content.length > 100 ? c.content.substring(0, 100) + "..." : c.content,
+    createdAt: c.createdAt.toISOString(),
+    author: {
+      id: c.author.id,
+      name: c.author.firstName || c.author.name,
+      avatarUrl: c.author.avatarUrl,
     },
-    {
-      title: "Sessies (7d)",
-      value: recentSessions.length,
-      icon: Activity,
-      href: "#",
-      color: "text-orange-600",
+    post: {
+      id: c.post.id,
+      title: c.post.title || c.post.content.substring(0, 50) + "...",
     },
-  ];
+  }));
+
+  const transformedMissedSchedules = scheduledPrograms.map((sp) => ({
+    id: sp.id,
+    scheduledDate: sp.scheduledDate.toISOString(),
+    client: {
+      id: sp.client.id,
+      name: sp.client.firstName || sp.client.name,
+    },
+    programName: sp.clientProgram.program.name,
+  }));
+
+  const transformedNewClients = newClients.map((c) => ({
+    id: c.id,
+    name: c.firstName || c.name,
+    email: c.email,
+    createdAt: c.createdAt.toISOString(),
+  }));
 
   return (
-    <div className="p-4 md:p-6">
-      <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Dashboard</h1>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Link key={stat.title} href={stat.href}>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-1 md:pb-2">
-                  <CardTitle className="text-xs md:text-sm font-medium text-gray-500">
-                    {stat.title}
-                  </CardTitle>
-                  <Icon className={`w-4 h-4 md:w-5 md:h-5 ${stat.color}`} />
-                </CardHeader>
-                <CardContent className="p-3 md:p-6 pt-0">
-                  <div className="text-2xl md:text-3xl font-bold">{stat.value}</div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recente activiteit</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentSessions.length === 0 ? (
-            <p className="text-gray-500">
-              Nog geen voltooide sessies in de afgelopen 7 dagen.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {recentSessions.map((sess) => (
-                <div
-                  key={sess.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{sess.user.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {sess.clientProgram.program.name}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">
-                      {sess.finishedAt
-                        ? new Date(sess.finishedAt).toLocaleDateString(
-                            "nl-NL",
-                            {
-                              day: "numeric",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )
-                        : "-"}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <DashboardClient
+      stats={{
+        totalClients,
+        activeClients,
+        inactiveClients,
+        totalSessionsThisWeek,
+        exerciseCount,
+        programCount,
+      }}
+      clientMetrics={clientMetrics}
+      recentSessions={transformedSessions}
+      upcomingEvents={transformedEvents}
+      recentComments={transformedComments}
+      missedSchedules={transformedMissedSchedules}
+      newClients={transformedNewClients}
+      instructorId={instructorId}
+    />
   );
 }

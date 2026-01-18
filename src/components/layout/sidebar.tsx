@@ -48,7 +48,7 @@ interface SidebarProps {
 
 export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
   const pathname = usePathname();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(["/instructor/programs", "/client/trainings"]);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(["/instructor/trainingen", "/client/trainings"]);
 
   const toggleMenu = (href: string) => {
     setExpandedMenus((prev) =>
@@ -75,17 +75,13 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
     ...(enabledModules.fitnessEnabled
       ? [
           {
-            href: "/instructor/exercises",
-            label: "Oefeningen",
+            href: "/instructor/trainingen",
+            label: "Trainingen",
             icon: Dumbbell,
-          },
-          {
-            href: "/instructor/programs",
-            label: "Programma's",
-            icon: FileText,
             subLinks: [
-              { href: "/instructor/programs", label: "Alle programma's" },
-              { href: "/instructor/categories", label: "Categorieën" },
+              { href: "/instructor/trainingen", label: "Alle programma's" },
+              { href: "/instructor/trainingen/categorieen", label: "Categorieën" },
+              { href: "/instructor/trainingen/oefeningen", label: "Oefeningen" },
             ],
           },
           {
@@ -185,8 +181,10 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
   const isLinkActive = (href: string, subLinks?: { href: string; label: string }[]) => {
     if (pathname === href) return true;
     if (subLinks) {
-      return subLinks.some((sub) => pathname === sub.href);
+      return subLinks.some((sub) => pathname === sub.href || pathname.startsWith(sub.href + "/"));
     }
+    // Check if current path starts with the link href (for nested routes)
+    if (href !== "/" && pathname.startsWith(href + "/")) return true;
     return false;
   };
 
@@ -242,7 +240,7 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                             onClick={onNavigate}
                             className={cn(
                               "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
-                              pathname === subLink.href
+                              pathname === subLink.href || pathname.startsWith(subLink.href + "/")
                                 ? "bg-blue-600 text-white"
                                 : "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
                             )}

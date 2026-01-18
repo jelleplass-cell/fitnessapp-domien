@@ -74,6 +74,9 @@ model User {
   eventRegistrations    EventRegistration[]
   createdEvents         Event[]
   modules               InstructorModules?
+  instructorProfile     InstructorProfile?
+  communitySettings     CommunitySettings?
+  givenKudos            ActivityKudos[] @relation("GivenKudos")
 
   @@index([instructorId])
 }
@@ -106,6 +109,7 @@ model Exercise {
   creator           User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   programItems      ProgramItem[]
   clientExerciseNotes ClientExerciseNote[]
+  clientProgramItems  ClientProgramItem[]
 
   @@index([creatorId])
 }
@@ -195,6 +199,7 @@ model ClientProgram {
   sessions            Session[]
   scheduledPrograms   ScheduledProgram[]
   exerciseNotes       ClientExerciseNote[]
+  customItems         ClientProgramItem[]
 
   @@unique([clientId, programId])
   @@index([clientId])
@@ -233,6 +238,7 @@ model Session {
   userId          String
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   completedItems  SessionItem[]
+  kudos           ActivityKudos[]
 
   @@index([userId])
 }
@@ -466,4 +472,86 @@ model InstructorModules {
   // Relations
   instructorId    String   @unique
   instructor      User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+}
+
+// ============ INSTRUCTOR PROFILE ============
+
+model InstructorProfile {
+  id              String   @id @default(cuid())
+  bio             String?  // About the instructor
+  expertise       String?  // e.g., "Krachttraining, HIIT, Voedingsadvies"
+  trainingTypes   String?  // e.g., "Personal Training, Groepslessen, Online Coaching"
+  certifications  String?  // e.g., "NASM-CPT, Voedingscoach niveau 4"
+  yearsExperience Int?
+  photoUrl        String?  // Profile photo
+  coverImageUrl   String?  // Cover/banner image
+  instagramUrl    String?
+  facebookUrl     String?
+  linkedinUrl     String?
+  websiteUrl      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  instructorId    String   @unique
+  instructor      User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+}
+
+// ============ COMMUNITY SETTINGS ============
+
+model CommunitySettings {
+  id              String   @id @default(cuid())
+  name            String   @default("FitTrack Pro") // Community name
+  description     String?  // Community description
+  logoUrl         String?  // Custom logo
+  primaryColor    String   @default("#3B82F6") // Brand color
+  welcomeMessage  String?  // Message shown to new clients
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  instructorId    String   @unique
+  instructor      User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+}
+
+// ============ ACTIVITY KUDOS ============
+
+model ActivityKudos {
+  id          String   @id @default(cuid())
+  emoji       String   @default("💪") // e.g., "💪", "🔥", "⭐", "👏"
+  message     String?  // Optional short message from instructor
+  createdAt   DateTime @default(now())
+
+  // Relations
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  instructorId String
+  instructor  User     @relation("GivenKudos", fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, instructorId]) // One kudos per instructor per session
+  @@index([sessionId])
+}
+
+// ============ CLIENT PROGRAM CUSTOMIZATION ============
+
+model ClientProgramItem {
+  id              String   @id @default(cuid())
+  order           Int
+  customSets      Int?     // Override from template
+  customReps      Int?     // Override from template
+  customDuration  Int?     // Override from template (minutes)
+  notes           String?  // Custom notes for this client
+  isAdded         Boolean  @default(false) // True if added specifically for this client (not from template)
+  isRemoved       Boolean  @default(false) // True if removed for this client (hide from template)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  clientProgramId String
+  clientProgram   ClientProgram @relation(fields: [clientProgramId], references: [id], onDelete: Cascade)
+  exerciseId      String
+  exercise        Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([clientProgramId, exerciseId])
+  @@index([clientProgramId])
 }

@@ -8,7 +8,7 @@ import AssignProgramForm from "./assign-program-form";
 import { RemoveProgramButton } from "./remove-program-button";
 import { ScheduleForm } from "./schedule-form";
 import { ScheduleCalendar } from "./schedule-calendar";
-import { ExerciseNotesModal } from "./exercise-notes-modal";
+import { CustomizeProgramModal } from "./customize-program-modal";
 
 const difficultyColors = {
   BEGINNER: "bg-green-100 text-green-800",
@@ -57,6 +57,7 @@ export default async function ClientDetailPage({
             },
           },
           exerciseNotes: true,
+          customItems: true,
           sessions: {
             where: { status: "COMPLETED" },
             orderBy: { finishedAt: "desc" },
@@ -76,6 +77,20 @@ export default async function ClientDetailPage({
         take: 10,
       },
     },
+  });
+
+  // Get all exercises for adding to programs
+  const allExercises = await db.exercise.findMany({
+    where: { creatorId: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      sets: true,
+      reps: true,
+      holdSeconds: true,
+      durationMinutes: true,
+    },
+    orderBy: { name: "asc" },
   });
 
   if (!client) {
@@ -212,13 +227,27 @@ export default async function ClientDetailPage({
                       0
                     );
                     const completedCount = cp.sessions.length;
-                    const exercises = program.items.map((item) => ({
-                      id: item.exercise.id,
-                      name: item.exercise.name,
+                    const programItems = program.items.map((item) => ({
+                      exerciseId: item.exercise.id,
+                      exercise: {
+                        id: item.exercise.id,
+                        name: item.exercise.name,
+                        sets: item.exercise.sets,
+                        reps: item.exercise.reps,
+                        holdSeconds: item.exercise.holdSeconds,
+                        durationMinutes: item.exercise.durationMinutes,
+                      },
+                      order: item.order,
                     }));
-                    const existingNotes = cp.exerciseNotes.map((n) => ({
-                      exerciseId: n.exerciseId,
-                      note: n.note,
+                    const existingCustomItems = cp.customItems.map((item) => ({
+                      id: item.id,
+                      exerciseId: item.exerciseId,
+                      customSets: item.customSets,
+                      customReps: item.customReps,
+                      customDuration: item.customDuration,
+                      notes: item.notes,
+                      isRemoved: item.isRemoved,
+                      isAdded: item.isAdded,
                     }));
 
                     return (
@@ -259,11 +288,12 @@ export default async function ClientDetailPage({
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <ExerciseNotesModal
+                            <CustomizeProgramModal
                               clientProgramId={cp.id}
                               programName={program.name}
-                              exercises={exercises}
-                              existingNotes={existingNotes}
+                              programItems={programItems}
+                              existingCustomItems={existingCustomItems}
+                              allExercises={allExercises}
                             />
                             <RemoveProgramButton clientProgramId={cp.id} />
                           </div>
