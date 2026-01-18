@@ -113,7 +113,30 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
     },
   ];
 
-  const links = role === "INSTRUCTOR" ? instructorLinks : clientLinks;
+  const adminLinks: NavLink[] = [
+    {
+      href: "/admin/dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      href: "/admin/users",
+      label: "Gebruikers",
+      icon: Users,
+    },
+    {
+      href: "/admin/instructors",
+      label: "Instructeurs",
+      icon: Dumbbell,
+    },
+    {
+      href: "/admin/settings",
+      label: "Instellingen",
+      icon: Settings,
+    },
+  ];
+
+  const links = role === "SUPER_ADMIN" ? adminLinks : role === "INSTRUCTOR" ? instructorLinks : clientLinks;
 
   const isLinkActive = (href: string, subLinks?: { href: string; label: string }[]) => {
     if (pathname === href) return true;
