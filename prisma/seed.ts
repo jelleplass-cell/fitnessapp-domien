@@ -47,24 +47,52 @@ async function main() {
   });
   console.log("Created instructor:", instructor.email);
 
-  // Create a test client (linked to instructor)
+  // Create test clients (linked to instructor)
   const clientPassword = await bcrypt.hash("client123", 10);
-  const client = await prisma.user.upsert({
-    where: { email: "klant@example.com" },
-    update: {},
-    create: {
-      email: "klant@example.com",
-      password: clientPassword,
-      name: "Pieter Klant",
-      firstName: "Pieter",
-      lastName: "Klant",
-      phone: "+31687654321",
-      role: Role.CLIENT,
-      language: Language.NL,
-      instructorId: instructor.id,
-    },
-  });
-  console.log("Created client:", client.email);
+
+  const clientData = [
+    { email: "klant@example.com", firstName: "Pieter", lastName: "Klant", phone: "+31687654321" },
+    { email: "lisa.jansen@example.com", firstName: "Lisa", lastName: "Jansen", phone: "+31612345001" },
+    { email: "mark.devries@example.com", firstName: "Mark", lastName: "de Vries", phone: "+31612345002" },
+    { email: "anna.bakker@example.com", firstName: "Anna", lastName: "Bakker", phone: "+31612345003" },
+    { email: "tom.smit@example.com", firstName: "Tom", lastName: "Smit", phone: "+31612345004" },
+    { email: "emma.mulder@example.com", firstName: "Emma", lastName: "Mulder", phone: "+31612345005" },
+    { email: "daan.bos@example.com", firstName: "Daan", lastName: "Bos", phone: "+31612345006" },
+    { email: "sophie.visser@example.com", firstName: "Sophie", lastName: "Visser", phone: "+31612345007" },
+    { email: "luuk.dekker@example.com", firstName: "Luuk", lastName: "Dekker", phone: "+31612345008" },
+    { email: "julia.vandenBerg@example.com", firstName: "Julia", lastName: "van den Berg", phone: "+31612345009" },
+    { email: "max.peters@example.com", firstName: "Max", lastName: "Peters", phone: "+31612345010" },
+    { email: "fleur.vanDijk@example.com", firstName: "Fleur", lastName: "van Dijk", phone: "+31612345011" },
+    { email: "sam.hendriks@example.com", firstName: "Sam", lastName: "Hendriks", phone: "+31612345012" },
+    { email: "nina.dejong@example.com", firstName: "Nina", lastName: "de Jong", phone: "+31612345013" },
+    { email: "tim.vanLeeuwen@example.com", firstName: "Tim", lastName: "van Leeuwen", phone: "+31612345014" },
+    { email: "eva.kuiper@example.com", firstName: "Eva", lastName: "Kuiper", phone: "+31612345015" },
+  ];
+
+  const clients = await Promise.all(
+    clientData.map((data) =>
+      prisma.user.upsert({
+        where: { email: data.email },
+        update: {
+          instructorId: instructor.id,
+        },
+        create: {
+          email: data.email,
+          password: clientPassword,
+          name: `${data.firstName} ${data.lastName}`,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          role: Role.CLIENT,
+          language: Language.NL,
+          instructorId: instructor.id,
+        },
+      })
+    )
+  );
+  console.log(`Created ${clients.length} clients`);
+
+  const client = clients[0]; // Reference first client for other seed data
 
   // ============================================================
   // CATEGORIES
