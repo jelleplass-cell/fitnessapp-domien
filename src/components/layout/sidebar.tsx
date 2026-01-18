@@ -16,8 +16,10 @@ import {
   ChevronDown,
   ChevronRight,
   Settings,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface NavLink {
   href: string;
@@ -27,7 +29,7 @@ interface NavLink {
 }
 
 interface SidebarProps {
-  role: "INSTRUCTOR" | "CLIENT";
+  role: "INSTRUCTOR" | "CLIENT" | "SUPER_ADMIN";
   userName: string;
   onNavigate?: () => void;
 }
@@ -112,10 +114,15 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
   return (
     <div className="flex flex-col h-full w-64 bg-gray-900 text-white">
       <div className="p-4 border-b border-gray-800">
-        <h1 className="text-xl font-bold">FitTrack Pro</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">FitTrack Pro</h1>
+          <div className="hidden lg:block">
+            <NotificationBell />
+          </div>
+        </div>
         <p className="text-sm text-gray-400 mt-1">{userName}</p>
         <p className="text-xs text-gray-500">
-          {role === "INSTRUCTOR" ? "Instructeur" : "Klant"}
+          {role === "INSTRUCTOR" ? "Instructeur" : role === "SUPER_ADMIN" ? "Admin" : "Klant"}
         </p>
       </div>
 

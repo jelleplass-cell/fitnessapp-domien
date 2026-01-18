@@ -8,6 +8,7 @@ import AssignProgramForm from "./assign-program-form";
 import { RemoveProgramButton } from "./remove-program-button";
 import { ScheduleForm } from "./schedule-form";
 import { ScheduleCalendar } from "./schedule-calendar";
+import { ExerciseNotesModal } from "./exercise-notes-modal";
 
 const difficultyColors = {
   BEGINNER: "bg-green-100 text-green-800",
@@ -20,6 +21,15 @@ const difficultyLabels = {
   INTERMEDIATE: "Gemiddeld",
   ADVANCED: "Gevorderd",
 };
+
+function formatDate(date: Date | null): string {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default async function ClientDetailPage({
   params,
@@ -42,9 +52,11 @@ export default async function ClientDetailPage({
             include: {
               items: {
                 include: { exercise: true },
+                orderBy: { order: "asc" },
               },
             },
           },
+          exerciseNotes: true,
           sessions: {
             where: { status: "COMPLETED" },
             orderBy: { finishedAt: "desc" },
@@ -116,6 +128,9 @@ export default async function ClientDetailPage({
       <div className="mb-4 md:mb-6">
         <h1 className="text-xl md:text-2xl font-bold">{client.name}</h1>
         <p className="text-sm text-gray-500">{client.email}</p>
+        {client.phone && (
+          <p className="text-sm text-gray-500">{client.phone}</p>
+        )}
       </div>
 
       {/* Stats */}
@@ -197,44 +212,72 @@ export default async function ClientDetailPage({
                       0
                     );
                     const completedCount = cp.sessions.length;
+                    const exercises = program.items.map((item) => ({
+                      id: item.exercise.id,
+                      name: item.exercise.name,
+                    }));
+                    const existingNotes = cp.exerciseNotes.map((n) => ({
+                      exerciseId: n.exerciseId,
+                      note: n.note,
+                    }));
 
                     return (
                       <div
                         key={cp.id}
-                        className="flex items-center justify-between p-3 md:p-4 border rounded-lg"
+                        className="p-3 md:p-4 border rounded-lg"
                       >
-                        <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                          <div className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium text-sm flex-shrink-0">
-                            {index + 1}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                            <div className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium text-sm flex-shrink-0">
+                              {index + 1}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-medium text-sm md:text-base truncate">{program.name}</h3>
+                                <Badge
+                                  className={`text-xs px-1.5 py-0 hidden md:inline-flex ${
+                                    difficultyColors[
+                                      program.difficulty as keyof typeof difficultyColors
+                                    ]
+                                  }`}
+                                >
+                                  {
+                                    difficultyLabels[
+                                      program.difficulty as keyof typeof difficultyLabels
+                                    ]
+                                  }
+                                </Badge>
+                              </div>
+                              <div className="flex gap-2 md:gap-4 text-xs md:text-sm text-gray-500 mt-1">
+                                <span>{program.items.length} oef</span>
+                                <span>~{totalDuration}min</span>
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />
+                                  {completedCount}x
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-medium text-sm md:text-base truncate">{program.name}</h3>
-                              <Badge
-                                className={`text-xs px-1.5 py-0 hidden md:inline-flex ${
-                                  difficultyColors[
-                                    program.difficulty as keyof typeof difficultyColors
-                                  ]
-                                }`}
-                              >
-                                {
-                                  difficultyLabels[
-                                    program.difficulty as keyof typeof difficultyLabels
-                                  ]
-                                }
-                              </Badge>
-                            </div>
-                            <div className="flex gap-2 md:gap-4 text-xs md:text-sm text-gray-500 mt-1">
-                              <span>{program.items.length} oef</span>
-                              <span>~{totalDuration}min</span>
-                              <span className="flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" />
-                                {completedCount}x
-                              </span>
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <ExerciseNotesModal
+                              clientProgramId={cp.id}
+                              programName={program.name}
+                              exercises={exercises}
+                              existingNotes={existingNotes}
+                            />
+                            <RemoveProgramButton clientProgramId={cp.id} />
                           </div>
                         </div>
-                        <RemoveProgramButton clientProgramId={cp.id} />
+
+                        {/* Period info */}
+                        {(cp.startDate || cp.endDate) && (
+                          <div className="mt-3 pt-3 border-t flex items-center gap-2 text-xs text-gray-500">
+                            <Calendar className="w-3 h-3" />
+                            <span>
+                              {formatDate(cp.startDate)} - {formatDate(cp.endDate)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

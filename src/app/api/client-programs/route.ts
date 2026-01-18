@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { clientId, programId, order, startDate } = body;
+  const { clientId, programId, order, startDate, endDate } = body;
 
   // Verify client exists
   const client = await db.user.findUnique({
@@ -56,9 +56,22 @@ export async function POST(req: NextRequest) {
       programId,
       order: order ?? (maxOrder._max.order ?? -1) + 1,
       startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+      assignedBy: "INSTRUCTOR",
     },
     include: {
       program: true,
+    },
+  });
+
+  // Create notification for the client
+  await db.notification.create({
+    data: {
+      userId: clientId,
+      type: "PROGRAM_ASSIGNED",
+      title: "Nieuw programma toegewezen",
+      message: `Je trainer heeft '${clientProgram.program.name}' aan je toegewezen.`,
+      link: "/client/programs",
     },
   });
 

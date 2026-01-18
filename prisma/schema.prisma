@@ -10,122 +10,219 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============ MODELS ============
+// ============ ENUMS ============
+
+enum Role {
+  SUPER_ADMIN
+  INSTRUCTOR
+  CLIENT
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Location {
+  GYM
+  HOME
+  OUTDOOR
+}
+
+enum Language {
+  NL
+  EN
+  FR
+}
+
+// ============ USER & AUTH ============
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String   // hashed with bcrypt
-  name         String
-  firstName    String?  // voornaam
-  lastName     String?  // achternaam
-  phone        String?  // telefoonnummer
-  role         String   @default("CLIENT") // "INSTRUCTOR" or "CLIENT"
-  resetToken   String?  // for password reset
-  resetExpires DateTime? // when reset token expires
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String    @id @default(cuid())
+  email          String    @unique
+  password       String    // hashed with bcrypt
+  name           String
+  firstName      String?
+  lastName       String?
+  phone          String?
+  avatarUrl      String?
+  role           Role      @default(CLIENT)
+  language       Language  @default(NL)
+  resetToken     String?
+  resetExpires   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Instructor relation (for clients)
+  instructorId   String?
+  instructor     User?     @relation("InstructorClients", fields: [instructorId], references: [id], onDelete: SetNull)
+  clients        User[]    @relation("InstructorClients")
 
   // Relations
-  createdExercises   Exercise[]         // only for instructors
-  createdPrograms    Program[]          // program templates created by instructor
-  createdCategories  Category[]         // categories created by instructor
-  clientPrograms     ClientProgram[]    // programs assigned to this client
-  sessions           Session[]          // training sessions
-  scheduledPrograms  ScheduledProgram[] // scheduled workouts for this client
+  createdExercises      Exercise[]
+  createdPrograms       Program[]
+  createdCategories     Category[]
+  clientPrograms        ClientProgram[]
+  sessions              Session[]
+  scheduledPrograms     ScheduledProgram[]
+  notifications         Notification[]
+  communityPosts        CommunityPost[]
+  postComments          PostComment[]
+  eventRegistrations    EventRegistration[]
+  createdEvents         Event[]
+
+  @@index([instructorId])
 }
+
+// ============ EXERCISES ============
 
 model Exercise {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   name              String
-  description       String? // textual explanation
-  youtubeUrl        String? // optional video
-  audioUrl          String? // optional audio link
-  durationMinutes   Int // estimated duration
-  sets              Int // number of sets
-  reps              Int? // repetitions (null = hold exercise)
-  holdSeconds       Int? // hold time (null = rep-based)
-  requiresEquipment Boolean  @default(false)
-  equipment         String? // e.g., "dumbbells, mat"
-  location          String   @default("GYM") // "GYM", "HOME", "OUTDOOR"
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  description       String?
+  instructions      String?   // detailed step-by-step instructions
+  youtubeUrl        String?
+  imageUrl          String?
+  audioUrl          String?
+  durationMinutes   Int       // estimated duration for full exercise
+  sets              Int
+  reps              Int?
+  holdSeconds       Int?
+  restSeconds       Int       @default(60) // rest between sets
+  caloriesPerSet    Int?      // estimated calories burned per set
+  requiresEquipment Boolean   @default(false)
+  equipment         String?
+  location          Location  @default(GYM)
+  muscleGroups      String?   // e.g., "chest,shoulders,triceps"
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   // Relations
-  creatorId    String
-  creator      User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  programItems ProgramItem[]
+  creatorId         String
+  creator           User             @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  programItems      ProgramItem[]
+  clientExerciseNotes ClientExerciseNote[]
+
+  @@index([creatorId])
 }
 
-// Category for organizing programs
+// ============ CATEGORIES ============
+
 model Category {
   id          String   @id @default(cuid())
   name        String
   description String?
-  color       String   @default("#3B82F6") // hex color for UI
+  color       String   @default("#3B82F6")
+  icon        String?  // icon name for UI
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  creatorId String
-  creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  programs  Program[]
+  creatorId   String
+  creator     User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  programs    Program[]
+
+  @@index([creatorId])
 }
 
-// Program is now a TEMPLATE that can be assigned to multiple clients
+// ============ PROGRAMS ============
+
 model Program {
-  id          String   @id @default(cuid())
-  name        String // e.g., "Beginners Full Body"
-  description String?
-  difficulty  String   @default("BEGINNER") // "BEGINNER", "INTERMEDIATE", "ADVANCED"
-  isArchived  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String     @id @default(cuid())
+  name             String
+  description      String?
+  shortDescription String?    // for library cards
+  imageUrl         String?
+  difficulty       Difficulty @default(BEGINNER)
+  location         Location   @default(GYM)
+  durationMinutes  Int?       // total estimated duration
+  caloriesBurn     Int?       // estimated calories burned
+  equipmentNeeded  String?    // comma-separated list
+  isPublic         Boolean    @default(false) // visible in library for all clients
+  isArchived       Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   // Relations
-  creatorId      String
-  creator        User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  categoryId     String?
-  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  items          ProgramItem[]
-  clientPrograms ClientProgram[] // assignments to clients
+  creatorId        String
+  creator          User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  categoryId       String?
+  category         Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  items            ProgramItem[]
+  clientPrograms   ClientProgram[]
+
+  @@index([creatorId])
+  @@index([isPublic])
 }
 
 model ProgramItem {
-  id    String @id @default(cuid())
-  order Int // order in program
+  id             String   @id @default(cuid())
+  order          Int
+  customSets     Int?     // override exercise default
+  customReps     Int?     // override exercise default
+  customDuration Int?     // override exercise default (minutes)
+  notes          String?  // instructor notes for this exercise in this program
 
   // Relations
-  programId  String
-  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
-  exerciseId String
-  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  programId      String
+  program        Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exerciseId     String
+  exercise       Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([programId])
 }
 
-// Links a Program template to a Client
+// ============ CLIENT PROGRAMS ============
+
 model ClientProgram {
-  id        String    @id @default(cuid())
-  order     Int       @default(0) // order in client's program list (for progression)
-  startDate DateTime? // when client should start this program
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
+  id          String    @id @default(cuid())
+  order       Int       @default(0)
+  startDate   DateTime?
+  endDate     DateTime? // NEW: end date for the period
+  isActive    Boolean   @default(true)
+  assignedBy  String?   // "INSTRUCTOR" or "SELF" or "LIBRARY"
+  createdAt   DateTime  @default(now())
 
   // Relations
-  clientId          String
-  client            User               @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  programId         String
-  program           Program            @relation(fields: [programId], references: [id], onDelete: Cascade)
-  sessions          Session[]
-  scheduledPrograms ScheduledProgram[] // scheduled dates for this program
+  clientId            String
+  client              User                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  programId           String
+  program             Program                @relation(fields: [programId], references: [id], onDelete: Cascade)
+  sessions            Session[]
+  scheduledPrograms   ScheduledProgram[]
+  exerciseNotes       ClientExerciseNote[]
 
-  @@unique([clientId, programId]) // a program can only be assigned once to a client
+  @@unique([clientId, programId])
+  @@index([clientId])
 }
+
+// Custom notes per exercise per client program
+model ClientExerciseNote {
+  id              String   @id @default(cuid())
+  note            String   // custom instruction for this client
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  clientProgramId String
+  clientProgram   ClientProgram @relation(fields: [clientProgramId], references: [id], onDelete: Cascade)
+  exerciseId      String
+  exercise        Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([clientProgramId, exerciseId])
+  @@index([clientProgramId])
+}
+
+// ============ SESSIONS & TRACKING ============
 
 model Session {
-  id         String    @id @default(cuid())
-  startedAt  DateTime  @default(now())
-  finishedAt DateTime?
-  status     String    @default("IN_PROGRESS") // "IN_PROGRESS", "COMPLETED", "CANCELLED"
+  id              String    @id @default(cuid())
+  startedAt       DateTime  @default(now())
+  finishedAt      DateTime?
+  status          String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CANCELLED
+  caloriesBurned  Int?
+  durationMinutes Int?
 
   // Relations
   clientProgramId String
@@ -133,25 +230,34 @@ model Session {
   userId          String
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   completedItems  SessionItem[]
+
+  @@index([userId])
 }
 
 model SessionItem {
-  id          String   @id @default(cuid())
-  completedAt DateTime @default(now())
-  skipped     Boolean  @default(false)
+  id            String   @id @default(cuid())
+  completedAt   DateTime @default(now())
+  skipped       Boolean  @default(false)
+  actualSets    Int?
+  actualReps    Int?
+  notes         String?  // client can add notes during workout
 
   // Relations
   sessionId     String
   session       Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   programItemId String
+
+  @@index([sessionId])
 }
 
-// Scheduled workout on a specific date
+// ============ SCHEDULING ============
+
 model ScheduledProgram {
   id            String   @id @default(cuid())
-  scheduledDate DateTime // the date for this workout
+  scheduledDate DateTime
+  scheduledTime String?  // e.g., "09:00"
   completed     Boolean  @default(false)
-  notes         String?  // optional notes for this scheduled day
+  notes         String?
   createdAt     DateTime @default(now())
 
   // Relations
@@ -161,4 +267,95 @@ model ScheduledProgram {
   clientProgram   ClientProgram @relation(fields: [clientProgramId], references: [id], onDelete: Cascade)
 
   @@index([clientId, scheduledDate])
+}
+
+// ============ NOTIFICATIONS ============
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // PROGRAM_ASSIGNED, NEW_POST, EVENT_REMINDER, etc.
+  title     String
+  message   String
+  link      String?  // URL to navigate to
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+// ============ COMMUNITY ============
+
+model CommunityPost {
+  id        String   @id @default(cuid())
+  title     String?
+  content   String
+  imageUrl  String?
+  videoUrl  String?
+  audioUrl  String?
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments  PostComment[]
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+// ============ EVENTS ============
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  imageUrl    String?
+  startDate   DateTime
+  endDate     DateTime?
+  maxAttendees Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creatorId     String
+  creator       User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  registrations EventRegistration[]
+
+  @@index([creatorId])
+  @@index([startDate])
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  status    String   @default("REGISTERED") // REGISTERED, CANCELLED, ATTENDED
+  createdAt DateTime @default(now())
+
+  // Relations
+  eventId   String
+  event     Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
 }

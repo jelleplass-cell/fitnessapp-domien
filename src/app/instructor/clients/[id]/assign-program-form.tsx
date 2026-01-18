@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 
 interface Program {
   id: string;
@@ -43,7 +45,10 @@ export default function AssignProgramForm({
 }: AssignProgramFormProps) {
   const router = useRouter();
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [showDates, setShowDates] = useState(false);
 
   const handleAssign = async () => {
     if (!selectedProgramId) return;
@@ -56,11 +61,16 @@ export default function AssignProgramForm({
         body: JSON.stringify({
           clientId,
           programId: selectedProgramId,
+          startDate: startDate || null,
+          endDate: endDate || null,
         }),
       });
 
       if (response.ok) {
         setSelectedProgramId("");
+        setStartDate("");
+        setEndDate("");
+        setShowDates(false);
         router.refresh();
       } else {
         const data = await response.json();
@@ -74,41 +84,82 @@ export default function AssignProgramForm({
   };
 
   return (
-    <div className="flex gap-2">
-      <Select value={selectedProgramId} onValueChange={setSelectedProgramId}>
-        <SelectTrigger className="flex-1">
-          <SelectValue placeholder="Selecteer een programma..." />
-        </SelectTrigger>
-        <SelectContent>
-          {programs.map((program) => (
-            <SelectItem key={program.id} value={program.id}>
-              <div className="flex items-center gap-2">
-                <span>{program.name}</span>
-                <Badge
-                  className={
-                    difficultyColors[
-                      program.difficulty as keyof typeof difficultyColors
-                    ]
-                  }
-                >
-                  {
-                    difficultyLabels[
-                      program.difficulty as keyof typeof difficultyLabels
-                    ]
-                  }
-                </Badge>
-                <span className="text-gray-400">
-                  ({program.itemCount} oefeningen)
-                </span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button onClick={handleAssign} disabled={!selectedProgramId || loading}>
-        <Plus className="w-4 h-4 mr-2" />
-        Toewijzen
-      </Button>
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Select value={selectedProgramId} onValueChange={(value) => {
+          setSelectedProgramId(value);
+          setShowDates(true);
+        }}>
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="Selecteer een programma..." />
+          </SelectTrigger>
+          <SelectContent>
+            {programs.map((program) => (
+              <SelectItem key={program.id} value={program.id}>
+                <div className="flex items-center gap-2">
+                  <span>{program.name}</span>
+                  <Badge
+                    className={
+                      difficultyColors[
+                        program.difficulty as keyof typeof difficultyColors
+                      ]
+                    }
+                  >
+                    {
+                      difficultyLabels[
+                        program.difficulty as keyof typeof difficultyLabels
+                      ]
+                    }
+                  </Badge>
+                  <span className="text-gray-400">
+                    ({program.itemCount} oefeningen)
+                  </span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {showDates && selectedProgramId && (
+        <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <Calendar className="w-4 h-4" />
+            Periode (optioneel)
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="startDate" className="text-xs text-gray-500">Startdatum</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="endDate" className="text-xs text-gray-500">Einddatum</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                className="text-sm"
+              />
+            </div>
+          </div>
+          <Button
+            onClick={handleAssign}
+            disabled={!selectedProgramId || loading}
+            className="w-full"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {loading ? "Bezig..." : "Programma toewijzen"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

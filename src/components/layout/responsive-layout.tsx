@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface ResponsiveLayoutProps {
-  role: "INSTRUCTOR" | "CLIENT";
+  role: "INSTRUCTOR" | "CLIENT" | "SUPER_ADMIN";
   userName: string;
   children: React.ReactNode;
 }
@@ -39,14 +40,17 @@ export function ResponsiveLayout({ role, userName, children }: ResponsiveLayoutP
         {/* Mobile header */}
         <header className="lg:hidden bg-gray-900 text-white p-4 flex items-center justify-between">
           <h1 className="text-lg font-bold">FitTrack Pro</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-gray-800"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-gray-800"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </Button>
+          </div>
         </header>
 
         {/* Page content */}
