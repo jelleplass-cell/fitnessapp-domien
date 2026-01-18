@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============ MODELS ============
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String   // hashed with bcrypt
+  name         String
+  firstName    String?  // voornaam
+  lastName     String?  // achternaam
+  phone        String?  // telefoonnummer
+  role         String   @default("CLIENT") // "INSTRUCTOR" or "CLIENT"
+  resetToken   String?  // for password reset
+  resetExpires DateTime? // when reset token expires
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  createdExercises   Exercise[]         // only for instructors
+  createdPrograms    Program[]          // program templates created by instructor
+  createdCategories  Category[]         // categories created by instructor
+  clientPrograms     ClientProgram[]    // programs assigned to this client
+  sessions           Session[]          // training sessions
+  scheduledPrograms  ScheduledProgram[] // scheduled workouts for this client
+}
+
+model Exercise {
+  id                String   @id @default(cuid())
+  name              String
+  description       String? // textual explanation
+  youtubeUrl        String? // optional video
+  audioUrl          String? // optional audio link
+  durationMinutes   Int // estimated duration
+  sets              Int // number of sets
+  reps              Int? // repetitions (null = hold exercise)
+  holdSeconds       Int? // hold time (null = rep-based)
+  requiresEquipment Boolean  @default(false)
+  equipment         String? // e.g., "dumbbells, mat"
+  location          String   @default("GYM") // "GYM", "HOME", "OUTDOOR"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  creatorId    String
+  creator      User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  programItems ProgramItem[]
+}
+
+// Category for organizing programs
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String   @default("#3B82F6") // hex color for UI
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creatorId String
+  creator   User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  programs  Program[]
+}
+
+// Program is now a TEMPLATE that can be assigned to multiple clients
+model Program {
+  id          String   @id @default(cuid())
+  name        String // e.g., "Beginners Full Body"
+  description String?
+  difficulty  String   @default("BEGINNER") // "BEGINNER", "INTERMEDIATE", "ADVANCED"
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creatorId      String
+  creator        User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  categoryId     String?
+  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  items          ProgramItem[]
+  clientPrograms ClientProgram[] // assignments to clients
+}
+
+model ProgramItem {
+  id    String @id @default(cuid())
+  order Int // order in program
+
+  // Relations
+  programId  String
+  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+}
+
+// Links a Program template to a Client
+model ClientProgram {
+  id        String    @id @default(cuid())
+  order     Int       @default(0) // order in client's program list (for progression)
+  startDate DateTime? // when client should start this program
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  // Relations
+  clientId          String
+  client            User               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  programId         String
+  program           Program            @relation(fields: [programId], references: [id], onDelete: Cascade)
+  sessions          Session[]
+  scheduledPrograms ScheduledProgram[] // scheduled dates for this program
+
+  @@unique([clientId, programId]) // a program can only be assigned once to a client
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  status     String    @default("IN_PROGRESS") // "IN_PROGRESS", "COMPLETED", "CANCELLED"
+
+  // Relations
+  clientProgramId String
+  clientProgram   ClientProgram @relation(fields: [clientProgramId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedItems  SessionItem[]
+}
+
+model SessionItem {
+  id          String   @id @default(cuid())
+  completedAt DateTime @default(now())
+  skipped     Boolean  @default(false)
+
+  // Relations
+  sessionId     String
+  session       Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  programItemId String
+}
+
+// Scheduled workout on a specific date
+model ScheduledProgram {
+  id            String   @id @default(cuid())
+  scheduledDate DateTime // the date for this workout
+  completed     Boolean  @default(false)
+  notes         String?  // optional notes for this scheduled day
+  createdAt     DateTime @default(now())
+
+  // Relations
+  clientId        String
+  client          User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientProgramId String
+  clientProgram   ClientProgram @relation(fields: [clientProgramId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, scheduledDate])
+}
