@@ -6,22 +6,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check, Mail, Phone, User, AlertTriangle } from "lucide-react";
+import { Language } from "@prisma/client";
 
-interface User {
+interface UserData {
   id: string;
   email: string;
   name: string;
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
+  language: Language;
+}
+
+interface Instructor {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  firstName: string | null;
+  lastName: string | null;
 }
 
 interface SettingsFormProps {
-  user: User;
+  user: UserData;
+  instructors: Instructor[];
 }
 
-export function ClientSettingsForm({ user }: SettingsFormProps) {
+const languageLabels: Record<Language, string> = {
+  NL: "Nederlands",
+  EN: "English",
+  FR: "Français",
+};
+
+export function ClientSettingsForm({ user, instructors }: SettingsFormProps) {
   const router = useRouter();
 
   // Profile form state
@@ -31,6 +50,7 @@ export function ClientSettingsForm({ user }: SettingsFormProps) {
     lastName: user.lastName || "",
     email: user.email || "",
     phone: user.phone || "",
+    language: user.language || "NL",
   });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -45,6 +65,11 @@ export function ClientSettingsForm({ user }: SettingsFormProps) {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  // Delete account state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,15 +146,87 @@ export function ClientSettingsForm({ user }: SettingsFormProps) {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "VERWIJDEREN") return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await fetch("/api/user/delete", {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        window.location.href = "/login?deleted=true";
+      } else {
+        alert("Er is een fout opgetreden bij het verwijderen van je account");
+      }
+    } catch {
+      alert("Er is een fout opgetreden");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Instructor Contact Info */}
+      {instructors.length > 0 && (
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">Mijn Instructeur{instructors.length > 1 ? "s" : ""}</CardTitle>
+            <CardDescription className="text-sm">
+              Neem contact op met je instructeur voor vragen
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+            <div className="space-y-4">
+              {instructors.map((instructor) => (
+                <div key={instructor.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium">
+                        {instructor.firstName && instructor.lastName
+                          ? `${instructor.firstName} ${instructor.lastName}`
+                          : instructor.name}
+                      </p>
+                      <p className="text-sm text-gray-500">Instructeur</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <a
+                      href={`mailto:${instructor.email}`}
+                      className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                    >
+                      <Mail className="w-4 h-4" />
+                      {instructor.email}
+                    </a>
+                    {instructor.phone && (
+                      <a
+                        href={`tel:${instructor.phone}`}
+                        className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                      >
+                        <Phone className="w-4 h-4" />
+                        {instructor.phone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Profile Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle>Profiel</CardTitle>
-          <CardDescription>Pas je persoonlijke gegevens aan</CardDescription>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Profiel</CardTitle>
+          <CardDescription className="text-sm">Pas je persoonlijke gegevens aan</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             {profileError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
@@ -143,7 +240,7 @@ export function ClientSettingsForm({ user }: SettingsFormProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">Voornaam</Label>
                 <Input
@@ -202,6 +299,30 @@ export function ClientSettingsForm({ user }: SettingsFormProps) {
               />
             </div>
 
+            <div>
+              <Label htmlFor="language">Taal</Label>
+              <Select
+                value={profileData.language}
+                onValueChange={(value: Language) =>
+                  setProfileData({ ...profileData, language: value })
+                }
+              >
+                <SelectTrigger id="language">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(languageLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                De taal voor de app interface
+              </p>
+            </div>
+
             <Button type="submit" disabled={profileLoading}>
               {profileLoading ? "Opslaan..." : "Profiel opslaan"}
             </Button>
@@ -211,13 +332,13 @@ export function ClientSettingsForm({ user }: SettingsFormProps) {
 
       {/* Password Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle>Wachtwoord wijzigen</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Wachtwoord wijzigen</CardTitle>
+          <CardDescription className="text-sm">
             Wijzig je wachtwoord om je account te beveiligen
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             {passwordError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
@@ -272,6 +393,71 @@ export function ClientSettingsForm({ user }: SettingsFormProps) {
               {passwordLoading ? "Wijzigen..." : "Wachtwoord wijzigen"}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Delete Account */}
+      <Card className="border-red-200">
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg text-red-600 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5" />
+            Account verwijderen
+          </CardTitle>
+          <CardDescription className="text-sm">
+            Verwijder je account en alle bijbehorende gegevens permanent
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+          {!showDeleteConfirm ? (
+            <div>
+              <p className="text-sm text-gray-600 mb-4">
+                Als je je account verwijdert, worden al je trainingsgegevens, programma&apos;s
+                en sessies permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.
+              </p>
+              <Button
+                variant="outline"
+                className="text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Account verwijderen
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800 font-medium mb-2">
+                  Weet je zeker dat je je account wilt verwijderen?
+                </p>
+                <p className="text-sm text-red-700">
+                  Typ <strong>VERWIJDEREN</strong> om te bevestigen.
+                </p>
+              </div>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Typ VERWIJDEREN"
+                className="uppercase"
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmText("");
+                  }}
+                >
+                  Annuleren
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={deleteConfirmText !== "VERWIJDEREN" || deleteLoading}
+                  onClick={handleDeleteAccount}
+                >
+                  {deleteLoading ? "Verwijderen..." : "Definitief verwijderen"}
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

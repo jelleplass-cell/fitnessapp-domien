@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check } from "lucide-react";
+import { Language } from "@prisma/client";
 
 interface User {
   id: string;
@@ -15,11 +17,18 @@ interface User {
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
+  language: Language;
 }
 
 interface SettingsFormProps {
   user: User;
 }
+
+const languageLabels: Record<Language, string> = {
+  NL: "Nederlands",
+  EN: "English",
+  FR: "Français",
+};
 
 export function SettingsForm({ user }: SettingsFormProps) {
   const router = useRouter();
@@ -31,6 +40,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
     lastName: user.lastName || "",
     email: user.email || "",
     phone: user.phone || "",
+    language: user.language || "NL",
   });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -125,11 +135,11 @@ export function SettingsForm({ user }: SettingsFormProps) {
     <div className="space-y-6">
       {/* Profile Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle>Profiel</CardTitle>
-          <CardDescription>Pas je persoonlijke gegevens aan</CardDescription>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Profiel</CardTitle>
+          <CardDescription className="text-sm">Pas je persoonlijke gegevens aan</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             {profileError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
@@ -143,7 +153,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">Voornaam</Label>
                 <Input
@@ -200,6 +210,33 @@ export function SettingsForm({ user }: SettingsFormProps) {
                 }
                 placeholder="+31 6 12345678"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Dit nummer is zichtbaar voor je klanten
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="language">Taal</Label>
+              <Select
+                value={profileData.language}
+                onValueChange={(value: Language) =>
+                  setProfileData({ ...profileData, language: value })
+                }
+              >
+                <SelectTrigger id="language">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(languageLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                De taal voor de app interface
+              </p>
             </div>
 
             <Button type="submit" disabled={profileLoading}>
@@ -211,13 +248,13 @@ export function SettingsForm({ user }: SettingsFormProps) {
 
       {/* Password Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle>Wachtwoord wijzigen</CardTitle>
-          <CardDescription>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Wachtwoord wijzigen</CardTitle>
+          <CardDescription className="text-sm">
             Wijzig je wachtwoord om je account te beveiligen
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             {passwordError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">

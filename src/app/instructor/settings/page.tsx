@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { SettingsForm } from "./settings-form";
+import { Language } from "@prisma/client";
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -19,6 +20,7 @@ export default async function SettingsPage() {
       firstName: true,
       lastName: true,
       phone: true,
+      language: true,
     },
   });
 
@@ -27,13 +29,18 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Instellingen</h1>
-        <p className="text-gray-500">Beheer je account en voorkeuren</p>
+    <div className="p-4 md:p-6 max-w-2xl">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold">Instellingen</h1>
+        <p className="text-sm text-gray-500">Beheer je account en voorkeuren</p>
       </div>
 
-      <SettingsForm user={user} />
+      <SettingsForm
+        user={{
+          ...user,
+          language: user.language as Language,
+        }}
+      />
     </div>
   );
 }

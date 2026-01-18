@@ -19,6 +19,7 @@ export async function GET() {
       lastName: true,
       phone: true,
       role: true,
+      language: true,
     },
   });
 
@@ -34,7 +35,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, firstName, lastName, phone, email } = body;
+    const { name, firstName, lastName, phone, email, language } = body;
 
     // Check if email is being changed and if it's already taken
     if (email && email !== session.user.email) {
@@ -57,6 +58,7 @@ export async function PUT(req: NextRequest) {
         lastName: lastName || undefined,
         phone: phone || undefined,
         email: email || undefined,
+        language: language || undefined,
       },
       select: {
         id: true,
@@ -66,6 +68,7 @@ export async function PUT(req: NextRequest) {
         lastName: true,
         phone: true,
         role: true,
+        language: true,
       },
     });
 
