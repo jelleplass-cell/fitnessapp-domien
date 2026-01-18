@@ -54,6 +54,15 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
+  // Address fields
+  street         String?
+  houseNumber    String?
+  postalCode     String?
+  city           String?
+  country        String?   @default("Nederland")
+  dateOfBirth    DateTime?
+  notes          String?   // Instructor notes about this client
+
   // Instructor relation (for clients)
   instructorId   String?
   instructor     User?     @relation("InstructorClients", fields: [instructorId], references: [id], onDelete: SetNull)

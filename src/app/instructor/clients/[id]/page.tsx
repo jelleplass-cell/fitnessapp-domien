@@ -3,12 +3,13 @@ import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, CheckCircle } from "lucide-react";
+import { Calendar, Clock, CheckCircle, Mail, Phone, MapPin } from "lucide-react";
 import AssignProgramForm from "./assign-program-form";
 import { RemoveProgramButton } from "./remove-program-button";
 import { ScheduleForm } from "./schedule-form";
 import { ScheduleCalendar } from "./schedule-calendar";
 import { CustomizeProgramModal } from "./customize-program-modal";
+import { ClientProfileModal } from "./client-profile-modal";
 
 const difficultyColors = {
   BEGINNER: "bg-green-100 text-green-800",
@@ -79,6 +80,27 @@ export default async function ClientDetailPage({
     },
   });
 
+  // Get full client profile data for the modal
+  const clientProfile = await db.user.findUnique({
+    where: { id, role: "CLIENT" },
+    select: {
+      id: true,
+      name: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      street: true,
+      houseNumber: true,
+      postalCode: true,
+      city: true,
+      country: true,
+      dateOfBirth: true,
+      notes: true,
+      createdAt: true,
+    },
+  });
+
   // Get all exercises for adding to programs
   const allExercises = await db.exercise.findMany({
     where: { creatorId: session.user.id },
@@ -138,14 +160,60 @@ export default async function ClientDetailPage({
     return new Date(s.finishedAt) > weekAgo;
   }).length;
 
+  // Build address string
+  const addressParts = [
+    clientProfile?.street && clientProfile?.houseNumber
+      ? `${clientProfile.street} ${clientProfile.houseNumber}`
+      : null,
+    clientProfile?.postalCode,
+    clientProfile?.city,
+  ].filter(Boolean);
+  const fullAddress = addressParts.length > 0 ? addressParts.join(", ") : null;
+
   return (
     <div className="p-4 md:p-6">
+      {/* Client Header */}
       <div className="mb-4 md:mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">{client.name}</h1>
-        <p className="text-sm text-gray-500">{client.email}</p>
-        {client.phone && (
-          <p className="text-sm text-gray-500">{client.phone}</p>
-        )}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold">{client.name}</h1>
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Mail className="w-4 h-4" />
+                <a href={`mailto:${client.email}`} className="hover:text-blue-600">
+                  {client.email}
+                </a>
+              </div>
+              {client.phone && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Phone className="w-4 h-4" />
+                  <a href={`tel:${client.phone}`} className="hover:text-blue-600">
+                    {client.phone}
+                  </a>
+                </div>
+              )}
+              {fullAddress && (
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <MapPin className="w-4 h-4" />
+                  <span>{fullAddress}</span>
+                </div>
+              )}
+            </div>
+            {clientProfile?.notes && (
+              <p className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded max-w-md">
+                {clientProfile.notes}
+              </p>
+            )}
+          </div>
+          {clientProfile && (
+            <ClientProfileModal
+              client={{
+                ...clientProfile,
+                dateOfBirth: clientProfile.dateOfBirth?.toISOString() || null,
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* Stats */}
