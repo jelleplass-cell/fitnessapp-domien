@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { User, KeyRound, Trash2, Copy, Check } from "lucide-react";
+import { User, KeyRound, Trash2, Copy, Check, Users } from "lucide-react";
 
 interface ClientData {
   id: string;
@@ -44,16 +45,35 @@ interface ClientData {
   notes: string | null;
 }
 
-interface ClientProfileModalProps {
-  client: ClientData;
+interface Community {
+  id: string;
+  name: string;
+  color: string;
+  isDefault: boolean;
 }
 
-export function ClientProfileModal({ client }: ClientProfileModalProps) {
+interface CommunityMembership {
+  communityId: string;
+}
+
+interface ClientProfileModalProps {
+  client: ClientData;
+  communities?: Community[];
+  clientMemberships?: CommunityMembership[];
+}
+
+export function ClientProfileModal({ client, communities = [], clientMemberships = [] }: ClientProfileModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [newPassword, setNewPassword] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Track community memberships (only non-default communities)
+  const exclusiveCommunities = communities.filter((c) => !c.isDefault);
+  const initialMembershipIds = clientMemberships.map((m) => m.communityId);
+  const [selectedCommunities, setSelectedCommunities] = useState<string[]>(initialMembershipIds);
+
   const [formData, setFormData] = useState({
     name: client.name || "",
     firstName: client.firstName || "",
@@ -76,6 +96,7 @@ export function ClientProfileModal({ client }: ClientProfileModalProps) {
     setLoading(true);
 
     try {
+      // Update client profile
       const response = await fetch(`/api/clients/${client.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -88,6 +109,29 @@ export function ClientProfileModal({ client }: ClientProfileModalProps) {
         return;
       }
 
+      // Update community memberships
+      if (exclusiveCommunities.length > 0) {
+        // Determine which communities to add and remove
+        const toAdd = selectedCommunities.filter((id) => !initialMembershipIds.includes(id));
+        const toRemove = initialMembershipIds.filter((id) => !selectedCommunities.includes(id));
+
+        // Add new memberships
+        for (const communityId of toAdd) {
+          await fetch(`/api/communities/${communityId}/members`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userIds: [client.id] }),
+          });
+        }
+
+        // Remove memberships
+        for (const communityId of toRemove) {
+          await fetch(`/api/communities/${communityId}/members?userId=${client.id}`, {
+            method: "DELETE",
+          });
+        }
+      }
+
       setOpen(false);
       router.refresh();
     } catch (error) {
@@ -95,6 +139,14 @@ export function ClientProfileModal({ client }: ClientProfileModalProps) {
       alert("Er is iets misgegaan");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCommunityToggle = (communityId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedCommunities((prev) => [...prev, communityId]);
+    } else {
+      setSelectedCommunities((prev) => prev.filter((id) => id !== communityId));
     }
   };
 
@@ -372,6 +424,50 @@ export function ClientProfileModal({ client }: ClientProfileModalProps) {
                 rows={3}
               />
             </div>
+
+            {/* Community Access */}
+            {exclusiveCommunities.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-gray-500" />
+                  <h3 className="text-sm font-medium text-gray-700">
+                    Community toegang
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Selecteer welke exclusieve communities deze klant toegang toe heeft.
+                  De standaard community is altijd toegankelijk.
+                </p>
+                <div className="space-y-3">
+                  {exclusiveCommunities.map((community) => (
+                    <div
+                      key={community.id}
+                      className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50"
+                    >
+                      <Checkbox
+                        id={`community-${community.id}`}
+                        checked={selectedCommunities.includes(community.id)}
+                        onCheckedChange={(checked) =>
+                          handleCommunityToggle(community.id, checked === true)
+                        }
+                      />
+                      <div className="flex items-center gap-2 flex-1">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: community.color }}
+                        />
+                        <Label
+                          htmlFor={`community-${community.id}`}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          {community.name}
+                        </Label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <div className="flex gap-2 w-full sm:w-auto">

@@ -19,6 +19,21 @@ export default async function InstructorCommunityPage() {
     redirect("/instructor/dashboard");
   }
 
+  // Get all communities for this instructor
+  const communities = await db.community.findMany({
+    where: {
+      creatorId: session.user.id,
+      isArchived: false,
+    },
+    select: {
+      id: true,
+      name: true,
+      color: true,
+      isDefault: true,
+    },
+    orderBy: [{ isDefault: "desc" }, { order: "asc" }],
+  });
+
   // Instructors can see all posts including scheduled ones
   const posts = await db.communityPost.findMany({
     orderBy: [
@@ -150,6 +165,7 @@ export default async function InstructorCommunityPage() {
         }))}
         currentUserId={session.user.id}
         canCreatePosts={true}
+        communities={communities}
       />
     </div>
   );

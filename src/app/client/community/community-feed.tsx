@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   MessageCircle,
   Trash2,
   Send,
@@ -87,17 +94,29 @@ interface Post {
   event?: LinkedEvent | null;
 }
 
+interface CommunityOption {
+  id: string;
+  name: string;
+  color: string;
+  isDefault: boolean;
+}
+
 interface CommunityFeedProps {
   initialPosts: Post[];
   currentUserId: string;
   canCreatePosts?: boolean;
+  communities?: CommunityOption[];
 }
 
-export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = false }: CommunityFeedProps) {
+export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = false, communities = [] }: CommunityFeedProps) {
   const router = useRouter();
   const [posts, setPosts] = useState(initialPosts);
   const [showNewPost, setShowNewPost] = useState(false);
-  const [newPost, setNewPost] = useState({ title: "", content: "", imageUrl: "", videoUrl: "" });
+  const [newPost, setNewPost] = useState({ title: "", content: "", imageUrl: "", videoUrl: "", communityId: "" });
+
+  // Get the default community for pre-selection
+  const defaultCommunity = communities.find(c => c.isDefault);
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string>(defaultCommunity?.id || "");
   const [submitting, setSubmitting] = useState(false);
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
   const [commentText, setCommentText] = useState<Record<string, string>>({});
@@ -140,12 +159,14 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
           ...newPost,
           imageUrl: newPost.imageUrl || undefined,
           videoUrl: newPost.videoUrl || undefined,
+          communityId: selectedCommunityId || undefined,
         }),
       });
 
       if (res.ok) {
-        setNewPost({ title: "", content: "", imageUrl: "", videoUrl: "" });
+        setNewPost({ title: "", content: "", imageUrl: "", videoUrl: "", communityId: "" });
         setShowNewPost(false);
+        setSelectedCommunityId(defaultCommunity?.id || "");
         router.refresh();
       }
     } catch {
@@ -690,6 +711,43 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                       />
                     </div>
                   </div>
+                  {/* Community Selector - only show if there are multiple communities */}
+                  {communities.length > 1 && (
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">
+                        Plaatsen in community
+                      </label>
+                      <Select
+                        value={selectedCommunityId}
+                        onValueChange={setSelectedCommunityId}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer community" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {communities.map((community) => (
+                            <SelectItem key={community.id} value={community.id}>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: community.color }}
+                                />
+                                {community.name}
+                                {community.isDefault && (
+                                  <span className="text-xs text-gray-400">(Alle klanten)</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {communities.find(c => c.id === selectedCommunityId)?.isDefault
+                          ? "Alle klanten kunnen deze post zien"
+                          : "Alleen leden van deze community kunnen deze post zien"}
+                      </p>
+                    </div>
+                  )}
                   <div className="flex gap-2">
                     <Button onClick={handleCreatePost} disabled={submitting}>
                       {submitting ? "Posten..." : "Plaatsen"}
@@ -698,7 +756,8 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                       variant="outline"
                       onClick={() => {
                         setShowNewPost(false);
-                        setNewPost({ title: "", content: "", imageUrl: "", videoUrl: "" });
+                        setNewPost({ title: "", content: "", imageUrl: "", videoUrl: "", communityId: "" });
+                        setSelectedCommunityId(defaultCommunity?.id || "");
                       }}
                     >
                       Annuleren

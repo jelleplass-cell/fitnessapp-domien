@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -26,11 +26,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
+interface Community {
+  id: string;
+  name: string;
+  color: string;
+  isDefault: boolean;
+}
+
+interface SubLink {
+  href: string;
+  label: string;
+  color?: string;
+}
+
 interface NavLink {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  subLinks?: { href: string; label: string }[];
+  subLinks?: SubLink[];
 }
 
 interface InstructorModules {
@@ -49,6 +62,7 @@ interface SidebarProps {
 export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
   const pathname = usePathname();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(["/instructor/trainingen", "/client/trainings"]);
+  const [communities, setCommunities] = useState<Community[]>([]);
 
   const toggleMenu = (href: string) => {
     setExpandedMenus((prev) =>
@@ -57,6 +71,20 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
         : [...prev, href]
     );
   };
+
+  // Fetch communities for clients
+  useEffect(() => {
+    if (role === "CLIENT") {
+      fetch("/api/communities")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setCommunities(data);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [role]);
 
   // Default all modules to enabled if not specified
   const enabledModules = {
@@ -118,6 +146,15 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
     },
   ];
 
+  // Build community sublinks dynamically
+  const communitySubLinks = communities.length > 1
+    ? communities.map((c) => ({
+        href: `/client/community${c.isDefault ? "" : `?community=${c.id}`}`,
+        label: c.name,
+        color: c.color,
+      }))
+    : undefined;
+
   const clientLinks: NavLink[] = [
     {
       href: "/client/dashboard",
@@ -140,6 +177,7 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
       href: "/client/community",
       label: "Community",
       icon: MessageSquare,
+      subLinks: communitySubLinks,
     },
     {
       href: "/client/events",
@@ -233,23 +271,37 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                   </button>
                   {isExpanded && (
                     <ul className="ml-4 mt-1 space-y-1">
-                      {link.subLinks!.map((subLink) => (
-                        <li key={subLink.href}>
-                          <Link
-                            href={subLink.href}
-                            onClick={onNavigate}
-                            className={cn(
-                              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
-                              pathname === subLink.href || pathname.startsWith(subLink.href + "/")
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
-                            )}
-                          >
-                            <span className="w-5" />
-                            {subLink.label}
-                          </Link>
-                        </li>
-                      ))}
+                      {link.subLinks!.map((subLink) => {
+                        // Check if this sublink is active (handle query params for community)
+                        const isSubLinkActive = subLink.href.includes("?")
+                          ? pathname + (typeof window !== "undefined" ? window.location.search : "") === subLink.href
+                          : pathname === subLink.href || pathname.startsWith(subLink.href + "/");
+
+                        return (
+                          <li key={subLink.href}>
+                            <Link
+                              href={subLink.href}
+                              onClick={onNavigate}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                                isSubLinkActive
+                                  ? "bg-blue-600 text-white"
+                                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                              )}
+                            >
+                              {subLink.color ? (
+                                <span
+                                  className="w-3 h-3 rounded-full ml-1"
+                                  style={{ backgroundColor: subLink.color }}
+                                />
+                              ) : (
+                                <span className="w-5" />
+                              )}
+                              {subLink.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </li>

@@ -115,6 +115,29 @@ export default async function ClientDetailPage({
     orderBy: { name: "asc" },
   });
 
+  // Get communities for this instructor
+  const communities = await db.community.findMany({
+    where: {
+      creatorId: session.user.id,
+      isArchived: false,
+    },
+    select: {
+      id: true,
+      name: true,
+      color: true,
+      isDefault: true,
+    },
+    orderBy: [{ isDefault: "desc" }, { order: "asc" }],
+  });
+
+  // Get client's community memberships
+  const clientMemberships = await db.communityMember.findMany({
+    where: { userId: id },
+    select: {
+      communityId: true,
+    },
+  });
+
   if (!client) {
     notFound();
   }
@@ -211,6 +234,8 @@ export default async function ClientDetailPage({
                 ...clientProfile,
                 dateOfBirth: clientProfile.dateOfBirth?.toISOString() || null,
               }}
+              communities={communities}
+              clientMemberships={clientMemberships}
             />
           )}
         </div>

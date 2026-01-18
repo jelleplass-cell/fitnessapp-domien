@@ -86,6 +86,8 @@ model User {
   instructorProfile     InstructorProfile?
   communitySettings     CommunitySettings?
   givenKudos            ActivityKudos[] @relation("GivenKudos")
+  createdCommunities    Community[]     @relation("CreatedCommunities")
+  communityMemberships  CommunityMember[]
 
   @@index([instructorId])
 }
@@ -307,6 +309,45 @@ model Notification {
 
 // ============ COMMUNITY ============
 
+// Community groups - instructors can create multiple communities (General, Mastermind, VIP, etc.)
+model Community {
+  id           String   @id @default(cuid())
+  name         String   // e.g., "Algemeen", "Mastermind", "VIP"
+  description  String?
+  color        String   @default("#3B82F6") // For visual distinction
+  icon         String?  // Icon name
+  isDefault    Boolean  @default(false) // The main/general community everyone has access to
+  isArchived   Boolean  @default(false)
+  order        Int      @default(0) // For ordering in sidebar
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  creatorId    String
+  creator      User              @relation("CreatedCommunities", fields: [creatorId], references: [id], onDelete: Cascade)
+  members      CommunityMember[]
+  posts        CommunityPost[]
+
+  @@index([creatorId])
+  @@index([isDefault])
+}
+
+// Community membership - which clients have access to which communities
+model CommunityMember {
+  id           String   @id @default(cuid())
+  joinedAt     DateTime @default(now())
+
+  // Relations
+  communityId  String
+  community    Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+}
+
 model CommunityPost {
   id           String    @id @default(cuid())
   title        String?
@@ -321,18 +362,23 @@ model CommunityPost {
   updatedAt    DateTime  @updatedAt
 
   // Relations
-  authorId  String
-  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments  PostComment[]
-  likes     PostLike[]
+  authorId     String
+  author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments     PostComment[]
+  likes        PostLike[]
+
+  // Community this post belongs to (null = legacy posts, shown in default community)
+  communityId  String?
+  community    Community?    @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
   // Optional linked event
-  eventId   String?  @unique
-  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  eventId      String?  @unique
+  event        Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([authorId])
   @@index([createdAt])
   @@index([publishAt])
+  @@index([communityId])
 }
 
 model PostLike {
