@@ -48,8 +48,13 @@ export default async function HistoryPage() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Trainingsgeschiedenis</h1>
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-xl md:text-2xl font-bold">Trainingsgeschiedenis</h1>
+        <p className="text-sm text-gray-500">
+          Overzicht van al je voltooide trainingen
+        </p>
+      </div>
 
       {sessions.length === 0 ? (
         <Card>

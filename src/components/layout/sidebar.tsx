@@ -21,6 +21,7 @@ import {
   PlusCircle,
   MessageSquare,
   Calendar,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -32,15 +33,22 @@ interface NavLink {
   subLinks?: { href: string; label: string }[];
 }
 
+interface InstructorModules {
+  fitnessEnabled: boolean;
+  communityEnabled: boolean;
+  eventsEnabled: boolean;
+}
+
 interface SidebarProps {
   role: "INSTRUCTOR" | "CLIENT" | "SUPER_ADMIN";
   userName: string;
   onNavigate?: () => void;
+  modules?: InstructorModules | null;
 }
 
-export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
+export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
   const pathname = usePathname();
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(["/instructor/programs"]);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(["/instructor/programs", "/client/trainings"]);
 
   const toggleMenu = (href: string) => {
     setExpandedMenus((prev) =>
@@ -50,36 +58,63 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
     );
   };
 
+  // Default all modules to enabled if not specified
+  const enabledModules = {
+    fitnessEnabled: modules?.fitnessEnabled ?? true,
+    communityEnabled: modules?.communityEnabled ?? true,
+    eventsEnabled: modules?.eventsEnabled ?? true,
+  };
+
   const instructorLinks: NavLink[] = [
     {
       href: "/instructor/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
     },
-    {
-      href: "/instructor/exercises",
-      label: "Oefeningen",
-      icon: Dumbbell,
-    },
-    {
-      href: "/instructor/programs",
-      label: "Programma's",
-      icon: FileText,
-      subLinks: [
-        { href: "/instructor/programs", label: "Alle programma's" },
-        { href: "/instructor/categories", label: "Categorieën" },
-      ],
-    },
-    {
-      href: "/instructor/clients",
-      label: "Klanten",
-      icon: Users,
-    },
-    {
-      href: "/instructor/events",
-      label: "Events",
-      icon: Calendar,
-    },
+    // Fitness module links
+    ...(enabledModules.fitnessEnabled
+      ? [
+          {
+            href: "/instructor/exercises",
+            label: "Oefeningen",
+            icon: Dumbbell,
+          },
+          {
+            href: "/instructor/programs",
+            label: "Programma's",
+            icon: FileText,
+            subLinks: [
+              { href: "/instructor/programs", label: "Alle programma's" },
+              { href: "/instructor/categories", label: "Categorieën" },
+            ],
+          },
+          {
+            href: "/instructor/clients",
+            label: "Klanten",
+            icon: Users,
+          },
+        ]
+      : []),
+    // Community module link
+    ...(enabledModules.communityEnabled
+      ? [
+          {
+            href: "/instructor/community",
+            label: "Community",
+            icon: MessageSquare,
+          },
+        ]
+      : []),
+    // Events module link
+    ...(enabledModules.eventsEnabled
+      ? [
+          {
+            href: "/instructor/events",
+            label: "Events",
+            icon: Calendar,
+          },
+        ]
+      : []),
     {
       href: "/instructor/settings",
       label: "Instellingen",
@@ -90,23 +125,20 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
   const clientLinks: NavLink[] = [
     {
       href: "/client/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
+      label: "Home",
+      icon: Home,
     },
     {
-      href: "/client/programs",
-      label: "Mijn Programma's",
-      icon: ClipboardList,
-    },
-    {
-      href: "/client/library",
-      label: "Bibliotheek",
-      icon: Library,
-    },
-    {
-      href: "/client/builder",
-      label: "Programma Maken",
-      icon: PlusCircle,
+      href: "/client/trainings",
+      label: "Trainingen",
+      icon: Dumbbell,
+      subLinks: [
+        { href: "/client/trainings", label: "Geplande trainingen" },
+        { href: "/client/programs", label: "Mijn programma's" },
+        { href: "/client/library", label: "Trainingsbibliotheek" },
+        { href: "/client/builder", label: "Programma maken" },
+        { href: "/client/history", label: "Trainingsgeschiedenis" },
+      ],
     },
     {
       href: "/client/community",
@@ -117,11 +149,6 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
       href: "/client/events",
       label: "Events",
       icon: Calendar,
-    },
-    {
-      href: "/client/history",
-      label: "Geschiedenis",
-      icon: History,
     },
     {
       href: "/client/settings",

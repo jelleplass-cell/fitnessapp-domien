@@ -1,4 +1,4 @@
-import { PrismaClient, Role, Difficulty, Location, Language } from "@prisma/client";
+import { PrismaClient, Role, Difficulty, Location, Language, EventType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -499,6 +499,116 @@ async function main() {
     },
   });
   console.log("Created sample community post");
+
+  // Create sample events
+  const now = new Date();
+
+  // Event 1: Physical training (tomorrow)
+  const trainingDate = new Date(now);
+  trainingDate.setDate(trainingDate.getDate() + 1);
+  trainingDate.setHours(10, 0, 0, 0);
+
+  const trainingEvent = await prisma.event.create({
+    data: {
+      title: "Groepstraining Bootcamp",
+      description: "Intensieve bootcamp training in de buitenlucht. We doen circuittraining met bodyweight oefeningen, hardlopen en teamchallenges. Geschikt voor alle niveaus - je kunt op je eigen tempo trainen.\n\nWat kun je verwachten:\n- Warming-up (10 min)\n- Circuittraining (40 min)\n- Cooling-down & stretching (10 min)\n\nNeem een handdoek en voldoende water mee!",
+      eventType: EventType.TRAINING,
+      location: "Vondelpark, Amsterdam",
+      locationDetails: "We verzamelen bij de grote vijver, nabij het Blauwe Theehuis. Gratis parkeren mogelijk aan de Stadhouderskade.",
+      equipment: "Yogamat (optioneel), handdoek, waterfles",
+      difficulty: "INTERMEDIATE",
+      startDate: trainingDate,
+      endDate: new Date(trainingDate.getTime() + 60 * 60 * 1000), // 1 hour
+      maxAttendees: 15,
+      requiresRegistration: true,
+      registrationDeadlineHours: 12,
+      allowWaitlist: true,
+      creatorId: instructor.id,
+    },
+  });
+  console.log("Created event:", trainingEvent.title);
+
+  // Event 2: Online coaching call (in 3 days)
+  const onlineDate = new Date(now);
+  onlineDate.setDate(onlineDate.getDate() + 3);
+  onlineDate.setHours(19, 30, 0, 0);
+
+  const onlineEvent = await prisma.event.create({
+    data: {
+      title: "Live Q&A: Voeding & Herstel",
+      description: "In deze online sessie bespreken we alles over voeding rondom je trainingen en optimaal herstel. Je kunt live vragen stellen!\n\nOnderwerpen:\n- Pre- en post-workout maaltijden\n- Supplementen: wat werkt echt?\n- Slaap en herstel optimaliseren\n- Jouw vragen beantwoord",
+      eventType: EventType.ONLINE,
+      location: "Online",
+      meetingUrl: "https://zoom.us/j/123456789",
+      meetingPlatform: "zoom",
+      startDate: onlineDate,
+      endDate: new Date(onlineDate.getTime() + 45 * 60 * 1000), // 45 min
+      maxAttendees: 50,
+      requiresRegistration: true,
+      registrationDeadlineHours: 1,
+      allowWaitlist: false,
+      creatorId: instructor.id,
+    },
+  });
+  console.log("Created event:", onlineEvent.title);
+
+  // Event 3: Workshop (in 1 week)
+  const workshopDate = new Date(now);
+  workshopDate.setDate(workshopDate.getDate() + 7);
+  workshopDate.setHours(14, 0, 0, 0);
+
+  const workshopEvent = await prisma.event.create({
+    data: {
+      title: "Workshop: Mobility & Stretching",
+      description: "Leer hoe je je mobiliteit verbetert en blessures voorkomt met de juiste stretching technieken. Deze hands-on workshop is perfect voor iedereen die last heeft van stijfheid of zijn flexibiliteit wil verbeteren.\n\nWe behandelen:\n- Warming-up methoden\n- Dynamisch vs statisch stretchen\n- Foam rolling technieken\n- Dagelijkse routines voor thuisgebruik",
+      eventType: EventType.WORKSHOP,
+      location: "Studio FitTrack, Prinsengracht 100, Amsterdam",
+      locationDetails: "Bel aan bij 'FitTrack Studio' (2e verdieping). Er is een lift aanwezig.",
+      equipment: "Comfortabele kleding",
+      difficulty: "BEGINNER",
+      startDate: workshopDate,
+      endDate: new Date(workshopDate.getTime() + 2 * 60 * 60 * 1000), // 2 hours
+      maxAttendees: 12,
+      requiresRegistration: true,
+      registrationDeadlineHours: 24,
+      allowWaitlist: true,
+      attachments: JSON.stringify([
+        { name: "Stretching Schema.pdf", url: "/files/stretching-schema.pdf", type: "application/pdf" }
+      ]),
+      creatorId: instructor.id,
+    },
+  });
+  console.log("Created event:", workshopEvent.title);
+
+  // Event 4: Add-to-calendar only event (in 2 weeks)
+  const openDate = new Date(now);
+  openDate.setDate(openDate.getDate() + 14);
+  openDate.setHours(9, 0, 0, 0);
+
+  const openEvent = await prisma.event.create({
+    data: {
+      title: "Open Gym Sessie",
+      description: "De gym is open voor vrij trainen. Geen begeleiding, maar wel de mogelijkheid om samen te trainen met andere leden. Ideaal om je eigen programma te volgen in een motiverende omgeving.",
+      eventType: EventType.OTHER,
+      location: "FitTrack Gym, Keizersgracht 200, Amsterdam",
+      startDate: openDate,
+      endDate: new Date(openDate.getTime() + 3 * 60 * 60 * 1000), // 3 hours
+      requiresRegistration: false, // Just add to calendar
+      creatorId: instructor.id,
+    },
+  });
+  console.log("Created event:", openEvent.title);
+
+  // Register client for the first training event
+  await prisma.eventRegistration.create({
+    data: {
+      eventId: trainingEvent.id,
+      userId: client.id,
+      status: "REGISTERED",
+      isWaitlist: false,
+    },
+  });
+  console.log("Registered client for bootcamp event");
 
   console.log("\n✅ Database seeded successfully!");
   console.log("\nTest accounts:");

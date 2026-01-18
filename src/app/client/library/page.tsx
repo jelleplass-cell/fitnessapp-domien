@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Flame, MapPin, Dumbbell } from "lucide-react";
 import { LibraryFilters } from "./library-filters";
 import { AddProgramButton } from "./add-program-button";
+import Link from "next/link";
 
 const difficultyColors = {
   BEGINNER: "bg-green-100 text-green-800",
@@ -107,8 +108,8 @@ export default async function LibraryPage({
   return (
     <div className="p-4 md:p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Programma Bibliotheek</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-xl md:text-2xl font-bold">Trainingsbibliotheek</h1>
+        <p className="text-sm text-gray-500 mt-1">
           Ontdek en voeg kant-en-klare trainingen toe aan je programma&apos;s
         </p>
       </div>
@@ -145,71 +146,75 @@ export default async function LibraryPage({
               locationIcons[program.location as keyof typeof locationIcons];
 
             return (
-              <Card key={program.id} className="overflow-hidden">
-                {program.imageUrl ? (
-                  <div
-                    className="h-32 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${program.imageUrl})` }}
-                  />
-                ) : (
-                  <div className="h-32 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <Dumbbell className="w-12 h-12 text-white/50" />
-                  </div>
-                )}
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-semibold">{program.name}</h3>
-                      {program.category && (
-                        <Badge
-                          variant="outline"
-                          className="mt-1 text-xs"
-                          style={{ borderColor: program.category.color }}
-                        >
-                          {program.category.name}
-                        </Badge>
-                      )}
+              <Card key={program.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+                <Link href={`/client/library/${program.id}`} className="block">
+                  {program.imageUrl ? (
+                    <div
+                      className="h-32 bg-cover bg-center group-hover:scale-105 transition-transform duration-300"
+                      style={{ backgroundImage: `url(${program.imageUrl})` }}
+                    />
+                  ) : (
+                    <div className="h-32 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                      <Dumbbell className="w-12 h-12 text-white/50" />
                     </div>
-                    <Badge
-                      className={
-                        difficultyColors[
-                          program.difficulty as keyof typeof difficultyColors
-                        ]
-                      }
-                    >
-                      {
-                        difficultyLabels[
-                          program.difficulty as keyof typeof difficultyLabels
-                        ]
-                      }
-                    </Badge>
-                  </div>
+                  )}
+                </Link>
+                <CardContent className="p-4">
+                  <Link href={`/client/library/${program.id}`} className="block">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="font-semibold group-hover:text-blue-600 transition-colors">{program.name}</h3>
+                        {program.category && (
+                          <Badge
+                            variant="outline"
+                            className="mt-1 text-xs"
+                            style={{ borderColor: program.category.color }}
+                          >
+                            {program.category.name}
+                          </Badge>
+                        )}
+                      </div>
+                      <Badge
+                        className={
+                          difficultyColors[
+                            program.difficulty as keyof typeof difficultyColors
+                          ]
+                        }
+                      >
+                        {
+                          difficultyLabels[
+                            program.difficulty as keyof typeof difficultyLabels
+                          ]
+                        }
+                      </Badge>
+                    </div>
 
-                  <p className="text-sm text-gray-500 mt-2 line-clamp-2">
-                    {program.shortDescription || program.description}
-                  </p>
+                    <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                      {program.shortDescription || program.description}
+                    </p>
 
-                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {totalDuration} min
-                    </span>
-                    {totalCalories > 0 && (
+                    <div className="flex flex-wrap gap-3 mt-3 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
-                        <Flame className="w-3 h-3" />
-                        ~{totalCalories} kcal
+                        <Clock className="w-3 h-3" />
+                        {totalDuration} min
                       </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <LocationIcon className="w-3 h-3" />
-                      {
-                        locationLabels[
-                          program.location as keyof typeof locationLabels
-                        ]
-                      }
-                    </span>
-                    <span>{program.items.length} oefeningen</span>
-                  </div>
+                      {totalCalories > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Flame className="w-3 h-3" />
+                          ~{totalCalories} kcal
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <LocationIcon className="w-3 h-3" />
+                        {
+                          locationLabels[
+                            program.location as keyof typeof locationLabels
+                          ]
+                        }
+                      </span>
+                      <span>{program.items.length} oefeningen</span>
+                    </div>
+                  </Link>
 
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-xs text-gray-400">

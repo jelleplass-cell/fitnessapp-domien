@@ -31,10 +31,10 @@ export default async function BuilderPage() {
   }
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Programma Maken</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-xl md:text-2xl font-bold">Programma maken</h1>
+        <p className="text-sm text-gray-500">
           Stel je eigen trainingsprogramma samen
         </p>
       </div>

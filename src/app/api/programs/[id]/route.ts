@@ -62,7 +62,12 @@ export async function PUT(
     data: {
       name: body.name,
       description: body.description || null,
+      shortDescription: body.shortDescription || null,
+      imageUrl: body.imageUrl || null,
       difficulty: body.difficulty || existing.difficulty,
+      location: body.location || existing.location,
+      equipmentNeeded: body.equipmentNeeded || null,
+      isPublic: body.isPublic ?? existing.isPublic,
       categoryId: body.categoryId || null,
       items: {
         create: body.exercises.map(

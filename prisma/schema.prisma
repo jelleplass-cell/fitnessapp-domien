@@ -69,8 +69,11 @@ model User {
   notifications         Notification[]
   communityPosts        CommunityPost[]
   postComments          PostComment[]
+  postLikes             PostLike[]     @relation("PostLikes")
+  commentLikes          CommentLike[]  @relation("CommentLikes")
   eventRegistrations    EventRegistration[]
   createdEvents         Event[]
+  modules               InstructorModules?
 
   @@index([instructorId])
 }
@@ -290,29 +293,58 @@ model Notification {
 // ============ COMMUNITY ============
 
 model CommunityPost {
-  id        String   @id @default(cuid())
-  title     String?
-  content   String
-  imageUrl  String?
-  videoUrl  String?
-  audioUrl  String?
-  isPinned  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  title        String?
+  content      String
+  imageUrl     String?
+  videoUrl     String?
+  audioUrl     String?
+  isPinned     Boolean   @default(false)
+  publishAt    DateTime? // Scheduled post - if set and in future, post is not visible yet
+  isPublished  Boolean   @default(true) // For draft/published state
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
   authorId  String
   author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments  PostComment[]
+  likes     PostLike[]
+
+  // Optional linked event
+  eventId   String?  @unique
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   @@index([authorId])
   @@index([createdAt])
+  @@index([publishAt])
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Relations
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation("PostLikes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
 }
 
 model PostComment {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  content         String
+  gifUrl          String?  // For GIF reactions
+  attachmentUrl   String?  // For file attachments (images, docs, etc.)
+  attachmentName  String?  // Original filename
+  attachmentType  String?  // MIME type of attachment
+  videoUrl        String?  // For video links (YouTube, Loom, etc.)
+  linkUrl         String?  // For URL links
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
   postId    String
@@ -320,42 +352,118 @@ model PostComment {
   authorId  String
   author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
+  // Nested replies
+  parentId  String?
+  parent    PostComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   PostComment[] @relation("CommentReplies")
+
+  // Likes
+  likes     CommentLike[]
+
   @@index([postId])
+  @@index([parentId])
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Relations
+  commentId String
+  comment   PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation("CommentLikes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
 }
 
 // ============ EVENTS ============
 
+enum EventType {
+  TRAINING      // Physical training session (gym, outdoor, etc.)
+  ONLINE        // Online coaching call, webinar, etc.
+  WORKSHOP      // In-person workshop
+  OTHER         // Other type of event
+}
+
 model Event {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  location    String?
-  imageUrl    String?
-  startDate   DateTime
-  endDate     DateTime?
-  maxAttendees Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String    @id @default(cuid())
+  title            String
+  description      String?
+  eventType        EventType @default(TRAINING)
+
+  // Location details
+  location         String?   // Physical location or "Online"
+  locationDetails  String?   // Additional directions, parking info, etc.
+
+  // Online event details
+  meetingUrl       String?   // Zoom, Teams, Google Meet link
+  meetingPlatform  String?   // "zoom", "teams", "meet", "other"
+
+  // Media & attachments
+  imageUrl         String?
+  videoUrl         String?   // Promo video or introduction
+
+  // Files/attachments (stored as JSON array)
+  attachments      String?   // JSON: [{ name, url, type }]
+
+  // Training-specific details
+  equipment        String?   // Required equipment/materials
+  difficulty       String?   // BEGINNER, INTERMEDIATE, ADVANCED
+
+  // Scheduling
+  startDate        DateTime
+  endDate          DateTime?
+
+  // Registration settings
+  maxAttendees     Int?
+  requiresRegistration Boolean @default(true)  // false = just add to calendar
+  registrationDeadlineHours Int @default(6)    // Hours before event to close registration
+  allowWaitlist    Boolean   @default(true)
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
-  creatorId     String
-  creator       User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  registrations EventRegistration[]
+  creatorId        String
+  creator          User               @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  registrations    EventRegistration[]
+  communityPost    CommunityPost?
 
   @@index([creatorId])
   @@index([startDate])
+  @@index([eventType])
 }
 
 model EventRegistration {
-  id        String   @id @default(cuid())
-  status    String   @default("REGISTERED") // REGISTERED, CANCELLED, ATTENDED
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  status     String   @default("REGISTERED") // REGISTERED, WAITLIST, CANCELLED, ATTENDED
+  isWaitlist Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
-  eventId   String
-  event     Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId    String
+  event      Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
+  @@index([eventId, status])
+}
+
+// ============ INSTRUCTOR MODULES ============
+
+model InstructorModules {
+  id              String   @id @default(cuid())
+  fitnessEnabled  Boolean  @default(true)  // Programs & Exercises
+  communityEnabled Boolean @default(true)  // Community posts
+  eventsEnabled   Boolean  @default(true)  // Events management
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  instructorId    String   @unique
+  instructor      User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
 }

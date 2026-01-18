@@ -44,14 +44,18 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  // Only instructors and admins can create posts
+  if (!session?.user?.id || session.user.role === "CLIENT") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const body = await req.json();
-  const { title, content } = body as {
+  const { title, content, imageUrl, videoUrl, publishAt } = body as {
     title?: string;
     content: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    publishAt?: string;
   };
 
   if (!content) {
@@ -62,6 +66,10 @@ export async function POST(req: NextRequest) {
     data: {
       title,
       content,
+      imageUrl,
+      videoUrl,
+      publishAt: publishAt ? new Date(publishAt) : null,
+      isPublished: !publishAt, // If scheduled, don't publish yet
       authorId: session.user.id,
     },
     include: {
@@ -74,6 +82,29 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  // If post is published immediately (not scheduled), notify all clients
+  if (!publishAt) {
+    const clients = await db.user.findMany({
+      where: { role: "CLIENT" },
+      select: { id: true },
+    });
+
+    // Create notifications for all clients
+    if (clients.length > 0) {
+      await db.notification.createMany({
+        data: clients.map((client) => ({
+          userId: client.id,
+          type: "NEW_POST",
+          title: "Nieuw bericht",
+          message: title
+            ? `${session.user.name} heeft een nieuw bericht geplaatst: ${title}`
+            : `${session.user.name} heeft een nieuw bericht geplaatst`,
+          link: "/client/community",
+        })),
+      });
+    }
+  }
 
   return NextResponse.json(post);
 }

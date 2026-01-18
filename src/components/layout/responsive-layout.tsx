@@ -6,13 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
+interface InstructorModules {
+  fitnessEnabled: boolean;
+  communityEnabled: boolean;
+  eventsEnabled: boolean;
+}
+
 interface ResponsiveLayoutProps {
   role: "INSTRUCTOR" | "CLIENT" | "SUPER_ADMIN";
   userName: string;
   children: React.ReactNode;
+  modules?: InstructorModules | null;
 }
 
-export function ResponsiveLayout({ role, userName, children }: ResponsiveLayoutProps) {
+export function ResponsiveLayout({ role, userName, children, modules }: ResponsiveLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -32,7 +39,7 @@ export function ResponsiveLayout({ role, userName, children }: ResponsiveLayoutP
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <Sidebar role={role} userName={userName} onNavigate={() => setSidebarOpen(false)} />
+        <Sidebar role={role} userName={userName} onNavigate={() => setSidebarOpen(false)} modules={modules} />
       </div>
 
       {/* Main content */}

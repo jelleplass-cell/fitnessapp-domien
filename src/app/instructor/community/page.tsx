@@ -1,25 +1,26 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { CommunityFeed } from "./community-feed";
+import { CommunityFeed } from "@/app/client/community/community-feed";
 
-export default async function CommunityPage() {
+export default async function InstructorCommunityPage() {
   const session = await auth();
 
-  if (!session?.user?.id || session.user.role !== "CLIENT") {
+  if (!session?.user?.id || session.user.role !== "INSTRUCTOR") {
     redirect("/login");
   }
 
-  const now = new Date();
+  // Check if community module is enabled
+  const modules = await db.instructorModules.findUnique({
+    where: { instructorId: session.user.id },
+  });
 
+  if (modules && !modules.communityEnabled) {
+    redirect("/instructor/dashboard");
+  }
+
+  // Instructors can see all posts including scheduled ones
   const posts = await db.communityPost.findMany({
-    where: {
-      isPublished: true,
-      OR: [
-        { publishAt: null },
-        { publishAt: { lte: now } },
-      ],
-    },
     orderBy: [
       { isPinned: "desc" },
       { createdAt: "desc" },
@@ -103,7 +104,7 @@ export default async function CommunityPage() {
     <div className="p-4 md:p-6 max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-xl md:text-2xl font-bold">Community</h1>
-        <p className="text-sm text-gray-500">Blijf op de hoogte van updates van je instructeur</p>
+        <p className="text-sm text-gray-500">Deel updates en tips met je klanten</p>
       </div>
 
       <CommunityFeed
@@ -121,11 +122,6 @@ export default async function CommunityPage() {
             id: c.id,
             content: c.content,
             gifUrl: c.gifUrl,
-            attachmentUrl: c.attachmentUrl,
-            attachmentName: c.attachmentName,
-            attachmentType: c.attachmentType,
-            videoUrl: c.videoUrl,
-            linkUrl: c.linkUrl,
             createdAt: c.createdAt.toISOString(),
             author: c.author,
             likes: c.likes,
@@ -135,11 +131,6 @@ export default async function CommunityPage() {
               id: r.id,
               content: r.content,
               gifUrl: r.gifUrl,
-              attachmentUrl: r.attachmentUrl,
-              attachmentName: r.attachmentName,
-              attachmentType: r.attachmentType,
-              videoUrl: r.videoUrl,
-              linkUrl: r.linkUrl,
               createdAt: r.createdAt.toISOString(),
               author: r.author,
               likes: r.likes,
@@ -158,7 +149,7 @@ export default async function CommunityPage() {
           } : null,
         }))}
         currentUserId={session.user.id}
-        canCreatePosts={false}
+        canCreatePosts={true}
       />
     </div>
   );

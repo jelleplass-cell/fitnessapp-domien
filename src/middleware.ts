@@ -18,11 +18,12 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
-  // If logged in and on login page, redirect to appropriate dashboard
+  // If logged in and on login page, redirect to appropriate default page
   if (isLoggedIn && isPublicRoute) {
     if (userRole === "INSTRUCTOR") {
       return NextResponse.redirect(new URL("/instructor/dashboard", nextUrl));
     }
+    // Clients go to home/dashboard as default page
     return NextResponse.redirect(new URL("/client/dashboard", nextUrl));
   }
 
@@ -43,6 +44,7 @@ export default auth((req) => {
       if (userRole === "INSTRUCTOR") {
         return NextResponse.redirect(new URL("/instructor/dashboard", nextUrl));
       }
+      // Clients go to home/dashboard as default page
       return NextResponse.redirect(new URL("/client/dashboard", nextUrl));
     }
   }

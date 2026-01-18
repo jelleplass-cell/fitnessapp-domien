@@ -114,7 +114,12 @@ export default async function ProgramDetailPage({
           id: program.id,
           name: program.name,
           description: program.description,
+          shortDescription: program.shortDescription,
+          imageUrl: program.imageUrl,
           difficulty: program.difficulty,
+          location: program.location,
+          equipmentNeeded: program.equipmentNeeded,
+          isPublic: program.isPublic,
           categoryId: program.categoryId,
           items: program.items.map((item) => ({
             id: item.id,
@@ -129,6 +134,7 @@ export default async function ProgramDetailPage({
               holdSeconds: item.exercise.holdSeconds,
               location: item.exercise.location,
               equipment: item.exercise.equipment,
+              caloriesPerSet: item.exercise.caloriesPerSet,
             },
           })),
         }}

@@ -12,9 +12,12 @@ import {
   Trees,
   Youtube,
   Music,
+  User,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { startSession } from "./actions";
+import { ScheduleButton } from "./schedule-button";
 
 const locationIcons = {
   GYM: Dumbbell,
@@ -55,11 +58,26 @@ export default async function ProgramDetailPage({
     include: {
       program: {
         include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              firstName: true,
+            },
+          },
           items: {
             include: { exercise: true },
             orderBy: { order: "asc" },
           },
         },
+      },
+      scheduledPrograms: {
+        where: {
+          completed: false,
+          scheduledDate: { gte: new Date() },
+        },
+        orderBy: { scheduledDate: "asc" },
+        take: 1,
       },
     },
   });
@@ -80,11 +98,23 @@ export default async function ProgramDetailPage({
     0
   );
 
+  const getInstructorLabel = () => {
+    if (clientProgram.assignedBy === "INSTRUCTOR") {
+      const firstName =
+        program.creator.firstName || program.creator.name.split(" ")[0];
+      return `Op maat gemaakt door ${firstName}`;
+    }
+    return null;
+  };
+
+  const instructorLabel = getInstructorLabel();
+  const nextScheduled = clientProgram.scheduledPrograms[0];
+
   return (
-    <div className="p-6 max-w-2xl">
+    <div className="p-4 md:p-6 max-w-2xl mx-auto">
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-2xl font-bold">{program.name}</h1>
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <h1 className="text-xl md:text-2xl font-bold">{program.name}</h1>
           <Badge
             className={
               difficultyColors[program.difficulty as keyof typeof difficultyColors]
@@ -93,30 +123,64 @@ export default async function ProgramDetailPage({
             {difficultyLabels[program.difficulty as keyof typeof difficultyLabels]}
           </Badge>
         </div>
-        {program.description && (
-          <p className="text-gray-500 mt-1">{program.description}</p>
+
+        {instructorLabel && (
+          <div className="flex items-center gap-1 text-sm text-purple-600 mt-2">
+            <User className="w-4 h-4" />
+            {instructorLabel}
+          </div>
         )}
-        <div className="flex gap-4 mt-2 text-sm text-gray-600">
-          <span>{program.items.length} oefeningen</span>
-          <span>~{totalDuration} minuten</span>
+
+        {program.description && (
+          <p className="text-gray-500 mt-2">{program.description}</p>
+        )}
+
+        <div className="flex gap-4 mt-3 text-sm text-gray-600">
+          <span className="flex items-center gap-1">
+            <Dumbbell className="w-4 h-4" />
+            {program.items.length} oefeningen
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            ~{totalDuration} minuten
+          </span>
         </div>
+
+        {nextScheduled && (
+          <Badge
+            variant="outline"
+            className="mt-3 border-blue-200 text-blue-600"
+          >
+            <Calendar className="w-3 h-3 mr-1" />
+            Gepland:{" "}
+            {new Date(nextScheduled.scheduledDate).toLocaleDateString("nl-NL", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            })}
+            {nextScheduled.scheduledTime && ` om ${nextScheduled.scheduledTime}`}
+          </Badge>
+        )}
       </div>
 
-      {activeSession ? (
-        <Link href={`/client/programs/${id}/session`}>
-          <Button className="w-full mb-6" size="lg">
-            <PlayCircle className="w-5 h-5 mr-2" />
-            Training hervatten
-          </Button>
-        </Link>
-      ) : (
-        <form action={startSession.bind(null, id)}>
-          <Button className="w-full mb-6" size="lg" type="submit">
-            <PlayCircle className="w-5 h-5 mr-2" />
-            Training starten
-          </Button>
-        </form>
-      )}
+      <div className="flex gap-3 mb-6">
+        {activeSession ? (
+          <Link href={`/client/programs/${id}/session`} className="flex-1">
+            <Button className="w-full" size="lg">
+              <PlayCircle className="w-5 h-5 mr-2" />
+              Training hervatten
+            </Button>
+          </Link>
+        ) : (
+          <form action={startSession.bind(null, id)} className="flex-1">
+            <Button className="w-full" size="lg" type="submit">
+              <PlayCircle className="w-5 h-5 mr-2" />
+              Training starten
+            </Button>
+          </form>
+        )}
+        <ScheduleButton clientProgramId={id} />
+      </div>
 
       <Card>
         <CardHeader>
@@ -135,10 +199,10 @@ export default async function ProgramDetailPage({
                   key={item.id}
                   className="flex gap-4 p-4 bg-gray-50 rounded-lg"
                 >
-                  <div className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium">
+                  <div className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium flex-shrink-0">
                     {index + 1}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-medium">{exercise.name}</h3>
                     {exercise.description && (
                       <p className="text-sm text-gray-500 mt-1 line-clamp-2">

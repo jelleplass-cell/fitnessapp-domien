@@ -36,7 +36,12 @@ export async function POST(req: NextRequest) {
     data: {
       name: body.name,
       description: body.description || null,
+      shortDescription: body.shortDescription || null,
+      imageUrl: body.imageUrl || null,
       difficulty: body.difficulty || "BEGINNER",
+      location: body.location || "GYM",
+      equipmentNeeded: body.equipmentNeeded || null,
+      isPublic: body.isPublic || false,
       categoryId: body.categoryId || null,
       creatorId: session.user.id,
       items: {

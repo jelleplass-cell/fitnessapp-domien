@@ -14,9 +14,19 @@ export async function POST(
   }
 
   const body = await req.json();
-  const { content } = body as { content: string };
+  const { content, parentId, gifUrl, attachmentUrl, attachmentName, attachmentType, videoUrl, linkUrl } = body as {
+    content: string;
+    parentId?: string;
+    gifUrl?: string;
+    attachmentUrl?: string;
+    attachmentName?: string;
+    attachmentType?: string;
+    videoUrl?: string;
+    linkUrl?: string;
+  };
 
-  if (!content) {
+  // Need at least content or one media type
+  if (!content && !gifUrl && !attachmentUrl && !videoUrl) {
     return NextResponse.json({ error: "Inhoud is verplicht" }, { status: 400 });
   }
 
@@ -28,10 +38,28 @@ export async function POST(
     return NextResponse.json({ error: "Post niet gevonden" }, { status: 404 });
   }
 
+  // If parentId is provided, verify the parent comment exists
+  if (parentId) {
+    const parentComment = await db.postComment.findUnique({
+      where: { id: parentId },
+    });
+
+    if (!parentComment) {
+      return NextResponse.json({ error: "Reactie niet gevonden" }, { status: 404 });
+    }
+  }
+
   const comment = await db.postComment.create({
     data: {
-      content,
+      content: content || "",
+      gifUrl,
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
+      videoUrl,
+      linkUrl,
       postId,
+      parentId,
       authorId: session.user.id,
     },
     include: {

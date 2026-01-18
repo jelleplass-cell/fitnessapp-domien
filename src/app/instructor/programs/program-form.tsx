@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -24,6 +25,8 @@ import {
   Trees,
   ArrowUp,
   ArrowDown,
+  Globe,
+  Lock,
 } from "lucide-react";
 
 interface Exercise {
@@ -35,6 +38,7 @@ interface Exercise {
   holdSeconds: number | null;
   location: string;
   equipment: string | null;
+  caloriesPerSet: number | null;
 }
 
 interface ProgramItem {
@@ -55,7 +59,12 @@ interface ProgramFormProps {
     id: string;
     name: string;
     description: string | null;
+    shortDescription: string | null;
+    imageUrl: string | null;
     difficulty: string;
+    location: string;
+    equipmentNeeded: string | null;
+    isPublic: boolean;
     categoryId: string | null;
     items: ProgramItem[];
   };
@@ -92,7 +101,12 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
   const [formData, setFormData] = useState({
     name: program?.name || "",
     description: program?.description || "",
+    shortDescription: program?.shortDescription || "",
+    imageUrl: program?.imageUrl || "",
     difficulty: program?.difficulty || "BEGINNER",
+    location: program?.location || "GYM",
+    equipmentNeeded: program?.equipmentNeeded || "",
+    isPublic: program?.isPublic || false,
     categoryId: program?.categoryId || "",
   });
 
@@ -102,6 +116,40 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
       .then(setExercises)
       .catch(console.error);
   }, []);
+
+  // Auto-detect equipment from selected exercises
+  useEffect(() => {
+    if (selectedExercises.length > 0 && !formData.equipmentNeeded) {
+      const allEquipment = selectedExercises
+        .map((e) => e.exercise.equipment)
+        .filter(Boolean)
+        .flatMap((eq) => eq!.split(",").map((s) => s.trim()))
+        .filter((v, i, a) => a.indexOf(v) === i);
+      if (allEquipment.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          equipmentNeeded: allEquipment.join(", "),
+        }));
+      }
+    }
+  }, [selectedExercises, formData.equipmentNeeded]);
+
+  // Auto-detect primary location from exercises
+  useEffect(() => {
+    if (selectedExercises.length > 0) {
+      const locationCounts: Record<string, number> = {};
+      selectedExercises.forEach((e) => {
+        const loc = e.exercise.location;
+        locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+      });
+      const primaryLocation = Object.entries(locationCounts).sort(
+        (a, b) => b[1] - a[1]
+      )[0]?.[0];
+      if (primaryLocation && primaryLocation !== formData.location) {
+        setFormData((prev) => ({ ...prev, location: primaryLocation }));
+      }
+    }
+  }, [selectedExercises]);
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
@@ -202,8 +250,48 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
     0
   );
 
+  const totalCalories = selectedExercises.reduce(
+    (acc, e) => acc + (e.exercise.caloriesPerSet || 0) * e.exercise.sets,
+    0
+  );
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Public/Private Toggle */}
+      <Card className={formData.isPublic ? "border-green-200 bg-green-50/30" : ""}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {formData.isPublic ? (
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Globe className="w-5 h-5 text-green-600" />
+                </div>
+              ) : (
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Lock className="w-5 h-5 text-gray-600" />
+                </div>
+              )}
+              <div>
+                <CardTitle className="text-base">
+                  {formData.isPublic ? "Publiek programma" : "Privé programma"}
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  {formData.isPublic
+                    ? "Zichtbaar in de bibliotheek voor alle klanten"
+                    : "Alleen zichtbaar na toewijzing aan een klant"}
+                </CardDescription>
+              </div>
+            </div>
+            <Switch
+              checked={formData.isPublic}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, isPublic: checked })
+              }
+            />
+          </div>
+        </CardHeader>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Programma details</CardTitle>
@@ -222,36 +310,124 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
             />
           </div>
 
+          {formData.isPublic && (
+            <div>
+              <Label htmlFor="shortDescription">Korte omschrijving (voor bibliotheek)</Label>
+              <Input
+                id="shortDescription"
+                value={formData.shortDescription}
+                onChange={(e) =>
+                  setFormData({ ...formData, shortDescription: e.target.value })
+                }
+                placeholder="bijv. Complete workout voor beginners"
+                maxLength={150}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Max 150 tekens. Wordt getoond in het programma-overzicht.
+              </p>
+            </div>
+          )}
+
           <div>
-            <Label htmlFor="description">Beschrijving</Label>
+            <Label htmlFor="description">
+              {formData.isPublic ? "Uitgebreide beschrijving" : "Beschrijving"}
+            </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="Korte beschrijving van het programma..."
-              rows={3}
+              placeholder="Beschrijf het programma, voor wie het geschikt is, wat de doelen zijn..."
+              rows={formData.isPublic ? 5 : 3}
             />
           </div>
 
+          {formData.isPublic && (
+            <div>
+              <Label htmlFor="imageUrl">Afbeelding URL (thumbnail)</Label>
+              <Input
+                id="imageUrl"
+                value={formData.imageUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, imageUrl: e.target.value })
+                }
+                placeholder="https://example.com/image.jpg"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Optioneel. URL naar een afbeelding voor het programma.
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="difficulty">Niveau *</Label>
+              <Select
+                value={formData.difficulty}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, difficulty: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BEGINNER">Beginner</SelectItem>
+                  <SelectItem value="INTERMEDIATE">Gemiddeld</SelectItem>
+                  <SelectItem value="ADVANCED">Gevorderd</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="location">Locatie</Label>
+              <Select
+                value={formData.location}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, location: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GYM">
+                    <div className="flex items-center gap-2">
+                      <Dumbbell className="w-4 h-4" />
+                      Gym
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="HOME">
+                    <div className="flex items-center gap-2">
+                      <Home className="w-4 h-4" />
+                      Thuis
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="OUTDOOR">
+                    <div className="flex items-center gap-2">
+                      <Trees className="w-4 h-4" />
+                      Buiten
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div>
-            <Label htmlFor="difficulty">Niveau *</Label>
-            <Select
-              value={formData.difficulty}
-              onValueChange={(value) =>
-                setFormData({ ...formData, difficulty: value })
+            <Label htmlFor="equipmentNeeded">Benodigde apparatuur</Label>
+            <Input
+              id="equipmentNeeded"
+              value={formData.equipmentNeeded}
+              onChange={(e) =>
+                setFormData({ ...formData, equipmentNeeded: e.target.value })
               }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="BEGINNER">Beginner</SelectItem>
-                <SelectItem value="INTERMEDIATE">Gemiddeld</SelectItem>
-                <SelectItem value="ADVANCED">Gevorderd</SelectItem>
-              </SelectContent>
-            </Select>
+              placeholder="bijv. dumbbells, mat, weerstandsband"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Scheid items met een komma
+            </p>
           </div>
 
           <div>
@@ -289,9 +465,17 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
           <div className="flex justify-between items-center">
             <CardTitle>Oefeningen</CardTitle>
             {selectedExercises.length > 0 && (
-              <Badge variant="secondary">
-                {selectedExercises.length} oefeningen - ~{totalDuration} min
-              </Badge>
+              <div className="flex gap-2">
+                <Badge variant="secondary">
+                  <Clock className="w-3 h-3 mr-1" />
+                  ~{totalDuration} min
+                </Badge>
+                {totalCalories > 0 && (
+                  <Badge variant="secondary">
+                    ~{totalCalories} kcal
+                  </Badge>
+                )}
+              </div>
             )}
           </div>
         </CardHeader>

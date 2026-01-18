@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ResponsiveLayout } from "@/components/layout/responsive-layout";
+import { db } from "@/lib/db";
 
 export default async function InstructorLayout({
   children,
@@ -13,8 +14,21 @@ export default async function InstructorLayout({
     redirect("/login");
   }
 
+  // Fetch instructor modules
+  const modules = await db.instructorModules.findUnique({
+    where: { instructorId: session.user.id },
+  });
+
   return (
-    <ResponsiveLayout role="INSTRUCTOR" userName={session.user.name || "Instructeur"}>
+    <ResponsiveLayout
+      role="INSTRUCTOR"
+      userName={session.user.name || "Instructeur"}
+      modules={modules ? {
+        fitnessEnabled: modules.fitnessEnabled,
+        communityEnabled: modules.communityEnabled,
+        eventsEnabled: modules.eventsEnabled,
+      } : null}
+    >
       {children}
     </ResponsiveLayout>
   );

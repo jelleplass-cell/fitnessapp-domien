@@ -2,7 +2,10 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FileText, Activity } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Users, FileText, Activity, Settings, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 export default async function AdminInstructorsPage() {
   const session = await auth();
@@ -22,6 +25,7 @@ export default async function AdminInstructorsPage() {
       createdAt: true,
       createdExercises: { select: { id: true } },
       createdPrograms: { select: { id: true } },
+      modules: true,
     },
   });
 
@@ -69,52 +73,83 @@ export default async function AdminInstructorsPage() {
             </CardContent>
           </Card>
         ) : (
-          instructorStats.map((instructor) => (
-            <Card key={instructor.id}>
-              <CardHeader className="p-4 md:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base md:text-lg">{instructor.name}</CardTitle>
-                    <p className="text-sm text-gray-500">{instructor.email}</p>
-                    {instructor.phone && (
-                      <p className="text-sm text-gray-500">{instructor.phone}</p>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    Sinds {new Date(instructor.createdAt).toLocaleDateString("nl-NL", {
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 md:p-6 pt-0">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-blue-600" />
+          instructorStats.map((instructor) => {
+            const modules = instructor.modules;
+            const activeModules = [
+              modules?.fitnessEnabled !== false ? "Fitness" : null,
+              modules?.communityEnabled !== false ? "Community" : null,
+              modules?.eventsEnabled !== false ? "Events" : null,
+            ].filter((m): m is string => m !== null);
+
+            return (
+              <Card key={instructor.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="p-4 md:p-6">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{instructor.clientCount}</p>
-                      <p className="text-xs text-gray-500">Klanten</p>
+                      <CardTitle className="text-base md:text-lg">{instructor.name}</CardTitle>
+                      <p className="text-sm text-gray-500">{instructor.email}</p>
+                      {instructor.phone && (
+                        <p className="text-sm text-gray-500">{instructor.phone}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-gray-400">
+                        Sinds {new Date(instructor.createdAt).toLocaleDateString("nl-NL", {
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                      <Link href={`/admin/instructors/${instructor.id}`}>
+                        <Button variant="ghost" size="icon">
+                          <Settings className="w-4 h-4" />
+                        </Button>
+                      </Link>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-green-600" />
-                    <div>
-                      <p className="font-medium">{instructor.createdPrograms.length}</p>
-                      <p className="text-xs text-gray-500">Programma&apos;s</p>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6 pt-0">
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <div>
+                        <p className="font-medium">{instructor.clientCount}</p>
+                        <p className="text-xs text-gray-500">Klanten</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="font-medium">{instructor.createdPrograms.length}</p>
+                        <p className="text-xs text-gray-500">Programma&apos;s</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-orange-600" />
+                      <div>
+                        <p className="font-medium">{instructor.sessionCount}</p>
+                        <p className="text-xs text-gray-500">Trainingen</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-orange-600" />
-                    <div>
-                      <p className="font-medium">{instructor.sessionCount}</p>
-                      <p className="text-xs text-gray-500">Trainingen</p>
+                  <div className="flex items-center justify-between pt-3 border-t">
+                    <div className="flex gap-1">
+                      {activeModules.map((module) => (
+                        <Badge key={module} variant="secondary" className="text-xs">
+                          {module}
+                        </Badge>
+                      ))}
                     </div>
+                    <Link href={`/admin/instructors/${instructor.id}`}>
+                      <Button variant="ghost" size="sm" className="text-xs">
+                        Beheer modules
+                        <ChevronRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </Link>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
     </div>
