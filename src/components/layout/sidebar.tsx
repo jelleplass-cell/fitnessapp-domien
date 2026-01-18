@@ -17,6 +17,8 @@ import {
   ChevronRight,
   Settings,
   Bell,
+  Library,
+  PlusCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -86,8 +88,18 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
     },
     {
       href: "/client/programs",
-      label: "Programma's",
+      label: "Mijn Programma's",
       icon: ClipboardList,
+    },
+    {
+      href: "/client/library",
+      label: "Bibliotheek",
+      icon: Library,
+    },
+    {
+      href: "/client/builder",
+      label: "Programma Maken",
+      icon: PlusCircle,
     },
     {
       href: "/client/history",
