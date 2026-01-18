@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings2, Save, Plus, Trash2, RotateCcw } from "lucide-react";
+import { Settings2, Save, Plus, Trash2, RotateCcw, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Exercise {
@@ -49,6 +48,7 @@ interface CustomItem {
   notes: string | null;
   isRemoved: boolean;
   isAdded: boolean;
+  order?: number;
 }
 
 interface CustomizeProgramModalProps {
@@ -70,6 +70,9 @@ export function CustomizeProgramModal({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // State for ordered items (combines program items + added items)
+  const [orderedItems, setOrderedItems] = useState<{ exerciseId: string; isAdded: boolean }[]>([]);
+
   // State for customizations
   const [customizations, setCustomizations] = useState<Record<string, {
     customSets: string;
@@ -84,9 +87,16 @@ export function CustomizeProgramModal({
   const [addedExercises, setAddedExercises] = useState<string[]>([]);
   const [selectedExercise, setSelectedExercise] = useState<string>("");
 
-  // Initialize state from existing custom items
+  // Drag state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const draggedItemRef = useRef<HTMLDivElement | null>(null);
+
+  // Initialize state from existing custom items and program items
   useEffect(() => {
     const initial: typeof customizations = {};
+    const addedIds: string[] = [];
+
     existingCustomItems.forEach((item) => {
       initial[item.exerciseId] = {
         customSets: item.customSets?.toString() || "",
@@ -97,11 +107,24 @@ export function CustomizeProgramModal({
         isAdded: item.isAdded,
       };
       if (item.isAdded) {
-        setAddedExercises((prev) => [...prev, item.exerciseId]);
+        addedIds.push(item.exerciseId);
       }
     });
+
     setCustomizations(initial);
-  }, [existingCustomItems]);
+    setAddedExercises(addedIds);
+
+    // Build ordered items list
+    const programOrder = programItems.map((item) => ({
+      exerciseId: item.exerciseId,
+      isAdded: false,
+    }));
+    const addedOrder = addedIds.map((id) => ({
+      exerciseId: id,
+      isAdded: true,
+    }));
+    setOrderedItems([...programOrder, ...addedOrder]);
+  }, [existingCustomItems, programItems]);
 
   const getCustomization = (exerciseId: string) => {
     return customizations[exerciseId] || {
@@ -144,6 +167,7 @@ export function CustomizeProgramModal({
     if (!exercise) return;
 
     setAddedExercises((prev) => [...prev, selectedExercise]);
+    setOrderedItems((prev) => [...prev, { exerciseId: selectedExercise, isAdded: true }]);
     setCustomizations((prev) => ({
       ...prev,
       [selectedExercise]: {
@@ -160,6 +184,7 @@ export function CustomizeProgramModal({
 
   const removeAddedExercise = (exerciseId: string) => {
     setAddedExercises((prev) => prev.filter((id) => id !== exerciseId));
+    setOrderedItems((prev) => prev.filter((item) => item.exerciseId !== exerciseId));
     setCustomizations((prev) => {
       const newState = { ...prev };
       delete newState[exerciseId];
@@ -167,31 +192,96 @@ export function CustomizeProgramModal({
     });
   };
 
+  // Move item up/down
+  const moveItem = (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= orderedItems.length) return;
+
+    const newItems = [...orderedItems];
+    const [movedItem] = newItems.splice(index, 1);
+    newItems.splice(newIndex, 0, movedItem);
+    setOrderedItems(newItems);
+  };
+
+  // Drag handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    // Add dragging style after a small delay
+    setTimeout(() => {
+      if (draggedItemRef.current) {
+        draggedItemRef.current.style.opacity = "0.5";
+      }
+    }, 0);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    if (draggedItemRef.current) {
+      draggedItemRef.current.style.opacity = "1";
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    const newItems = [...orderedItems];
+    const [movedItem] = newItems.splice(draggedIndex, 1);
+    newItems.splice(dropIndex, 0, movedItem);
+    setOrderedItems(newItems);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Prepare items to save
-      const items = Object.entries(customizations)
-        .filter(([, data]) => {
-          // Only save if there's any customization
-          return (
-            data.customSets !== "" ||
-            data.customReps !== "" ||
-            data.customDuration !== "" ||
-            data.notes !== "" ||
-            data.isRemoved ||
-            data.isAdded
-          );
+      // Prepare items to save with order
+      const items = orderedItems
+        .map((orderedItem, index) => {
+          const data = customizations[orderedItem.exerciseId];
+          if (!data && !orderedItem.isAdded) {
+            // Check if order changed from original
+            const originalIndex = programItems.findIndex(
+              (p) => p.exerciseId === orderedItem.exerciseId
+            );
+            if (originalIndex === index) {
+              return null; // No changes
+            }
+            // Order changed, create entry
+            return {
+              exerciseId: orderedItem.exerciseId,
+              customSets: null,
+              customReps: null,
+              customDuration: null,
+              notes: null,
+              isRemoved: false,
+              isAdded: false,
+              order: index,
+            };
+          }
+          if (!data) return null;
+
+          return {
+            exerciseId: orderedItem.exerciseId,
+            customSets: data.customSets ? parseInt(data.customSets) : null,
+            customReps: data.customReps ? parseInt(data.customReps) : null,
+            customDuration: data.customDuration ? parseInt(data.customDuration) : null,
+            notes: data.notes || null,
+            isRemoved: data.isRemoved,
+            isAdded: data.isAdded,
+            order: index,
+          };
         })
-        .map(([exerciseId, data]) => ({
-          exerciseId,
-          customSets: data.customSets ? parseInt(data.customSets) : null,
-          customReps: data.customReps ? parseInt(data.customReps) : null,
-          customDuration: data.customDuration ? parseInt(data.customDuration) : null,
-          notes: data.notes || null,
-          isRemoved: data.isRemoved,
-          isAdded: data.isAdded,
-        }));
+        .filter(Boolean);
 
       const response = await fetch("/api/client-program-items", {
         method: "POST",
@@ -216,13 +306,34 @@ export function CustomizeProgramModal({
     }
   };
 
-  const hasCustomizations = Object.keys(customizations).length > 0;
+  const hasCustomizations = Object.keys(customizations).length > 0 ||
+    orderedItems.some((item, idx) => {
+      const originalIdx = programItems.findIndex((p) => p.exerciseId === item.exerciseId);
+      return originalIdx !== -1 && originalIdx !== idx;
+    });
 
   // Get exercises not in the program and not already added
   const programExerciseIds = programItems.map((item) => item.exerciseId);
   const availableExercises = allExercises.filter(
     (e) => !programExerciseIds.includes(e.id) && !addedExercises.includes(e.id)
   );
+
+  // Helper to get exercise data
+  const getExerciseData = (exerciseId: string, isAdded: boolean): Exercise | null => {
+    if (isAdded) {
+      const ex = allExercises.find((e) => e.id === exerciseId);
+      return ex ? {
+        id: ex.id,
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        holdSeconds: ex.holdSeconds,
+        durationMinutes: ex.durationMinutes,
+      } : null;
+    }
+    const item = programItems.find((p) => p.exerciseId === exerciseId);
+    return item?.exercise || null;
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -245,109 +356,178 @@ export function CustomizeProgramModal({
         <DialogHeader>
           <DialogTitle>Programma aanpassen: {programName}</DialogTitle>
           <DialogDescription>
-            Pas het programma aan voor deze specifieke klant. Wijzig sets, reps, of verwijder oefeningen.
+            Pas het programma aan voor deze specifieke klant. Wijzig sets, reps, of verwijder oefeningen. Sleep oefeningen of gebruik de pijltjes om de volgorde aan te passen.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
-          {/* Program exercises */}
-          <div className="space-y-3">
+          {/* All exercises in order */}
+          <div className="space-y-2">
             <h3 className="font-medium text-sm text-gray-700">Programma oefeningen</h3>
-            {programItems.map((item, index) => {
-              const customization = getCustomization(item.exerciseId);
+            <p className="text-xs text-gray-500">Sleep of gebruik de pijltjes om de volgorde te wijzigen</p>
+
+            {orderedItems.map((orderedItem, index) => {
+              const exercise = getExerciseData(orderedItem.exerciseId, orderedItem.isAdded);
+              if (!exercise) return null;
+
+              const customization = getCustomization(orderedItem.exerciseId);
               const hasChanges = customization.customSets || customization.customReps ||
                 customization.customDuration || customization.notes || customization.isRemoved;
+              const isAdded = orderedItem.isAdded;
 
               return (
                 <div
-                  key={item.exerciseId}
-                  className={`p-4 border rounded-lg ${
+                  key={orderedItem.exerciseId}
+                  ref={draggedIndex === index ? draggedItemRef : null}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  className={`p-4 border rounded-lg transition-all ${
+                    dragOverIndex === index ? "border-blue-400 border-2" : ""
+                  } ${
                     customization.isRemoved
                       ? "bg-red-50 border-red-200 opacity-60"
-                      : hasChanges
-                        ? "bg-blue-50 border-blue-200"
-                        : "bg-gray-50"
+                      : isAdded
+                        ? "bg-green-50 border-green-200"
+                        : hasChanges
+                          ? "bg-blue-50 border-blue-200"
+                          : "bg-gray-50"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full text-sm font-medium">
-                        {index + 1}
-                      </span>
-                      <div>
-                        <p className={`font-medium ${customization.isRemoved ? "line-through text-gray-500" : ""}`}>
-                          {item.exercise.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Standaard: {item.exercise.sets} sets, {item.exercise.reps ? `${item.exercise.reps} reps` : `${item.exercise.holdSeconds}s`}, {item.exercise.durationMinutes} min
-                        </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {/* Drag handle */}
+                      <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-200 rounded">
+                        <GripVertical className="w-4 h-4 text-gray-400" />
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {hasChanges && (
+
+                      {/* Order controls */}
+                      <div className="flex flex-col gap-0.5">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => resetCustomization(item.exerciseId)}
+                          className="h-5 w-5 p-0"
+                          onClick={() => moveItem(index, "up")}
+                          disabled={index === 0}
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0"
+                          onClick={() => moveItem(index, "down")}
+                          disabled={index === orderedItems.length - 1}
+                        >
+                          <ChevronDown className="w-3 h-3" />
+                        </Button>
+                      </div>
+
+                      {/* Number badge */}
+                      <span className="w-6 h-6 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full text-sm font-medium flex-shrink-0">
+                        {index + 1}
+                      </span>
+
+                      {/* Exercise info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className={`font-medium truncate ${customization.isRemoved ? "line-through text-gray-500" : ""}`}>
+                            {exercise.name}
+                          </p>
+                          {isAdded && <Badge className="bg-green-500 text-xs">Nieuw</Badge>}
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Standaard: {exercise.sets} sets, {exercise.reps ? `${exercise.reps} reps` : `${exercise.holdSeconds}s`}, {exercise.durationMinutes} min
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {hasChanges && !isAdded && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => resetCustomization(orderedItem.exerciseId)}
                           title="Reset naar standaard"
+                          className="h-8 w-8 p-0"
                         >
                           <RotateCcw className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button
-                        variant={customization.isRemoved ? "destructive" : "outline"}
-                        size="sm"
-                        onClick={() => toggleRemoved(item.exerciseId)}
-                      >
-                        {customization.isRemoved ? "Terugzetten" : <Trash2 className="w-4 h-4" />}
-                      </Button>
+                      {isAdded ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeAddedExercise(orderedItem.exerciseId)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant={customization.isRemoved ? "destructive" : "outline"}
+                          size="sm"
+                          onClick={() => toggleRemoved(orderedItem.exerciseId)}
+                          className="h-8"
+                        >
+                          {customization.isRemoved ? "Terugzetten" : <Trash2 className="w-4 h-4" />}
+                        </Button>
+                      )}
                     </div>
                   </div>
 
                   {!customization.isRemoved && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                      <div>
-                        <Label className="text-xs">Sets</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder={item.exercise.sets.toString()}
-                          value={customization.customSets}
-                          onChange={(e) => updateCustomization(item.exerciseId, "customSets", e.target.value)}
-                          className="h-8 text-sm"
-                        />
+                    <div className="mt-4 space-y-3">
+                      {/* Sets, Reps, Duration row */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-xs">Sets</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            placeholder={exercise.sets.toString()}
+                            value={customization.customSets}
+                            onChange={(e) => updateCustomization(orderedItem.exerciseId, "customSets", e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Reps</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            placeholder={exercise.reps?.toString() || "-"}
+                            value={customization.customReps}
+                            onChange={(e) => updateCustomization(orderedItem.exerciseId, "customReps", e.target.value)}
+                            className="h-8 text-sm"
+                            disabled={!exercise.reps}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Duur (min)</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            placeholder={exercise.durationMinutes.toString()}
+                            value={customization.customDuration}
+                            onChange={(e) => updateCustomization(orderedItem.exerciseId, "customDuration", e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
                       </div>
+
+                      {/* Notes - full width, larger */}
                       <div>
-                        <Label className="text-xs">Reps</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder={item.exercise.reps?.toString() || "-"}
-                          value={customization.customReps}
-                          onChange={(e) => updateCustomization(item.exerciseId, "customReps", e.target.value)}
-                          className="h-8 text-sm"
-                          disabled={!item.exercise.reps}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Duur (min)</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder={item.exercise.durationMinutes.toString()}
-                          value={customization.customDuration}
-                          onChange={(e) => updateCustomization(item.exerciseId, "customDuration", e.target.value)}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="col-span-2 md:col-span-1">
-                        <Label className="text-xs">Notities</Label>
+                        <Label className="text-xs">Notities / Instructies voor deze klant</Label>
                         <Textarea
-                          placeholder="Speciale instructies..."
+                          placeholder="Voeg hier speciale instructies, aanpassingen of begeleiding toe voor deze klant bij deze oefening..."
                           value={customization.notes}
-                          onChange={(e) => updateCustomization(item.exerciseId, "notes", e.target.value)}
-                          className="text-sm h-8 min-h-[32px]"
-                          rows={1}
+                          onChange={(e) => updateCustomization(orderedItem.exerciseId, "notes", e.target.value)}
+                          className="text-sm min-h-[80px] resize-y"
+                          rows={3}
                         />
                       </div>
                     </div>
@@ -357,96 +537,9 @@ export function CustomizeProgramModal({
             })}
           </div>
 
-          {/* Added exercises */}
-          {addedExercises.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-medium text-sm text-gray-700 flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Toegevoegde oefeningen
-              </h3>
-              {addedExercises.map((exerciseId) => {
-                const exercise = allExercises.find((e) => e.id === exerciseId);
-                if (!exercise) return null;
-                const customization = getCustomization(exerciseId);
-
-                return (
-                  <div
-                    key={exerciseId}
-                    className="p-4 border rounded-lg bg-green-50 border-green-200"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <Badge className="bg-green-500">Nieuw</Badge>
-                        <div>
-                          <p className="font-medium">{exercise.name}</p>
-                          <p className="text-xs text-gray-500">
-                            Standaard: {exercise.sets} sets, {exercise.reps ? `${exercise.reps} reps` : `${exercise.holdSeconds}s`}, {exercise.durationMinutes} min
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeAddedExercise(exerciseId)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                      <div>
-                        <Label className="text-xs">Sets</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder={exercise.sets.toString()}
-                          value={customization.customSets}
-                          onChange={(e) => updateCustomization(exerciseId, "customSets", e.target.value)}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Reps</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder={exercise.reps?.toString() || "-"}
-                          value={customization.customReps}
-                          onChange={(e) => updateCustomization(exerciseId, "customReps", e.target.value)}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Duur (min)</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder={exercise.durationMinutes.toString()}
-                          value={customization.customDuration}
-                          onChange={(e) => updateCustomization(exerciseId, "customDuration", e.target.value)}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="col-span-2 md:col-span-1">
-                        <Label className="text-xs">Notities</Label>
-                        <Textarea
-                          placeholder="Speciale instructies..."
-                          value={customization.notes}
-                          onChange={(e) => updateCustomization(exerciseId, "notes", e.target.value)}
-                          className="text-sm h-8 min-h-[32px]"
-                          rows={1}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
           {/* Add exercise */}
           {availableExercises.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 pt-4 border-t">
               <h3 className="font-medium text-sm text-gray-700">Oefening toevoegen</h3>
               <div className="flex gap-2">
                 <Select value={selectedExercise} onValueChange={setSelectedExercise}>

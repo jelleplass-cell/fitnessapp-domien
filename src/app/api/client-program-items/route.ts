@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
         notes: string | null;
         isRemoved: boolean;
         isAdded: boolean;
+        order?: number;
       }, index: number) => ({
         clientProgramId,
         exerciseId: item.exerciseId,
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
         notes: item.notes,
         isRemoved: item.isRemoved,
         isAdded: item.isAdded,
-        order: item.isAdded ? maxOrder + index + 1 : index,
+        order: item.order !== undefined ? item.order : (item.isAdded ? maxOrder + index + 1 : index),
       })),
     });
   }
