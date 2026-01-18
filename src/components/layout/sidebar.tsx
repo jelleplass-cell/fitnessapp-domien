@@ -19,6 +19,8 @@ import {
   Bell,
   Library,
   PlusCircle,
+  MessageSquare,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -74,6 +76,11 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
       icon: Users,
     },
     {
+      href: "/instructor/events",
+      label: "Events",
+      icon: Calendar,
+    },
+    {
       href: "/instructor/settings",
       label: "Instellingen",
       icon: Settings,
@@ -100,6 +107,16 @@ export function Sidebar({ role, userName, onNavigate }: SidebarProps) {
       href: "/client/builder",
       label: "Programma Maken",
       icon: PlusCircle,
+    },
+    {
+      href: "/client/community",
+      label: "Community",
+      icon: MessageSquare,
+    },
+    {
+      href: "/client/events",
+      label: "Events",
+      icon: Calendar,
     },
     {
       href: "/client/history",
