@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -25,16 +23,16 @@ import {
   MapPin,
   Users,
   ArrowRight,
-  ThumbsUp,
+  Heart,
   Pin,
   Image as ImageIcon,
   Video,
-  Clock,
   X,
   Smile,
   Paperclip,
   Link2,
-  Play
+  Play,
+  MoreHorizontal,
 } from "lucide-react";
 
 interface Author {
@@ -108,11 +106,15 @@ interface CommunityFeedProps {
   communities?: CommunityOption[];
 }
 
+// Filter pill types
+type FilterType = "all" | "pinned" | "events" | "media";
+
 export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = false, communities = [] }: CommunityFeedProps) {
   const router = useRouter();
   const [posts, setPosts] = useState(initialPosts);
   const [showNewPost, setShowNewPost] = useState(false);
   const [newPost, setNewPost] = useState({ title: "", content: "", imageUrl: "", videoUrl: "", communityId: "" });
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
   // Get the default community for pre-selection
   const defaultCommunity = communities.find(c => c.isDefault);
@@ -234,14 +236,12 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
       if (res.ok) {
         const data = await res.json();
 
-        // Update posts state with the new like status
         setPosts(posts.map(p => {
           if (p.id !== postId) return p;
 
           return {
             ...p,
             comments: p.comments.map(c => {
-              // Check if this is the comment or if it's in replies
               if (c.id === commentId) {
                 return {
                   ...c,
@@ -252,7 +252,6 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                 };
               }
 
-              // Check replies
               if (c.replies) {
                 return {
                   ...c,
@@ -293,7 +292,6 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
     const videoUrl = commentVideoUrl[postId];
     const linkUrl = commentLinkUrl[postId];
 
-    // Need at least content or one media type
     if (!content && !gifUrl && !attachment && !videoUrl) return;
 
     setSubmittingComment(parentId || postId);
@@ -316,12 +314,10 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
       if (res.ok) {
         const newComment = await res.json();
 
-        // Update posts state with the new comment
         setPosts(posts.map(p => {
           if (p.id !== postId) return p;
 
           if (parentId) {
-            // Add reply to parent comment
             return {
               ...p,
               comments: p.comments.map(c => {
@@ -350,7 +346,6 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
               _count: { ...p._count, comments: p._count.comments + 1 }
             };
           } else {
-            // Add new top-level comment
             return {
               ...p,
               comments: [...p.comments, {
@@ -358,8 +353,8 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                 content: newComment.content,
                 gifUrl: newComment.gifUrl,
                 attachmentUrl: newComment.attachmentUrl,
-                      attachmentName: newComment.attachmentName,
-                      attachmentType: newComment.attachmentType,
+                attachmentName: newComment.attachmentName,
+                attachmentType: newComment.attachmentType,
                 videoUrl: newComment.videoUrl,
                 linkUrl: newComment.linkUrl,
                 createdAt: newComment.createdAt,
@@ -374,7 +369,6 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
           }
         }));
 
-        // Clear all inputs for this post
         if (parentId) {
           setReplyText({ ...replyText, [parentId]: "" });
           setReplyingTo(null);
@@ -411,7 +405,6 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
   };
 
   const handleFileUpload = async (postId: string, file: File) => {
-    // Check file size (2MB max)
     if (file.size > 2 * 1024 * 1024) {
       alert("Bestand is te groot. Maximum is 2MB.");
       return;
@@ -444,15 +437,6 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
     }
   };
 
-  const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith("image/")) return "image";
-    if (mimeType === "application/pdf") return "pdf";
-    if (mimeType.includes("word") || mimeType.includes("document")) return "doc";
-    if (mimeType.includes("excel") || mimeType.includes("spreadsheet")) return "xls";
-    if (mimeType.includes("powerpoint") || mimeType.includes("presentation")) return "ppt";
-    return "file";
-  };
-
   const isImageType = (mimeType: string | null | undefined) => {
     return mimeType?.startsWith("image/") ?? false;
   };
@@ -464,7 +448,6 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
     }
     setSearchingGifs(true);
     try {
-      // Using Tenor API (free tier)
       const res = await fetch(
         `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=AIzaSyDhTLR9x3HB9R2gf0xIBqDEVD1V1r8VG-Y&limit=12&media_filter=gif`
       );
@@ -523,10 +506,18 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
 
   const getRoleBadge = (role: string) => {
     if (role === "INSTRUCTOR") {
-      return <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Instructeur</span>;
+      return (
+        <span className="text-[11px] font-medium bg-[#E8F5F0] text-[#2D7A5F] px-2 py-0.5 rounded-full">
+          Instructeur
+        </span>
+      );
     }
     if (role === "SUPER_ADMIN") {
-      return <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Admin</span>;
+      return (
+        <span className="text-[11px] font-medium bg-[#FCE8F0] text-[#9B3A5A] px-2 py-0.5 rounded-full">
+          Admin
+        </span>
+      );
     }
     return null;
   };
@@ -539,40 +530,66 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
     return comment.likes?.some(l => l.userId === currentUserId) ?? false;
   };
 
-  // Sort posts: pinned first, then by date
+  // Sort and filter posts
   const sortedPosts = [...posts].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  const filteredPosts = sortedPosts.filter((post) => {
+    switch (activeFilter) {
+      case "pinned":
+        return post.isPinned;
+      case "events":
+        return post.event != null;
+      case "media":
+        return post.imageUrl || post.videoUrl;
+      default:
+        return true;
+    }
+  });
+
+  // Get author initials
+  const getInitials = (name: string | null) => {
+    if (!name) return "?";
+    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  // Get avatar color based on role
+  const getAvatarStyle = (role: string) => {
+    if (role === "INSTRUCTOR") return "bg-gradient-to-br from-blue-400 to-blue-600 text-white";
+    if (role === "SUPER_ADMIN") return "bg-gradient-to-br from-purple-400 to-purple-600 text-white";
+    return "bg-gradient-to-br from-gray-300 to-gray-400 text-white";
+  };
+
   const renderComment = (comment: Comment, postId: string, isReply = false) => (
-    <div key={comment.id} className={`flex gap-2 ${isReply ? 'ml-10' : ''}`}>
-      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-        <User className="w-4 h-4 text-gray-400" />
+    <div key={comment.id} className={`flex gap-3 ${isReply ? 'ml-12' : ''}`}>
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold ${getAvatarStyle(comment.author.role)}`}>
+        {getInitials(comment.author.name)}
       </div>
-      <div className="flex-1">
-        <div className="bg-gray-50 rounded-lg p-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{comment.author.name}</span>
+      <div className="flex-1 min-w-0">
+        <div className="bg-[#F8FAFC] rounded-2xl px-4 py-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-semibold text-gray-900">{comment.author.name}</span>
             {getRoleBadge(comment.author.role)}
-            <span className="text-xs text-gray-400">{formatDate(comment.createdAt)}</span>
+            <span className="text-[11px] text-gray-400">{formatDate(comment.createdAt)}</span>
           </div>
-          {comment.content && <p className="text-sm text-gray-700 mt-1">{comment.content}</p>}
+          {comment.content && <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>}
           {comment.gifUrl && (
-            <img src={comment.gifUrl} alt="GIF" className="mt-2 rounded max-w-[200px]" />
+            <img src={comment.gifUrl} alt="GIF" className="mt-2 rounded-xl max-w-[200px]" />
           )}
           {comment.attachmentUrl && (
             isImageType(comment.attachmentType) ? (
-              <img src={comment.attachmentUrl} alt={comment.attachmentName || "Afbeelding"} className="mt-2 rounded max-w-[300px]" />
+              <img src={comment.attachmentUrl} alt={comment.attachmentName || "Afbeelding"} className="mt-2 rounded-xl max-w-[300px]" />
             ) : (
               <a
                 href={comment.attachmentUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 flex items-center gap-2 p-2 bg-gray-100 rounded hover:bg-gray-200 max-w-fit"
+                className="mt-2 flex items-center gap-2 p-2 bg-white rounded-xl border border-gray-100 hover:border-gray-200 max-w-fit"
               >
-                <Paperclip className="w-4 h-4 text-gray-500" />
+                <Paperclip className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-blue-600 hover:underline">{comment.attachmentName || "Bijlage"}</span>
               </a>
             )
@@ -582,17 +599,17 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
               {comment.videoUrl.includes('youtube.com') || comment.videoUrl.includes('youtu.be') ? (
                 <iframe
                   src={comment.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                  className="w-full max-w-[400px] aspect-video rounded"
+                  className="w-full max-w-[400px] aspect-video rounded-xl"
                   allowFullScreen
                 />
               ) : comment.videoUrl.includes('loom.com') ? (
                 <iframe
                   src={comment.videoUrl.replace('share/', 'embed/')}
-                  className="w-full max-w-[400px] aspect-video rounded"
+                  className="w-full max-w-[400px] aspect-video rounded-xl"
                   allowFullScreen
                 />
               ) : (
-                <video src={comment.videoUrl} controls className="max-w-[400px] rounded" />
+                <video src={comment.videoUrl} controls className="max-w-[400px] rounded-xl" />
               )}
             </div>
           )}
@@ -601,28 +618,28 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
               href={comment.linkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 text-sm text-blue-600 hover:underline flex items-center gap-1"
+              className="mt-2 text-sm text-blue-500 hover:underline flex items-center gap-1"
             >
               <Link2 className="w-3 h-3" />
               {comment.linkUrl}
             </a>
           )}
         </div>
-        <div className="flex items-center gap-3 mt-1 ml-2">
+        <div className="flex items-center gap-4 mt-1.5 ml-4">
           <button
             onClick={() => handleToggleCommentLike(postId, comment.id)}
             disabled={likingComment === comment.id}
-            className={`text-xs flex items-center gap-1 ${
-              isCommentLikedByUser(comment) ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
+            className={`text-xs flex items-center gap-1 transition-colors ${
+              isCommentLikedByUser(comment) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
             }`}
           >
-            <ThumbsUp className={`w-3 h-3 ${isCommentLikedByUser(comment) ? 'fill-current' : ''}`} />
-            {comment._count?.likes || 0}
+            <Heart className={`w-3.5 h-3.5 ${isCommentLikedByUser(comment) ? 'fill-current' : ''}`} />
+            {(comment._count?.likes || 0) > 0 && <span>{comment._count?.likes}</span>}
           </button>
           {!isReply && (
             <button
               onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-              className="text-xs text-gray-500 hover:text-blue-500"
+              className="text-xs text-gray-400 hover:text-blue-500 transition-colors font-medium"
             >
               Reageren
             </button>
@@ -642,12 +659,13 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                   handleAddComment(postId, comment.id);
                 }
               }}
-              className="text-sm"
+              className="text-sm rounded-full bg-[#F8FAFC] border-gray-200"
             />
             <Button
               size="sm"
               onClick={() => handleAddComment(postId, comment.id)}
               disabled={submittingComment === comment.id}
+              className="rounded-full bg-blue-500 hover:bg-blue-600"
             >
               <Send className="w-4 h-4" />
             </Button>
@@ -656,7 +674,7 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
 
         {/* Nested replies */}
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-2 space-y-2">
+          <div className="mt-3 space-y-3">
             {comment.replies.map(reply => renderComment(reply, postId, true))}
           </div>
         )}
@@ -664,179 +682,232 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
     </div>
   );
 
+  // Filter pills
+  const filters: { key: FilterType; label: string }[] = [
+    { key: "all", label: "Alles" },
+    { key: "pinned", label: "Vastgepind" },
+    { key: "events", label: "Events" },
+    { key: "media", label: "Media" },
+  ];
+
   return (
-    <div className="space-y-4">
-      {/* New Post Button/Form - Only shown if canCreatePosts is true */}
+    <div className="space-y-5">
+      {/* Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {filters.map((filter) => (
+          <button
+            key={filter.key}
+            onClick={() => setActiveFilter(filter.key)}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              activeFilter === filter.key
+                ? "bg-blue-500 text-white shadow-sm"
+                : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
+      {/* New Post Composer - Only shown if canCreatePosts is true */}
       {canCreatePosts && (
         <>
           {!showNewPost ? (
-            <Button onClick={() => setShowNewPost(true)} className="w-full">
-              <Plus className="w-4 h-4 mr-2" />
-              Nieuwe post
-            </Button>
+            <button
+              onClick={() => setShowNewPost(true)}
+              className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 hover:border-gray-200 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                <Plus className="w-5 h-5" />
+              </div>
+              <span className="text-gray-400 text-sm">Wat wil je delen?</span>
+            </button>
           ) : (
-            <Card>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <Input
-                    placeholder="Titel van je post"
-                    value={newPost.title}
-                    onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                  />
-                  <Textarea
-                    placeholder="Wat wil je delen met je klanten?"
-                    value={newPost.content}
-                    onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                    rows={4}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs text-gray-500 flex items-center gap-1 mb-1">
-                        <ImageIcon className="w-3 h-3" /> Afbeelding URL (optioneel)
-                      </label>
-                      <Input
-                        placeholder="https://..."
-                        value={newPost.imageUrl}
-                        onChange={(e) => setNewPost({ ...newPost, imageUrl: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 flex items-center gap-1 mb-1">
-                        <Video className="w-3 h-3" /> Video URL (optioneel)
-                      </label>
-                      <Input
-                        placeholder="https://youtube.com/..."
-                        value={newPost.videoUrl}
-                        onChange={(e) => setNewPost({ ...newPost, videoUrl: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  {/* Community Selector - only show if there are multiple communities */}
-                  {communities.length > 1 && (
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">
-                        Plaatsen in community
-                      </label>
-                      <Select
-                        value={selectedCommunityId}
-                        onValueChange={setSelectedCommunityId}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecteer community" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {communities.map((community) => (
-                            <SelectItem key={community.id} value={community.id}>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-2 h-2 rounded-full"
-                                  style={{ backgroundColor: community.color }}
-                                />
-                                {community.name}
-                                {community.isDefault && (
-                                  <span className="text-xs text-gray-400">(Alle klanten)</span>
-                                )}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {communities.find(c => c.id === selectedCommunityId)?.isDefault
-                          ? "Alle klanten kunnen deze post zien"
-                          : "Alleen leden van deze community kunnen deze post zien"}
-                      </p>
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Button onClick={handleCreatePost} disabled={submitting}>
-                      {submitting ? "Posten..." : "Plaatsen"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setShowNewPost(false);
-                        setNewPost({ title: "", content: "", imageUrl: "", videoUrl: "", communityId: "" });
-                        setSelectedCommunityId(defaultCommunity?.id || "");
-                      }}
-                    >
-                      Annuleren
-                    </Button>
-                  </div>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="space-y-4">
+                <Input
+                  placeholder="Titel van je post"
+                  value={newPost.title}
+                  onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                  className="border-0 border-b border-gray-100 rounded-none px-0 text-lg font-semibold placeholder:text-gray-300 placeholder:font-normal focus-visible:ring-0"
+                />
+                <Textarea
+                  placeholder="Wat wil je delen met je klanten?"
+                  value={newPost.content}
+                  onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                  rows={4}
+                  className="border-0 px-0 resize-none placeholder:text-gray-300 focus-visible:ring-0"
+                />
+                {/* Media toolbar */}
+                <div className="flex items-center gap-1 pt-2 border-t border-gray-100">
+                  <button
+                    className="p-2 rounded-xl hover:bg-[#E8F5F0] transition-colors"
+                    onClick={() => {
+                      const url = prompt("Afbeelding URL:");
+                      if (url) setNewPost({ ...newPost, imageUrl: url });
+                    }}
+                    title="Afbeelding toevoegen"
+                  >
+                    <ImageIcon className="w-5 h-5 text-[#2D7A5F]" />
+                  </button>
+                  <button
+                    className="p-2 rounded-xl hover:bg-[#FCE8F0] transition-colors"
+                    onClick={() => {
+                      const url = prompt("Video URL (YouTube, Loom, etc.):");
+                      if (url) setNewPost({ ...newPost, videoUrl: url });
+                    }}
+                    title="Video toevoegen"
+                  >
+                    <Video className="w-5 h-5 text-[#9B3A5A]" />
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+                {/* Media previews */}
+                {newPost.imageUrl && (
+                  <div className="flex items-center gap-2 p-2 bg-[#E8F5F0] rounded-xl text-sm text-[#2D7A5F]">
+                    <ImageIcon className="w-4 h-4" />
+                    <span className="truncate flex-1">{newPost.imageUrl}</span>
+                    <button onClick={() => setNewPost({ ...newPost, imageUrl: "" })}>
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                {newPost.videoUrl && (
+                  <div className="flex items-center gap-2 p-2 bg-[#FCE8F0] rounded-xl text-sm text-[#9B3A5A]">
+                    <Video className="w-4 h-4" />
+                    <span className="truncate flex-1">{newPost.videoUrl}</span>
+                    <button onClick={() => setNewPost({ ...newPost, videoUrl: "" })}>
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                {/* Community Selector - only show if there are multiple communities */}
+                {communities.length > 1 && (
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block font-medium">
+                      Plaatsen in community
+                    </label>
+                    <Select
+                      value={selectedCommunityId}
+                      onValueChange={setSelectedCommunityId}
+                    >
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecteer community" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {communities.map((community) => (
+                          <SelectItem key={community.id} value={community.id}>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: community.color }}
+                              />
+                              {community.name}
+                              {community.isDefault && (
+                                <span className="text-xs text-gray-400">(Alle klanten)</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 pt-2">
+                  <Button
+                    onClick={handleCreatePost}
+                    disabled={submitting}
+                    className="bg-blue-500 hover:bg-blue-600 rounded-xl px-6"
+                  >
+                    {submitting ? "Posten..." : "Plaatsen"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowNewPost(false);
+                      setNewPost({ title: "", content: "", imageUrl: "", videoUrl: "", communityId: "" });
+                      setSelectedCommunityId(defaultCommunity?.id || "");
+                    }}
+                    className="rounded-xl text-gray-500"
+                  >
+                    Annuleren
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </>
       )}
 
       {/* Posts List */}
-      {sortedPosts.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center text-gray-500">
-            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Nog geen posts in de community.</p>
-            {!canCreatePosts && (
-              <p className="text-sm">Je instructeur zal hier updates delen.</p>
-            )}
-          </CardContent>
-        </Card>
+      {filteredPosts.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
+          <div className="w-16 h-16 bg-[#F8FAFC] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <MessageCircle className="w-8 h-8 text-gray-300" />
+          </div>
+          <p className="text-gray-500 font-medium">Nog geen posts in de community.</p>
+          {!canCreatePosts && (
+            <p className="text-sm text-gray-400 mt-1">Je instructeur zal hier updates delen.</p>
+          )}
+        </div>
       ) : (
-        sortedPosts.map((post) => (
-          <Card key={post.id} className={post.isPinned ? 'border-blue-200 bg-blue-50/30' : ''}>
-            <CardHeader className="p-4 pb-2">
+        filteredPosts.map((post) => (
+          <div key={post.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
+            post.isPinned ? 'border-[#FFF0E8] ring-1 ring-[#FFF0E8]' : 'border-gray-100'
+          }`}>
+            {/* Post Header */}
+            <div className="p-5 pb-0">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-500" />
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold ${getAvatarStyle(post.author.role)}`}>
+                    {getInitials(post.author.name)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{post.author.name}</span>
+                      <span className="font-semibold text-gray-900">{post.author.name}</span>
                       {getRoleBadge(post.author.role)}
                       {post.isPinned && (
-                        <Badge variant="secondary" className="text-xs">
-                          <Pin className="w-3 h-3 mr-1" />
+                        <span className="text-[11px] font-medium bg-[#FFF0E8] text-[#C4693B] px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Pin className="w-3 h-3" />
                           Vastgepind
-                        </Badge>
+                        </span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500">{formatDate(post.createdAt)}</span>
+                    <span className="text-xs text-gray-400">{formatDate(post.createdAt)}</span>
                   </div>
                 </div>
                 {post.author.id === currentUserId && canCreatePosts && (
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <button
                       onClick={() => handleTogglePin(post.id)}
-                      className="text-gray-400 hover:text-blue-600"
+                      className={`p-2 rounded-xl hover:bg-gray-50 transition-colors ${post.isPinned ? 'text-[#C4693B]' : 'text-gray-300 hover:text-gray-500'}`}
                       title={post.isPinned ? "Losmaken" : "Vastpinnen"}
                     >
-                      <Pin className={`w-4 h-4 ${post.isPinned ? 'fill-blue-600 text-blue-600' : ''}`} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                      <Pin className={`w-4 h-4 ${post.isPinned ? 'fill-current' : ''}`} />
+                    </button>
+                    <button
                       onClick={() => handleDeletePost(post.id)}
-                      className="text-gray-400 hover:text-red-600"
+                      className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </button>
                   </div>
                 )}
               </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              {post.title && <h3 className="font-semibold mb-2">{post.title}</h3>}
-              <p className="text-gray-700 whitespace-pre-wrap text-sm">{post.content}</p>
+            </div>
+
+            {/* Post Content */}
+            <div className="px-5 py-3">
+              {post.title && (
+                <h3 className="font-semibold text-gray-900 text-[15px] mb-2">{post.title}</h3>
+              )}
+              <p className="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{post.content}</p>
 
               {/* Post Image */}
               {post.imageUrl && (
                 <img
                   src={post.imageUrl}
                   alt="Post afbeelding"
-                  className="mt-3 rounded-lg max-h-96 w-full object-cover"
+                  className="mt-3 rounded-xl max-h-96 w-full object-cover"
                 />
               )}
 
@@ -846,11 +917,11 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                   {post.videoUrl.includes('youtube.com') || post.videoUrl.includes('youtu.be') ? (
                     <iframe
                       src={post.videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                      className="w-full aspect-video rounded-lg"
+                      className="w-full aspect-video rounded-xl"
                       allowFullScreen
                     />
                   ) : (
-                    <video src={post.videoUrl} controls className="w-full rounded-lg" />
+                    <video src={post.videoUrl} controls className="w-full rounded-xl" />
                   )}
                 </div>
               )}
@@ -858,17 +929,17 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
               {/* Linked Event Card */}
               {post.event && (
                 <Link href={`/client/events`}>
-                  <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100 hover:border-blue-200 transition-colors">
+                  <div className="mt-4 p-4 bg-[#E8F5F0] rounded-2xl hover:shadow-sm transition-all">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <Badge className="bg-blue-100 text-blue-700 mb-2">
-                          <Calendar className="w-3 h-3 mr-1" />
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-white/60 text-[#2D7A5F] px-2 py-0.5 rounded-full mb-2">
+                          <Calendar className="w-3 h-3" />
                           Event
-                        </Badge>
+                        </span>
                         <h4 className="font-semibold text-gray-900">{post.event.title}</h4>
                         <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-600">
                           <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="w-4 h-4 text-[#2D7A5F]" />
                             {new Date(post.event.startDate).toLocaleDateString("nl-NL", {
                               weekday: "short",
                               day: "numeric",
@@ -879,18 +950,18 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                           </span>
                           {post.event.location && (
                             <span className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
+                              <MapPin className="w-4 h-4 text-[#2D7A5F]" />
                               {post.event.location}
                             </span>
                           )}
                           <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
+                            <Users className="w-4 h-4 text-[#2D7A5F]" />
                             {post.event._count.registrations}
                             {post.event.maxAttendees && ` / ${post.event.maxAttendees}`} aanmeldingen
                           </span>
                         </div>
                       </div>
-                      <Button size="sm" variant="secondary" className="shrink-0">
+                      <Button size="sm" className="shrink-0 bg-[#2D7A5F] hover:bg-[#245F4A] rounded-xl text-white">
                         Bekijken
                         <ArrowRight className="w-4 h-4 ml-1" />
                       </Button>
@@ -898,278 +969,292 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                   </div>
                 </Link>
               )}
+            </div>
 
-              {/* Like and Comment buttons */}
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t">
-                <button
-                  onClick={() => handleToggleLike(post.id)}
-                  disabled={likingPost === post.id}
-                  className={`flex items-center gap-1 text-sm ${
-                    isLikedByUser(post) ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'
-                  }`}
-                >
-                  <ThumbsUp className={`w-5 h-5 ${isLikedByUser(post) ? 'fill-current' : ''}`} />
-                  <span>{post._count.likes || 0}</span>
-                </button>
-                <button
-                  onClick={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-500"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  <span>{post._count.comments} {post._count.comments === 1 ? "reactie" : "reacties"}</span>
-                </button>
+            {/* Engagement Stats & Actions */}
+            <div className="px-5 py-3 border-t border-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => handleToggleLike(post.id)}
+                    disabled={likingPost === post.id}
+                    className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                      isLikedByUser(post) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                    }`}
+                  >
+                    <Heart className={`w-5 h-5 ${isLikedByUser(post) ? 'fill-current' : ''}`} />
+                    <span>{post._count.likes || 0}</span>
+                  </button>
+                  <button
+                    onClick={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
+                    className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>{post._count.comments}</span>
+                  </button>
+                </div>
+                {post._count.comments > 0 && expandedPost !== post.id && (
+                  <button
+                    onClick={() => setExpandedPost(post.id)}
+                    className="text-xs text-blue-500 font-medium hover:underline"
+                  >
+                    Bekijk {post._count.comments} {post._count.comments === 1 ? "reactie" : "reacties"}
+                  </button>
+                )}
               </div>
+            </div>
 
-              {/* Comments Section */}
-              {expandedPost === post.id && (
-                <div className="mt-4 pt-4 border-t space-y-3">
+            {/* Comments Section */}
+            {expandedPost === post.id && (
+              <div className="px-5 pb-5 space-y-4">
+                <div className="space-y-4">
                   {post.comments
                     .filter(c => !c.parentId)
                     .map((comment) => renderComment(comment, post.id))}
+                </div>
 
-                  {/* Add comment with rich media toolbar */}
-                  <div className="mt-4 space-y-2">
-                    {/* Media Previews */}
-                    <div className="flex flex-wrap gap-2">
-                      {commentGifUrl[post.id] && (
-                        <div className="relative inline-block">
-                          <img src={commentGifUrl[post.id]} alt="GIF" className="max-w-[120px] rounded border" />
-                          <button
-                            onClick={() => setCommentGifUrl({ ...commentGifUrl, [post.id]: "" })}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                      {commentAttachment[post.id] && (
-                        <div className="relative inline-block">
-                          {isImageType(commentAttachment[post.id].type) ? (
-                            <img src={commentAttachment[post.id].url} alt={commentAttachment[post.id].name} className="max-w-[120px] rounded border" />
-                          ) : (
-                            <div className="flex items-center gap-2 p-2 bg-gray-100 rounded border pr-6">
-                              <Paperclip className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm truncate max-w-[100px]">{commentAttachment[post.id].name}</span>
-                            </div>
-                          )}
-                          <button
-                            onClick={() => {
-                              const newAttachments = { ...commentAttachment };
-                              delete newAttachments[post.id];
-                              setCommentAttachment(newAttachments);
-                            }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                      {commentVideoUrl[post.id] && (
-                        <div className="relative inline-block bg-gray-100 rounded border p-2 pr-6">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Play className="w-4 h-4" />
-                            <span className="truncate max-w-[150px]">{commentVideoUrl[post.id]}</span>
-                          </div>
-                          <button
-                            onClick={() => setCommentVideoUrl({ ...commentVideoUrl, [post.id]: "" })}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                      {commentLinkUrl[post.id] && (
-                        <div className="relative inline-block bg-gray-100 rounded border p-2 pr-6">
-                          <div className="flex items-center gap-2 text-sm text-blue-600">
-                            <Link2 className="w-4 h-4" />
-                            <span className="truncate max-w-[150px]">{commentLinkUrl[post.id]}</span>
-                          </div>
-                          <button
-                            onClick={() => setCommentLinkUrl({ ...commentLinkUrl, [post.id]: "" })}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-
-                    {/* Link URL Input Panel */}
-                    {showLinkInput === post.id && (
-                      <div className="p-3 bg-white rounded-lg border shadow-lg space-y-3">
-                        <h4 className="font-medium">Link toevoegen</h4>
-                        <Input
-                          placeholder="Voer een URL in..."
-                          value={commentLinkUrl[post.id] || ""}
-                          onChange={(e) => setCommentLinkUrl({ ...commentLinkUrl, [post.id]: e.target.value })}
-                        />
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => setShowLinkInput(null)}>
-                            Annuleren
-                          </Button>
-                          <Button size="sm" onClick={() => setShowLinkInput(null)} disabled={!commentLinkUrl[post.id]}>
-                            Link
-                          </Button>
-                        </div>
+                {/* Add comment with rich media toolbar */}
+                <div className="space-y-2 pt-2">
+                  {/* Media Previews */}
+                  <div className="flex flex-wrap gap-2">
+                    {commentGifUrl[post.id] && (
+                      <div className="relative inline-block">
+                        <img src={commentGifUrl[post.id]} alt="GIF" className="max-w-[120px] rounded-xl border" />
+                        <button
+                          onClick={() => setCommentGifUrl({ ...commentGifUrl, [post.id]: "" })}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
                     )}
-
-                    {/* Video URL Input Panel */}
-                    {showVideoInput === post.id && (
-                      <div className="p-3 bg-white rounded-lg border shadow-lg space-y-3">
-                        <h4 className="font-medium">Video toevoegen</h4>
-                        <Input
-                          placeholder="YouTube, Loom, Vimeo of Wistia link..."
-                          value={commentVideoUrl[post.id] || ""}
-                          onChange={(e) => setCommentVideoUrl({ ...commentVideoUrl, [post.id]: e.target.value })}
-                        />
-                        <p className="text-xs text-gray-500">Of sleep een video hierheen</p>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => setShowVideoInput(null)}>
-                            Annuleren
-                          </Button>
-                          <Button size="sm" onClick={() => setShowVideoInput(null)} disabled={!commentVideoUrl[post.id]}>
-                            Toevoegen
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Emoji Picker Panel */}
-                    {showEmojiPicker === post.id && (
-                      <div className="p-3 bg-white rounded-lg border shadow-lg">
-                        <div className="grid grid-cols-8 gap-1">
-                          {commonEmojis.map((emoji, i) => (
-                            <button
-                              key={i}
-                              onClick={() => insertEmoji(post.id, emoji)}
-                              className="text-xl hover:bg-gray-100 rounded p-1 transition-colors"
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* GIF Search Panel */}
-                    {showGifSearch === post.id && (
-                      <div className="p-3 bg-white rounded-lg border shadow-lg space-y-2">
-                        <Input
-                          placeholder="Zoek GIFs..."
-                          value={gifSearchQuery}
-                          onChange={(e) => {
-                            setGifSearchQuery(e.target.value);
-                            searchGifs(e.target.value);
-                          }}
-                          className="text-sm"
-                        />
-                        {searchingGifs && <p className="text-xs text-gray-500">Zoeken...</p>}
-                        {gifResults.length > 0 && (
-                          <div className="grid grid-cols-4 gap-1 max-h-48 overflow-y-auto">
-                            {gifResults.map((gif) => (
-                              <button
-                                key={gif.id}
-                                onClick={() => {
-                                  selectGif(post.id, gif.url);
-                                  setShowGifSearch(null);
-                                }}
-                                className="hover:opacity-75 transition-opacity"
-                              >
-                                <img src={gif.preview} alt="GIF" className="w-full h-20 object-cover rounded" />
-                              </button>
-                            ))}
+                    {commentAttachment[post.id] && (
+                      <div className="relative inline-block">
+                        {isImageType(commentAttachment[post.id].type) ? (
+                          <img src={commentAttachment[post.id].url} alt={commentAttachment[post.id].name} className="max-w-[120px] rounded-xl border" />
+                        ) : (
+                          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border pr-6">
+                            <Paperclip className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm truncate max-w-[100px]">{commentAttachment[post.id].name}</span>
                           </div>
                         )}
-                        <p className="text-xs text-gray-400">Powered by GIPHY</p>
+                        <button
+                          onClick={() => {
+                            const newAttachments = { ...commentAttachment };
+                            delete newAttachments[post.id];
+                            setCommentAttachment(newAttachments);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
                     )}
+                    {commentVideoUrl[post.id] && (
+                      <div className="relative inline-block bg-gray-50 rounded-xl border p-2 pr-6">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Play className="w-4 h-4" />
+                          <span className="truncate max-w-[150px]">{commentVideoUrl[post.id]}</span>
+                        </div>
+                        <button
+                          onClick={() => setCommentVideoUrl({ ...commentVideoUrl, [post.id]: "" })}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                    {commentLinkUrl[post.id] && (
+                      <div className="relative inline-block bg-gray-50 rounded-xl border p-2 pr-6">
+                        <div className="flex items-center gap-2 text-sm text-blue-500">
+                          <Link2 className="w-4 h-4" />
+                          <span className="truncate max-w-[150px]">{commentLinkUrl[post.id]}</span>
+                        </div>
+                        <button
+                          onClick={() => setCommentLinkUrl({ ...commentLinkUrl, [post.id]: "" })}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Comment Input with Toolbar */}
-                    <div className="border rounded-full flex items-center bg-gray-50 hover:bg-white focus-within:bg-white focus-within:border-gray-300 transition-colors">
+                  {/* Link URL Input Panel */}
+                  {showLinkInput === post.id && (
+                    <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-lg space-y-3">
+                      <h4 className="font-medium text-sm">Link toevoegen</h4>
                       <Input
-                        placeholder="Jouw reactie"
-                        value={commentText[post.id] || ""}
-                        onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleAddComment(post.id);
-                          }
-                        }}
-                        className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                        placeholder="Voer een URL in..."
+                        value={commentLinkUrl[post.id] || ""}
+                        onChange={(e) => setCommentLinkUrl({ ...commentLinkUrl, [post.id]: e.target.value })}
+                        className="rounded-xl"
                       />
-                      <div className="flex items-center gap-1 pr-2">
-                        {/* File Attachment */}
-                        <input
-                          type="file"
-                          id={`file-upload-${post.id}`}
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              handleFileUpload(post.id, file);
-                            }
-                            e.target.value = "";
-                          }}
-                        />
-                        <button
-                          onClick={() => document.getElementById(`file-upload-${post.id}`)?.click()}
-                          disabled={uploadingFile === post.id}
-                          className={`p-2 rounded-full hover:bg-gray-200 transition-colors ${uploadingFile === post.id ? 'opacity-50' : ''}`}
-                          title="Bestand toevoegen (max 2MB)"
-                        >
-                          <Paperclip className={`w-5 h-5 text-gray-500 ${uploadingFile === post.id ? 'animate-pulse' : ''}`} />
-                        </button>
-                        {/* Link */}
-                        <button
-                          onClick={() => { closeAllPanels('link'); setShowLinkInput(showLinkInput === post.id ? null : post.id); }}
-                          className={`p-2 rounded-full hover:bg-gray-200 transition-colors ${showLinkInput === post.id ? 'bg-gray-200' : ''}`}
-                          title="Link toevoegen"
-                        >
-                          <Link2 className="w-5 h-5 text-gray-500" />
-                        </button>
-                        {/* Video */}
-                        <button
-                          onClick={() => { closeAllPanels('video'); setShowVideoInput(showVideoInput === post.id ? null : post.id); }}
-                          className={`p-2 rounded-full hover:bg-gray-200 transition-colors ${showVideoInput === post.id ? 'bg-gray-200' : ''}`}
-                          title="Video toevoegen"
-                        >
-                          <Play className="w-5 h-5 text-gray-500" />
-                        </button>
-                        {/* Emoji */}
-                        <button
-                          onClick={() => { closeAllPanels('emoji'); setShowEmojiPicker(showEmojiPicker === post.id ? null : post.id); }}
-                          className={`p-2 rounded-full hover:bg-gray-200 transition-colors ${showEmojiPicker === post.id ? 'bg-gray-200' : ''}`}
-                          title="Emoji toevoegen"
-                        >
-                          <Smile className="w-5 h-5 text-gray-500" />
-                        </button>
-                        {/* GIF */}
-                        <button
-                          onClick={() => { closeAllPanels('gif'); setShowGifSearch(showGifSearch === post.id ? null : post.id); }}
-                          className={`p-2 rounded-full hover:bg-gray-200 transition-colors font-semibold text-sm ${showGifSearch === post.id ? 'bg-gray-200' : ''}`}
-                          title="GIF toevoegen"
-                        >
-                          <span className="text-gray-500">GIF</span>
-                        </button>
-                        {/* Send */}
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddComment(post.id)}
-                          disabled={submittingComment === post.id || (!commentText[post.id]?.trim() && !commentGifUrl[post.id] && !commentAttachment[post.id] && !commentVideoUrl[post.id])}
-                          className="rounded-full ml-1"
-                        >
-                          <Send className="w-4 h-4" />
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setShowLinkInput(null)} className="rounded-xl">
+                          Annuleren
+                        </Button>
+                        <Button size="sm" onClick={() => setShowLinkInput(null)} disabled={!commentLinkUrl[post.id]} className="rounded-xl bg-blue-500 hover:bg-blue-600">
+                          Link
                         </Button>
                       </div>
                     </div>
+                  )}
+
+                  {/* Video URL Input Panel */}
+                  {showVideoInput === post.id && (
+                    <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-lg space-y-3">
+                      <h4 className="font-medium text-sm">Video toevoegen</h4>
+                      <Input
+                        placeholder="YouTube, Loom, Vimeo of Wistia link..."
+                        value={commentVideoUrl[post.id] || ""}
+                        onChange={(e) => setCommentVideoUrl({ ...commentVideoUrl, [post.id]: e.target.value })}
+                        className="rounded-xl"
+                      />
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setShowVideoInput(null)} className="rounded-xl">
+                          Annuleren
+                        </Button>
+                        <Button size="sm" onClick={() => setShowVideoInput(null)} disabled={!commentVideoUrl[post.id]} className="rounded-xl bg-blue-500 hover:bg-blue-600">
+                          Toevoegen
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Emoji Picker Panel */}
+                  {showEmojiPicker === post.id && (
+                    <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-lg">
+                      <div className="grid grid-cols-8 gap-1">
+                        {commonEmojis.map((emoji, i) => (
+                          <button
+                            key={i}
+                            onClick={() => insertEmoji(post.id, emoji)}
+                            className="text-xl hover:bg-gray-50 rounded-xl p-1.5 transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* GIF Search Panel */}
+                  {showGifSearch === post.id && (
+                    <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-lg space-y-3">
+                      <Input
+                        placeholder="Zoek GIFs..."
+                        value={gifSearchQuery}
+                        onChange={(e) => {
+                          setGifSearchQuery(e.target.value);
+                          searchGifs(e.target.value);
+                        }}
+                        className="text-sm rounded-xl"
+                      />
+                      {searchingGifs && <p className="text-xs text-gray-400">Zoeken...</p>}
+                      {gifResults.length > 0 && (
+                        <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
+                          {gifResults.map((gif) => (
+                            <button
+                              key={gif.id}
+                              onClick={() => {
+                                selectGif(post.id, gif.url);
+                                setShowGifSearch(null);
+                              }}
+                              className="hover:opacity-75 transition-opacity rounded-xl overflow-hidden"
+                            >
+                              <img src={gif.preview} alt="GIF" className="w-full h-20 object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10px] text-gray-300">Powered by Tenor</p>
+                    </div>
+                  )}
+
+                  {/* Comment Input with Toolbar */}
+                  <div className="border border-gray-200 rounded-2xl flex items-center bg-[#F8FAFC] hover:bg-white focus-within:bg-white focus-within:border-gray-300 transition-all">
+                    <Input
+                      placeholder="Schrijf een reactie..."
+                      value={commentText[post.id] || ""}
+                      onChange={(e) => setCommentText({ ...commentText, [post.id]: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAddComment(post.id);
+                        }
+                      }}
+                      className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-sm"
+                    />
+                    <div className="flex items-center gap-0.5 pr-2">
+                      {/* File Attachment */}
+                      <input
+                        type="file"
+                        id={`file-upload-${post.id}`}
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleFileUpload(post.id, file);
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                      <button
+                        onClick={() => document.getElementById(`file-upload-${post.id}`)?.click()}
+                        disabled={uploadingFile === post.id}
+                        className={`p-2 rounded-xl hover:bg-gray-100 transition-colors ${uploadingFile === post.id ? 'opacity-50' : ''}`}
+                        title="Bestand toevoegen"
+                      >
+                        <Paperclip className={`w-4 h-4 text-gray-400 ${uploadingFile === post.id ? 'animate-pulse' : ''}`} />
+                      </button>
+                      {/* Link */}
+                      <button
+                        onClick={() => { closeAllPanels('link'); setShowLinkInput(showLinkInput === post.id ? null : post.id); }}
+                        className={`p-2 rounded-xl hover:bg-gray-100 transition-colors ${showLinkInput === post.id ? 'bg-gray-100' : ''}`}
+                        title="Link toevoegen"
+                      >
+                        <Link2 className="w-4 h-4 text-gray-400" />
+                      </button>
+                      {/* Video */}
+                      <button
+                        onClick={() => { closeAllPanels('video'); setShowVideoInput(showVideoInput === post.id ? null : post.id); }}
+                        className={`p-2 rounded-xl hover:bg-gray-100 transition-colors ${showVideoInput === post.id ? 'bg-gray-100' : ''}`}
+                        title="Video toevoegen"
+                      >
+                        <Play className="w-4 h-4 text-gray-400" />
+                      </button>
+                      {/* Emoji */}
+                      <button
+                        onClick={() => { closeAllPanels('emoji'); setShowEmojiPicker(showEmojiPicker === post.id ? null : post.id); }}
+                        className={`p-2 rounded-xl hover:bg-gray-100 transition-colors ${showEmojiPicker === post.id ? 'bg-gray-100' : ''}`}
+                        title="Emoji toevoegen"
+                      >
+                        <Smile className="w-4 h-4 text-gray-400" />
+                      </button>
+                      {/* GIF */}
+                      <button
+                        onClick={() => { closeAllPanels('gif'); setShowGifSearch(showGifSearch === post.id ? null : post.id); }}
+                        className={`p-2 rounded-xl hover:bg-gray-100 transition-colors text-xs font-bold ${showGifSearch === post.id ? 'bg-gray-100' : ''}`}
+                        title="GIF toevoegen"
+                      >
+                        <span className="text-gray-400">GIF</span>
+                      </button>
+                      {/* Send */}
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddComment(post.id)}
+                        disabled={submittingComment === post.id || (!commentText[post.id]?.trim() && !commentGifUrl[post.id] && !commentAttachment[post.id] && !commentVideoUrl[post.id])}
+                        className="rounded-xl bg-blue-500 hover:bg-blue-600 ml-1 h-8 w-8 p-0"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            )}
+          </div>
         ))
       )}
     </div>

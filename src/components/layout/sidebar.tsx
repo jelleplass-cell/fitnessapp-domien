@@ -10,15 +10,9 @@ import {
   Dumbbell,
   Users,
   LogOut,
-  ClipboardList,
-  History,
-  FileText,
   ChevronDown,
   ChevronRight,
   Settings,
-  Bell,
-  Library,
-  PlusCircle,
   MessageSquare,
   Calendar,
   Home,
@@ -230,22 +224,26 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
     return false;
   };
 
+  const firstName = userName.split(" ")[0];
+
   return (
-    <div className="flex flex-col h-full w-64 bg-gray-900 text-white">
-      <div className="p-4 border-b border-gray-800">
+    <div className="flex flex-col h-full w-64 bg-white border-r border-gray-100">
+      {/* Header */}
+      <div className="p-5 border-b border-gray-100">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">FitTrack Pro</h1>
+          <h1 className="text-xl font-bold text-gray-900">FitTrack Pro</h1>
           <div className="hidden lg:block">
             <NotificationBell />
           </div>
         </div>
-        <p className="text-sm text-gray-400 mt-1">{userName}</p>
-        <p className="text-xs text-gray-500">
+        <p className="text-sm text-gray-700 mt-1 font-medium">{userName}</p>
+        <p className="text-xs text-gray-400">
           {role === "INSTRUCTOR" ? "Instructeur" : role === "SUPER_ADMIN" ? "Admin" : "Klant"}
         </p>
       </div>
 
-      <nav className="flex-1 p-4">
+      {/* Navigation */}
+      <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-1">
           {links.map((link) => {
             const Icon = link.icon;
@@ -259,10 +257,10 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                   <button
                     onClick={() => toggleMenu(link.href)}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors w-full",
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full font-medium",
                       isActive
-                        ? "bg-gray-800 text-white"
-                        : "text-gray-300 hover:bg-gray-800"
+                        ? "bg-blue-500 text-white shadow-sm"
+                        : "text-gray-600 hover:bg-gray-50"
                     )}
                   >
                     <Icon className="w-5 h-5" />
@@ -274,7 +272,7 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                     )}
                   </button>
                   {isExpanded && (
-                    <ul className="ml-4 mt-1 space-y-1">
+                    <ul className="mt-1 ml-4 space-y-1">
                       {link.subLinks!.map((subLink) => {
                         // Check if this sublink is active (handle query params for community)
                         const isSubLinkActive = subLink.href.includes("?")
@@ -287,19 +285,19 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                               href={subLink.href}
                               onClick={onNavigate}
                               className={cn(
-                                "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm",
+                                "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm",
                                 isSubLinkActive
-                                  ? "bg-blue-600 text-white"
-                                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                                  ? "bg-blue-50 text-blue-600 font-medium"
+                                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                               )}
                             >
                               {subLink.color ? (
                                 <span
-                                  className="w-3 h-3 rounded-full ml-1"
+                                  className="w-3 h-3 rounded-full"
                                   style={{ backgroundColor: subLink.color }}
                                 />
                               ) : (
-                                <span className="w-5" />
+                                <span className="w-3" />
                               )}
                               {subLink.label}
                             </Link>
@@ -318,10 +316,10 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                   href={link.href}
                   onClick={onNavigate}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium",
                     isActive
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-300 hover:bg-gray-800"
+                      ? "bg-blue-500 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-50"
                   )}
                 >
                   <Icon className="w-5 h-5" />
@@ -333,10 +331,11 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-gray-800">
+      {/* Logout */}
+      <div className="p-4 border-t border-gray-100">
         <Button
           variant="ghost"
-          className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
+          className="w-full justify-start text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl"
           onClick={() => signOut({ callbackUrl: "/login" })}
         >
           <LogOut className="w-5 h-5 mr-3" />

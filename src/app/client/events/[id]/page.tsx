@@ -72,8 +72,9 @@ export default async function EventDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto">
-      <EventDetail
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <EventDetail
         event={{
           id: event.id,
           title: event.title,
@@ -106,7 +107,8 @@ export default async function EventDetailPage({ params }: PageProps) {
           waitlistCount,
           attendees,
         }}
-      />
+        />
+      </div>
     </div>
   );
 }

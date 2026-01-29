@@ -2,7 +2,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import ProgramForm from "../program-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Archive, ArchiveRestore, Users } from "lucide-react";
@@ -45,11 +44,11 @@ export default async function ProgramDetailPage({
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen max-w-4xl">
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl md:text-2xl font-bold">{program.name}</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{program.name}</h1>
             {program.isArchived && (
               <Badge variant="secondary">Gearchiveerd</Badge>
             )}
@@ -86,26 +85,22 @@ export default async function ProgramDetailPage({
 
       {/* Assigned clients info */}
       {program.clientPrograms.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Toegewezen aan {program.clientPrograms.length} klant
-              {program.clientPrograms.length !== 1 ? "en" : ""}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {program.clientPrograms.map((cp) => (
-                <Link key={cp.id} href={`/instructor/clients/${cp.clientId}`}>
-                  <Badge variant="secondary" className="cursor-pointer hover:bg-gray-200">
-                    {cp.client.name}
-                  </Badge>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-3xl shadow-sm p-6 mb-6">
+          <h3 className="text-base font-semibold flex items-center gap-2 mb-4">
+            <Users className="w-4 h-4" />
+            Toegewezen aan {program.clientPrograms.length} klant
+            {program.clientPrograms.length !== 1 ? "en" : ""}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {program.clientPrograms.map((cp) => (
+              <Link key={cp.id} href={`/instructor/clients/${cp.clientId}`}>
+                <Badge variant="secondary" className="cursor-pointer hover:bg-gray-200">
+                  {cp.client.name}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       <ProgramForm

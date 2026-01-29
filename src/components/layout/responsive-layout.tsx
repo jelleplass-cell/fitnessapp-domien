@@ -23,11 +23,11 @@ export function ResponsiveLayout({ role, userName, children, modules }: Responsi
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-[#F8FAFC]">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/30 z-40 lg:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -45,14 +45,14 @@ export function ResponsiveLayout({ role, userName, children, modules }: Responsi
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden bg-gray-900 text-white p-4 flex items-center justify-between">
-          <h1 className="text-lg font-bold">FitTrack Pro</h1>
+        <header className="lg:hidden bg-white border-b border-gray-100 p-4 flex items-center justify-between shadow-sm">
+          <h1 className="text-lg font-bold text-gray-900">FitTrack Pro</h1>
           <div className="flex items-center gap-2">
             <NotificationBell />
             <Button
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-gray-800"
+              className="text-gray-600 hover:bg-gray-50 rounded-xl"
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -61,7 +61,7 @@ export function ResponsiveLayout({ role, userName, children, modules }: Responsi
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

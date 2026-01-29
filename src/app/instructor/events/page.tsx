@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, MapPin, Users } from "lucide-react";
 import { CreateEventForm } from "./create-event-form";
 import { DeleteEventButton } from "./delete-event-button";
@@ -53,81 +52,79 @@ export default async function InstructorEventsPage() {
   const isPast = (date: Date) => date < new Date();
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">Events</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Events</h1>
           <p className="text-sm text-gray-500">Beheer je events en bekijk aanmeldingen</p>
         </div>
         <CreateEventForm />
       </div>
 
       {events.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center text-gray-500">
-            <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        <div className="bg-white rounded-3xl shadow-sm p-6">
+          <div className="text-center text-gray-500">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 mx-auto mb-4 flex items-center justify-center">
+              <Calendar className="w-8 h-8 text-gray-300" />
+            </div>
             <p>Je hebt nog geen events aangemaakt.</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <div className="space-y-4">
           {events.map((event) => (
-            <Card key={event.id} className={isPast(event.startDate) ? "opacity-60" : ""}>
-              <CardHeader className="p-4 md:p-6 pb-2">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <CardTitle className="text-base md:text-lg flex items-center gap-2">
-                      {event.title}
-                      {isPast(event.startDate) && (
-                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
-                          Afgelopen
-                        </span>
-                      )}
-                    </CardTitle>
-                    <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {formatDate(event.startDate)} om {formatTime(event.startDate)}
+            <div key={event.id} className={`bg-white rounded-3xl shadow-sm p-6 ${isPast(event.startDate) ? "opacity-60" : ""}`}>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-base md:text-lg font-semibold flex items-center gap-2">
+                    {event.title}
+                    {isPast(event.startDate) && (
+                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
+                        Afgelopen
                       </span>
-                      {event.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {event.location}
-                        </span>
-                      )}
+                    )}
+                  </h3>
+                  <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {formatDate(event.startDate)} om {formatTime(event.startDate)}
+                    </span>
+                    {event.location && (
                       <span className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {event._count.registrations}
-                        {event.maxAttendees && ` / ${event.maxAttendees}`} aanmeldingen
+                        <MapPin className="w-4 h-4" />
+                        {event.location}
                       </span>
-                    </div>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      {event._count.registrations}
+                      {event.maxAttendees && ` / ${event.maxAttendees}`} aanmeldingen
+                    </span>
                   </div>
-                  <DeleteEventButton eventId={event.id} eventTitle={event.title} />
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 md:p-6 pt-0">
-                {event.description && (
-                  <p className="text-gray-700 text-sm mb-4">{event.description}</p>
-                )}
+                <DeleteEventButton eventId={event.id} eventTitle={event.title} />
+              </div>
+              {event.description && (
+                <p className="text-gray-700 text-sm mb-4">{event.description}</p>
+              )}
 
-                {event.registrations.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium mb-2">Aanmeldingen:</p>
-                    <div className="space-y-2">
-                      {event.registrations.map((reg) => (
-                        <div
-                          key={reg.id}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
-                        >
-                          <span>{reg.user.name}</span>
-                          <span className="text-gray-500">{reg.user.email}</span>
-                        </div>
-                      ))}
-                    </div>
+              {event.registrations.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-2">Aanmeldingen:</p>
+                  <div className="space-y-2">
+                    {event.registrations.map((reg) => (
+                      <div
+                        key={reg.id}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
+                      >
+                        <span>{reg.user.name}</span>
+                        <span className="text-gray-500">{reg.user.email}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

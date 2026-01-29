@@ -17,8 +17,8 @@ export default async function NieuwProgrammaPage() {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl">
-      <h1 className="text-xl md:text-2xl font-bold mb-6">Nieuw programma</h1>
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen max-w-4xl">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Nieuw programma</h1>
       <ProgramForm categories={categories} />
     </div>
   );

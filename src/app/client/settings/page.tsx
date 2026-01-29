@@ -70,19 +70,21 @@ export default async function ClientSettingsPage() {
   const instructors = Array.from(instructorMap.values());
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-xl md:text-2xl font-bold">Instellingen</h1>
-        <p className="text-sm text-gray-500">Beheer je profiel en account</p>
-      </div>
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-2xl">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">Instellingen</h1>
+          <p className="text-sm text-gray-500">Beheer je profiel en account</p>
+        </div>
 
-      <ClientSettingsForm
-        user={{
-          ...user,
-          language: user.language as Language,
-        }}
-        instructors={instructors}
-      />
+        <ClientSettingsForm
+          user={{
+            ...user,
+            language: user.language as Language,
+          }}
+          instructors={instructors}
+        />
+      </div>
     </div>
   );
 }

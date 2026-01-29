@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -111,82 +110,80 @@ export default async function ProgramDetailPage({
   const nextScheduled = clientProgram.scheduledPrograms[0];
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <h1 className="text-xl md:text-2xl font-bold">{program.name}</h1>
-          <Badge
-            className={
-              difficultyColors[program.difficulty as keyof typeof difficultyColors]
-            }
-          >
-            {difficultyLabels[program.difficulty as keyof typeof difficultyLabels]}
-          </Badge>
-        </div>
-
-        {instructorLabel && (
-          <div className="flex items-center gap-1 text-sm text-purple-600 mt-2">
-            <User className="w-4 h-4" />
-            {instructorLabel}
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <h1 className="text-2xl font-semibold text-gray-900">{program.name}</h1>
+            <Badge
+              className={
+                difficultyColors[program.difficulty as keyof typeof difficultyColors]
+              }
+            >
+              {difficultyLabels[program.difficulty as keyof typeof difficultyLabels]}
+            </Badge>
           </div>
-        )}
 
-        {program.description && (
-          <p className="text-gray-500 mt-2">{program.description}</p>
-        )}
+          {instructorLabel && (
+            <div className="flex items-center gap-1 text-sm text-purple-600 mt-2">
+              <User className="w-4 h-4" />
+              {instructorLabel}
+            </div>
+          )}
 
-        <div className="flex gap-4 mt-3 text-sm text-gray-600">
-          <span className="flex items-center gap-1">
-            <Dumbbell className="w-4 h-4" />
-            {program.items.length} oefeningen
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            ~{totalDuration} minuten
-          </span>
+          {program.description && (
+            <p className="text-gray-500 mt-2">{program.description}</p>
+          )}
+
+          <div className="flex gap-4 mt-3 text-sm text-gray-600">
+            <span className="flex items-center gap-1">
+              <Dumbbell className="w-4 h-4" />
+              {program.items.length} oefeningen
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              ~{totalDuration} minuten
+            </span>
+          </div>
+
+          {nextScheduled && (
+            <Badge
+              variant="outline"
+              className="mt-3 border-blue-200 text-blue-600"
+            >
+              <Calendar className="w-3 h-3 mr-1" />
+              Gepland:{" "}
+              {new Date(nextScheduled.scheduledDate).toLocaleDateString("nl-NL", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              })}
+              {nextScheduled.scheduledTime && ` om ${nextScheduled.scheduledTime}`}
+            </Badge>
+          )}
         </div>
 
-        {nextScheduled && (
-          <Badge
-            variant="outline"
-            className="mt-3 border-blue-200 text-blue-600"
-          >
-            <Calendar className="w-3 h-3 mr-1" />
-            Gepland:{" "}
-            {new Date(nextScheduled.scheduledDate).toLocaleDateString("nl-NL", {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            })}
-            {nextScheduled.scheduledTime && ` om ${nextScheduled.scheduledTime}`}
-          </Badge>
-        )}
-      </div>
+        <div className="flex gap-3 mb-6">
+          {activeSession ? (
+            <Link href={`/client/programs/${id}/session`} className="flex-1">
+              <Button className="w-full bg-blue-500 hover:bg-blue-600 rounded-xl" size="lg">
+                <PlayCircle className="w-5 h-5 mr-2" />
+                Training hervatten
+              </Button>
+            </Link>
+          ) : (
+            <form action={startSession.bind(null, id)} className="flex-1">
+              <Button className="w-full bg-blue-500 hover:bg-blue-600 rounded-xl" size="lg" type="submit">
+                <PlayCircle className="w-5 h-5 mr-2" />
+                Training starten
+              </Button>
+            </form>
+          )}
+          <ScheduleButton clientProgramId={id} />
+        </div>
 
-      <div className="flex gap-3 mb-6">
-        {activeSession ? (
-          <Link href={`/client/programs/${id}/session`} className="flex-1">
-            <Button className="w-full" size="lg">
-              <PlayCircle className="w-5 h-5 mr-2" />
-              Training hervatten
-            </Button>
-          </Link>
-        ) : (
-          <form action={startSession.bind(null, id)} className="flex-1">
-            <Button className="w-full" size="lg" type="submit">
-              <PlayCircle className="w-5 h-5 mr-2" />
-              Training starten
-            </Button>
-          </form>
-        )}
-        <ScheduleButton clientProgramId={id} />
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Oefeningen overzicht</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <div className="bg-white rounded-3xl shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Oefeningen overzicht</h2>
           <div className="space-y-4">
             {program.items.map((item, index) => {
               const exercise = item.exercise;
@@ -197,7 +194,7 @@ export default async function ProgramDetailPage({
               return (
                 <div
                   key={item.id}
-                  className="flex gap-4 p-4 bg-gray-50 rounded-lg"
+                  className="flex gap-4 p-4 bg-gray-50 rounded-2xl"
                 >
                   <div className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium flex-shrink-0">
                     {index + 1}
@@ -249,8 +246,8 @@ export default async function ProgramDetailPage({
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

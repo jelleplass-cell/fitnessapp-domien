@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copy, Check } from "lucide-react";
 
 export default function NewClientPage() {
@@ -51,12 +50,10 @@ export default function NewClientPage() {
 
   if (generatedPassword) {
     return (
-      <div className="p-6 max-w-md">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-green-600">Klant aangemaakt!</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen max-w-md">
+        <div className="bg-white rounded-3xl shadow-sm p-6">
+          <h2 className="text-2xl font-semibold text-green-600 mb-4">Klant aangemaakt!</h2>
+          <div className="space-y-4">
             <p className="text-gray-600">
               De klant kan nu inloggen met onderstaande gegevens. Deel deze
               informatie veilig met je klant.
@@ -93,23 +90,22 @@ export default function NewClientPage() {
             </p>
 
             <Button
-              className="w-full"
+              className="w-full bg-blue-500 hover:bg-blue-600 rounded-xl"
               onClick={() => router.push("/instructor/clients")}
             >
               Naar klantenlijst
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-md">
-      <h1 className="text-2xl font-bold mb-6">Nieuwe klant</h1>
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen max-w-md">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Nieuwe klant</h1>
 
-      <Card>
-        <CardContent className="pt-6">
+      <div className="bg-white rounded-3xl shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="name">Naam *</Label>
@@ -143,20 +139,20 @@ export default function NewClientPage() {
             </p>
 
             <div className="flex gap-4">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
                 {loading ? "Aanmaken..." : "Klant aanmaken"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
+                className="rounded-xl"
               >
                 Annuleren
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, MessageSquare, Star } from "lucide-react";
 import { CreateCommunityModal } from "./create-community-modal";
@@ -70,10 +69,10 @@ export default async function CommunitySettingsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">Community Beheer</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Community Beheer</h1>
           <p className="text-sm text-gray-500">
             Beheer je communities en bepaal welke klanten toegang hebben
           </p>
@@ -83,47 +82,41 @@ export default async function CommunitySettingsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{communities.length}</p>
-                <p className="text-xs text-gray-500">Communities</p>
-              </div>
+        <div className="bg-white rounded-3xl shadow-sm p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-2xl">
+              <MessageSquare className="w-5 h-5 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{clients.length}</p>
-                <p className="text-xs text-gray-500">Klanten</p>
-              </div>
+            <div>
+              <p className="text-2xl font-bold">{communities.length}</p>
+              <p className="text-xs text-gray-500">Communities</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Star className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {communities.filter((c) => !c.isDefault).length}
-                </p>
-                <p className="text-xs text-gray-500">Exclusieve</p>
-              </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-3xl shadow-sm p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-2xl">
+              <Users className="w-5 h-5 text-green-600" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-2xl font-bold">{clients.length}</p>
+              <p className="text-xs text-gray-500">Klanten</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-3xl shadow-sm p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-2xl">
+              <Star className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">
+                {communities.filter((c) => !c.isDefault).length}
+              </p>
+              <p className="text-xs text-gray-500">Exclusieve</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Communities list */}
@@ -151,15 +144,17 @@ export default async function CommunitySettingsPage() {
       </div>
 
       {communities.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+        <div className="bg-white rounded-3xl shadow-sm p-6">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 mx-auto mb-4 flex items-center justify-center">
+              <MessageSquare className="w-8 h-8 text-gray-300" />
+            </div>
             <h3 className="font-medium text-gray-700 mb-2">Geen communities</h3>
             <p className="text-sm text-gray-500">
               Maak je eerste community om te beginnen
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -31,15 +31,16 @@ export default async function BuilderPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">Programma maken</h1>
-        <p className="text-sm text-gray-500">
-          Stel je eigen trainingsprogramma samen
-        </p>
-      </div>
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Programma maken</h1>
+          <p className="text-sm text-gray-500">
+            Stel je eigen trainingsprogramma samen
+          </p>
+        </div>
 
-      <ProgramBuilder
+        <ProgramBuilder
         exercises={exercises.map((e) => ({
           id: e.id,
           name: e.name,
@@ -54,8 +55,9 @@ export default async function BuilderPage() {
           location: e.location,
           muscleGroups: e.muscleGroups,
         }))}
-        userId={session.user.id}
-      />
+          userId={session.user.id}
+        />
+      </div>
     </div>
   );
 }

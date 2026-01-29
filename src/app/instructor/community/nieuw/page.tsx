@@ -35,9 +35,9 @@ export default async function NewCommunityPage() {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen max-w-2xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">Nieuwe community aanmaken</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Nieuwe community aanmaken</h1>
         <p className="text-sm text-gray-500">
           Maak een nieuwe community voor een specifieke groep klanten
         </p>

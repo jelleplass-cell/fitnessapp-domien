@@ -25,8 +25,10 @@ export default async function CommunityPage({ searchParams }: PageProps) {
 
   if (!user?.instructorId) {
     return (
-      <div className="p-4 md:p-6 max-w-3xl mx-auto">
-        <p className="text-gray-500">Je bent niet gekoppeld aan een instructeur.</p>
+      <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-gray-500">Je bent niet gekoppeld aan een instructeur.</p>
+        </div>
       </div>
     );
   }
@@ -211,37 +213,38 @@ export default async function CommunityPage({ searchParams }: PageProps) {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto">
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl md:text-2xl font-bold">
-                {currentCommunity?.name || "Community"}
-              </h1>
-              {currentCommunity && (
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: currentCommunity.color }}
-                />
-              )}
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-6">
+          <div className="flex flex-col gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-semibold text-gray-900">
+                  {currentCommunity?.name || "Community"}
+                </h1>
+                {currentCommunity && (
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: currentCommunity.color }}
+                  />
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                {currentCommunity?.isDefault
+                  ? "Blijf op de hoogte van updates van je instructeur"
+                  : "Exclusieve content voor deze community"}
+              </p>
             </div>
-            <p className="text-sm text-gray-500">
-              {currentCommunity?.isDefault
-                ? "Blijf op de hoogte van updates van je instructeur"
-                : "Exclusieve content voor deze community"}
-            </p>
+            {accessibleCommunities.length > 1 && (
+              <CommunitySelector
+                communities={accessibleCommunities}
+                currentCommunityId={currentCommunity?.id}
+              />
+            )}
           </div>
-          {accessibleCommunities.length > 1 && (
-            <CommunitySelector
-              communities={accessibleCommunities}
-              currentCommunityId={currentCommunity?.id}
-            />
-          )}
         </div>
-      </div>
 
-      <CommunityFeed
+        <CommunityFeed
         initialPosts={posts.map((p) => ({
           id: p.id,
           title: p.title,
@@ -292,9 +295,10 @@ export default async function CommunityPage({ searchParams }: PageProps) {
             _count: p.event._count,
           } : null,
         }))}
-        currentUserId={session.user.id}
-        canCreatePosts={false}
-      />
+          currentUserId={session.user.id}
+          canCreatePosts={false}
+        />
+      </div>
     </div>
   );
 }

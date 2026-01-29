@@ -29,9 +29,9 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen max-w-2xl">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-xl md:text-2xl font-bold">Instellingen</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Instellingen</h1>
         <p className="text-sm text-gray-500">Beheer je account en voorkeuren</p>
       </div>
 

@@ -1,13 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface Community {
   id: string;
@@ -37,23 +30,26 @@ export function CommunitySelector({
   };
 
   return (
-    <Select value={currentCommunityId} onValueChange={handleChange}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Selecteer community" />
-      </SelectTrigger>
-      <SelectContent>
-        {communities.map((community) => (
-          <SelectItem key={community.id} value={community.id}>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: community.color }}
-              />
-              {community.name}
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2 overflow-x-auto">
+      {communities.map((community) => (
+        <button
+          key={community.id}
+          onClick={() => handleChange(community.id)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            currentCommunityId === community.id
+              ? "bg-blue-500 text-white shadow-sm"
+              : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+          }`}
+        >
+          <div
+            className={`w-2 h-2 rounded-full ${
+              currentCommunityId === community.id ? "bg-white/60" : ""
+            }`}
+            style={currentCommunityId !== community.id ? { backgroundColor: community.color } : undefined}
+          />
+          {community.name}
+        </button>
+      ))}
+    </div>
   );
 }

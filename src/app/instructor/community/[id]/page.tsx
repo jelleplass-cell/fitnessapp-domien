@@ -157,6 +157,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
   });
 
   return (
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
     <CommunityDetailView
       community={{
         ...community,
@@ -212,5 +213,6 @@ export default async function CommunityDetailPage({ params }: PageProps) {
       clients={clients}
       currentUserId={session.user.id}
     />
+    </div>
   );
 }

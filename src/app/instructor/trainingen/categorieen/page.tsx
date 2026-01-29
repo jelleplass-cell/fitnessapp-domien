@@ -21,9 +21,9 @@ export default async function CategorieenPage() {
   });
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
       <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">Categorieën</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Categorieën</h1>
         <p className="text-sm text-gray-500">
           Beheer categorieën om je programma&apos;s te organiseren
         </p>

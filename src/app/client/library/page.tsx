@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Flame, MapPin, Dumbbell } from "lucide-react";
 import { LibraryFilters } from "./library-filters";
@@ -106,9 +105,9 @@ export default async function LibraryPage({
   const addedProgramIds = userPrograms.map((p) => p.programId);
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
       <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">Trainingsbibliotheek</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Trainingsbibliotheek</h1>
         <p className="text-sm text-gray-500 mt-1">
           Ontdek en voeg kant-en-klare trainingen toe aan je programma&apos;s
         </p>
@@ -120,8 +119,10 @@ export default async function LibraryPage({
       />
 
       {programs.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <Dumbbell className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <div className="bg-white rounded-3xl shadow-sm p-8 text-center text-gray-500">
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+            <Dumbbell className="w-8 h-8 text-gray-400" />
+          </div>
           <p>Geen programma&apos;s gevonden</p>
           <p className="text-sm mt-1">Probeer andere filters</p>
         </div>
@@ -146,7 +147,7 @@ export default async function LibraryPage({
               locationIcons[program.location as keyof typeof locationIcons];
 
             return (
-              <Card key={program.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+              <div key={program.id} className="bg-white rounded-3xl shadow-sm overflow-hidden group hover:shadow-lg transition-shadow">
                 <Link href={`/client/library/${program.id}`} className="block">
                   {program.imageUrl ? (
                     <div
@@ -159,7 +160,7 @@ export default async function LibraryPage({
                     </div>
                   )}
                 </Link>
-                <CardContent className="p-4">
+                <div className="p-4">
                   <Link href={`/client/library/${program.id}`} className="block">
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -226,8 +227,8 @@ export default async function LibraryPage({
                       isAdded={isAdded}
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>

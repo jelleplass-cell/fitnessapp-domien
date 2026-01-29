@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, CheckCircle, Mail, Phone, MapPin } from "lucide-react";
 import AssignProgramForm from "./assign-program-form";
@@ -194,12 +193,12 @@ export default async function ClientDetailPage({
   const fullAddress = addressParts.length > 0 ? addressParts.join(", ") : null;
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
       {/* Client Header */}
       <div className="mb-4 md:mb-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">{client.name}</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{client.name}</h1>
             <div className="mt-2 space-y-1">
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Mail className="w-4 h-4" />
@@ -243,70 +242,58 @@ export default async function ClientDetailPage({
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
-        <Card>
-          <CardContent className="p-3 md:pt-6 md:p-6">
-            <div className="text-xl md:text-2xl font-bold">{client.clientPrograms.length}</div>
-            <p className="text-xs md:text-sm text-gray-500">Programma&apos;s</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 md:pt-6 md:p-6">
-            <div className="text-xl md:text-2xl font-bold">{thisWeekSessions}</div>
-            <p className="text-xs md:text-sm text-gray-500">Deze week</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 md:pt-6 md:p-6">
-            <div className="text-xl md:text-2xl font-bold">{totalSessions}</div>
-            <p className="text-xs md:text-sm text-gray-500">Totaal</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-3xl shadow-sm p-3 md:p-6">
+          <div className="text-xl md:text-2xl font-bold">{client.clientPrograms.length}</div>
+          <p className="text-xs md:text-sm text-gray-500">Programma&apos;s</p>
+        </div>
+        <div className="bg-white rounded-3xl shadow-sm p-3 md:p-6">
+          <div className="text-xl md:text-2xl font-bold">{thisWeekSessions}</div>
+          <p className="text-xs md:text-sm text-gray-500">Deze week</p>
+        </div>
+        <div className="bg-white rounded-3xl shadow-sm p-3 md:p-6">
+          <div className="text-xl md:text-2xl font-bold">{totalSessions}</div>
+          <p className="text-xs md:text-sm text-gray-500">Totaal</p>
+        </div>
       </div>
 
       <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-1 lg:grid-cols-3 md:gap-6">
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
           {/* Assign Program */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">Programma toewijzen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {availablePrograms.length === 0 ? (
-                <p className="text-gray-500">
-                  Alle programma&apos;s zijn al toegewezen aan deze klant, of er zijn
-                  nog geen programma templates aangemaakt.
-                </p>
-              ) : (
-                <AssignProgramForm
-                  clientId={id}
-                  programs={availablePrograms.map((p) => ({
-                    id: p.id,
-                    name: p.name,
-                    difficulty: p.difficulty,
-                    itemCount: p.items.length,
-                  }))}
-                />
-              )}
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-3xl shadow-sm p-6">
+            <h3 className="text-base md:text-lg font-semibold mb-4">Programma toewijzen</h3>
+            {availablePrograms.length === 0 ? (
+              <p className="text-gray-500">
+                Alle programma&apos;s zijn al toegewezen aan deze klant, of er zijn
+                nog geen programma templates aangemaakt.
+              </p>
+            ) : (
+              <AssignProgramForm
+                clientId={id}
+                programs={availablePrograms.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  difficulty: p.difficulty,
+                  itemCount: p.items.length,
+                }))}
+              />
+            )}
+          </div>
 
           {/* Active Programs */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-base md:text-lg">
-                  Programma&apos;s ({activePrograms.length})
-                </CardTitle>
-                <ScheduleForm
-                  clientId={id}
-                  clientPrograms={activePrograms.map((cp) => ({
-                    id: cp.id,
-                    programName: cp.program.name,
-                  }))}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+          <div className="bg-white rounded-3xl shadow-sm p-6">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h3 className="text-base md:text-lg font-semibold">
+                Programma&apos;s ({activePrograms.length})
+              </h3>
+              <ScheduleForm
+                clientId={id}
+                clientPrograms={activePrograms.map((cp) => ({
+                  id: cp.id,
+                  programName: cp.program.name,
+                }))}
+              />
+            </div>
+            <div>
               {activePrograms.length === 0 ? (
                 <p className="text-gray-500 text-sm">
                   Nog geen programma&apos;s toegewezen.
@@ -406,8 +393,8 @@ export default async function ClientDetailPage({
                   })}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Schedule Calendar */}
           {activePrograms.length > 0 && (
@@ -430,51 +417,47 @@ export default async function ClientDetailPage({
 
         {/* Recent Activity */}
         <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recente trainingen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {client.sessions.length === 0 ? (
-                <p className="text-gray-500">Nog geen trainingen voltooid.</p>
-              ) : (
-                <div className="space-y-3">
-                  {client.sessions.map((session) => (
-                    <div key={session.id} className="p-3 bg-gray-50 rounded-lg">
-                      <p className="font-medium text-sm">
-                        {session.clientProgram.program.name}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                        <span>
-                          {session.finishedAt
-                            ? new Date(session.finishedAt).toLocaleDateString(
-                                "nl-NL",
-                                {
-                                  weekday: "short",
-                                  day: "numeric",
-                                  month: "short",
-                                }
-                              )
-                            : "-"}
+          <div className="bg-white rounded-3xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold mb-4">Recente trainingen</h3>
+            {client.sessions.length === 0 ? (
+              <p className="text-gray-500">Nog geen trainingen voltooid.</p>
+            ) : (
+              <div className="space-y-3">
+                {client.sessions.map((session) => (
+                  <div key={session.id} className="p-3 bg-gray-50 rounded-lg">
+                    <p className="font-medium text-sm">
+                      {session.clientProgram.program.name}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                      <span>
+                        {session.finishedAt
+                          ? new Date(session.finishedAt).toLocaleDateString(
+                              "nl-NL",
+                              {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                              }
+                            )
+                          : "-"}
+                      </span>
+                      {session.startedAt && session.finishedAt && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {Math.round(
+                            (new Date(session.finishedAt).getTime() -
+                              new Date(session.startedAt).getTime()) /
+                              60000
+                          )}{" "}
+                          min
                         </span>
-                        {session.startedAt && session.finishedAt && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {Math.round(
-                              (new Date(session.finishedAt).getTime() -
-                                new Date(session.startedAt).getTime()) /
-                                60000
-                            )}{" "}
-                            min
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

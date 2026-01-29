@@ -47,13 +47,14 @@ export default async function ClientProgramsPage() {
   });
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl md:text-2xl font-bold">Mijn programma&apos;s</h1>
-        <p className="text-sm text-gray-500">
-          Al je trainingen op een rij - start direct of plan ze in
-        </p>
-      </div>
+    <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Mijn programma&apos;s</h1>
+          <p className="text-sm text-gray-500">
+            Al je trainingen op een rij - start direct of plan ze in
+          </p>
+        </div>
 
       <ProgramsList
         programs={clientPrograms.map((cp) => ({
@@ -84,6 +85,7 @@ export default async function ClientProgramsPage() {
             : null,
         }))}
       />
+      </div>
     </div>
   );
 }

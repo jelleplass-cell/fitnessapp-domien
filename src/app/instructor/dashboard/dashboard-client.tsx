@@ -227,91 +227,91 @@ export function DashboardClient({
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <h1 className="text-xl md:text-2xl font-bold">Dashboard</h1>
+    <div className="p-4 md:p-6 space-y-6 bg-[#F8FAFC] min-h-screen">
+      <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Stats Cards - VitalView Style */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Link href="/instructor/clients">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                <span className="text-2xl font-bold">{stats.totalClients}</span>
+          <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                <Users className="w-5 h-5 text-blue-500" />
               </div>
-              <p className="text-xs text-gray-500">Totaal klanten</p>
-            </CardContent>
-          </Card>
+              <span className="text-3xl font-bold text-gray-900">{stats.totalClients}</span>
+            </div>
+            <p className="text-sm text-gray-500">Totaal klanten</p>
+          </div>
         </Link>
 
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              <span className="text-2xl font-bold text-green-700">{stats.activeClients}</span>
+        <div className="bg-[#E8F5F0] rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-200 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
-            <p className="text-xs text-green-600">Actief (laatste 3 dagen)</p>
-          </CardContent>
-        </Card>
+            <span className="text-3xl font-bold text-gray-900">{stats.activeClients}</span>
+          </div>
+          <p className="text-sm text-emerald-600">Actief (laatste 3 dagen)</p>
+        </div>
 
-        <Card className="bg-orange-50 border-orange-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <TrendingDown className="w-5 h-5 text-orange-600" />
-              <span className="text-2xl font-bold text-orange-700">{stats.inactiveClients}</span>
+        <div className="bg-[#FFF0E8] rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-orange-200 flex items-center justify-center">
+              <TrendingDown className="w-5 h-5 text-orange-500" />
             </div>
-            <p className="text-xs text-orange-600">Inactief (7+ dagen)</p>
-          </CardContent>
-        </Card>
+            <span className="text-3xl font-bold text-gray-900">{stats.inactiveClients}</span>
+          </div>
+          <p className="text-sm text-orange-500">Inactief (7+ dagen)</p>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Activity className="w-5 h-5 text-purple-600" />
-              <span className="text-2xl font-bold">{stats.totalSessionsThisWeek}</span>
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-purple-500" />
             </div>
-            <p className="text-xs text-gray-500">Sessies deze week</p>
-          </CardContent>
-        </Card>
+            <span className="text-3xl font-bold text-gray-900">{stats.totalSessionsThisWeek}</span>
+          </div>
+          <p className="text-sm text-gray-500">Sessies deze week</p>
+        </div>
 
         <Link href="/instructor/trainingen/oefeningen">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <Dumbbell className="w-5 h-5 text-green-600" />
-                <span className="text-2xl font-bold">{stats.exerciseCount}</span>
+          <div className="bg-[#E8F5F0] rounded-2xl p-5 hover:shadow-sm transition-shadow cursor-pointer">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 rounded-xl bg-emerald-200 flex items-center justify-center">
+                <Dumbbell className="w-5 h-5 text-emerald-600" />
               </div>
-              <p className="text-xs text-gray-500">Oefeningen</p>
-            </CardContent>
-          </Card>
+              <span className="text-3xl font-bold text-gray-900">{stats.exerciseCount}</span>
+            </div>
+            <p className="text-sm text-gray-500">Oefeningen</p>
+          </div>
         </Link>
 
         <Link href="/instructor/trainingen">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <ClipboardList className="w-5 h-5 text-purple-600" />
-                <span className="text-2xl font-bold">{stats.programCount}</span>
+          <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                <ClipboardList className="w-5 h-5 text-purple-500" />
               </div>
-              <p className="text-xs text-gray-500">Programma's</p>
-            </CardContent>
-          </Card>
+              <span className="text-3xl font-bold text-gray-900">{stats.programCount}</span>
+            </div>
+            <p className="text-sm text-gray-500">Programma's</p>
+          </div>
         </Link>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Activity Feed */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
-                Recente activiteit
-              </CardTitle>
-              <Badge variant="secondary">{recentSessions.length} deze week</Badge>
+        <div className="bg-white rounded-3xl p-6 shadow-sm lg:col-span-1">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-purple-500" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Recente activiteit</h2>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
+            <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">{recentSessions.length} deze week</Badge>
+          </div>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {recentSessions.length === 0 ? (
               <p className="text-gray-500 text-sm py-4 text-center">
                 Nog geen activiteit deze week
@@ -320,13 +320,13 @@ export function DashboardClient({
               recentSessions.map((session) => (
                 <div
                   key={session.id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-2xl hover:bg-gray-100 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-medium">
                     {session.user.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{session.user.name}</p>
+                    <p className="font-medium text-sm text-gray-900 truncate">{session.user.name}</p>
                     <p className="text-xs text-gray-500 truncate">{session.program.name}</p>
                     <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
                       {session.finishedAt && <span>{formatDate(session.finishedAt)}</span>}
@@ -360,40 +360,42 @@ export function DashboardClient({
                 </div>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Inactive Clients Alert */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-orange-500" />
-                Aandacht vereist
-              </CardTitle>
-              {inactiveClients.length > 0 && (
-                <Badge variant="destructive">{inactiveClients.length} inactief</Badge>
-              )}
+        <div className="bg-white rounded-3xl p-6 shadow-sm lg:col-span-1">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-orange-500" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Aandacht vereist</h2>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
+            {inactiveClients.length > 0 && (
+              <Badge className="bg-red-100 text-red-600 hover:bg-red-100">{inactiveClients.length} inactief</Badge>
+            )}
+          </div>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {inactiveClients.length === 0 ? (
               <div className="text-center py-8">
-                <TrendingUp className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                <div className="w-16 h-16 rounded-full bg-[#E8F5F0] mx-auto mb-3 flex items-center justify-center">
+                  <TrendingUp className="w-8 h-8 text-emerald-500" />
+                </div>
                 <p className="text-gray-500 text-sm">Alle klanten zijn actief!</p>
               </div>
             ) : (
               inactiveClients.map((client) => (
                 <div
                   key={client.id}
-                  className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100"
+                  className="flex items-center gap-3 p-4 bg-[#FFF0E8] rounded-2xl"
                 >
-                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-medium">
+                  <div className="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center text-orange-600 font-medium">
                     {client.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <Link href={`/instructor/clients/${client.id}`}>
-                      <p className="font-medium text-sm truncate hover:text-blue-600">
+                      <p className="font-medium text-sm text-gray-900 truncate hover:text-blue-600">
                         {client.name}
                       </p>
                     </Link>
@@ -411,7 +413,7 @@ export function DashboardClient({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-orange-600 border-orange-300 hover:bg-orange-100"
+                    className="text-orange-600 border-orange-300 hover:bg-orange-100 rounded-xl"
                     onClick={() => openNudgeDialog(client)}
                   >
                     <Send className="w-4 h-4 mr-1" />
@@ -420,26 +422,26 @@ export function DashboardClient({
                 </div>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Upcoming Events */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Aankomende events
-              </CardTitle>
-              <Link href="/instructor/events">
-                <Button variant="ghost" size="sm">
-                  Bekijk alle
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-amber-500" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Aankomende events</h2>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            <Link href="/instructor/events">
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
+                Bekijk alle
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          <div className="space-y-3">
             {upcomingEvents.length === 0 ? (
               <p className="text-gray-500 text-sm py-4 text-center">
                 Geen aankomende events
@@ -447,16 +449,16 @@ export function DashboardClient({
             ) : (
               upcomingEvents.map((event) => (
                 <Link key={event.id} href={`/instructor/events`}>
-                  <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="p-4 bg-[#FFF8E8] rounded-2xl hover:shadow-sm transition-all">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-sm">{event.title}</p>
+                      <p className="font-medium text-sm text-gray-900">{event.title}</p>
                       <Badge
-                        variant={
+                        className={
                           event.maxAttendees && event.registrationCount >= event.maxAttendees
-                            ? "destructive"
+                            ? "bg-red-100 text-red-600 hover:bg-red-100"
                             : event.registrationCount > 0
-                            ? "default"
-                            : "secondary"
+                            ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-100"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-100"
                         }
                       >
                         {event.registrationCount}
@@ -476,26 +478,26 @@ export function DashboardClient({
                 </Link>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Recent Community Comments */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Community reacties
-              </CardTitle>
-              <Link href="/instructor/community">
-                <Button variant="ghost" size="sm">
-                  Bekijk alle
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-pink-100 flex items-center justify-center">
+                <MessageSquare className="w-4 h-4 text-pink-500" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Community reacties</h2>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            <Link href="/instructor/community">
+              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
+                Bekijk alle
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          <div className="space-y-3">
             {recentComments.length === 0 ? (
               <p className="text-gray-500 text-sm py-4 text-center">
                 Nog geen reacties
@@ -503,12 +505,12 @@ export function DashboardClient({
             ) : (
               recentComments.map((comment) => (
                 <Link key={comment.id} href={`/instructor/community`}>
-                  <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div className="p-4 bg-[#FCE8F0] rounded-2xl hover:shadow-sm transition-all">
                     <div className="flex items-center gap-2 mb-1">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-medium">
+                      <div className="w-6 h-6 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 text-xs font-medium">
                         {comment.author.name.charAt(0).toUpperCase()}
                       </div>
-                      <p className="font-medium text-sm">{comment.author.name}</p>
+                      <p className="font-medium text-sm text-gray-900">{comment.author.name}</p>
                       <span className="text-xs text-gray-400">
                         {formatDate(comment.createdAt)}
                       </span>
@@ -521,30 +523,30 @@ export function DashboardClient({
                 </Link>
               ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* New Clients */}
         {newClients.length > 0 && (
-          <Card className="bg-green-50 border-green-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-green-700">
-                <UserPlus className="w-5 h-5" />
-                Nieuwe klanten deze week
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+          <div className="bg-[#E8F5F0] rounded-3xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-emerald-200 flex items-center justify-center">
+                <UserPlus className="w-4 h-4 text-emerald-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Nieuwe klanten deze week</h2>
+            </div>
+            <div className="space-y-2">
               {newClients.map((client) => (
                 <Link key={client.id} href={`/instructor/clients/${client.id}`}>
-                  <div className="flex items-center gap-3 p-2 bg-white rounded-lg hover:bg-green-100 transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-medium text-sm">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-2xl hover:shadow-sm transition-all">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-medium text-sm">
                       {client.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{client.name}</p>
+                      <p className="font-medium text-sm text-gray-900">{client.name}</p>
                       <p className="text-xs text-gray-500">{client.email}</p>
                     </div>
-                    <p className="text-xs text-green-600">
+                    <p className="text-xs text-emerald-600">
                       {new Date(client.createdAt).toLocaleDateString("nl-NL", {
                         day: "numeric",
                         month: "short",
@@ -553,28 +555,28 @@ export function DashboardClient({
                   </div>
                 </Link>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* Missed Schedules */}
         {missedSchedules.length > 0 && (
-          <Card className="bg-red-50 border-red-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-red-700">
-                <XCircle className="w-5 h-5" />
-                Gemiste trainingen
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+          <div className="bg-[#FCE8F0] rounded-3xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-red-200 flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-red-500" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Gemiste trainingen</h2>
+            </div>
+            <div className="space-y-2">
               {missedSchedules.slice(0, 5).map((schedule) => (
                 <Link key={schedule.id} href={`/instructor/clients/${schedule.client.id}`}>
-                  <div className="flex items-center gap-3 p-2 bg-white rounded-lg hover:bg-red-100 transition-colors">
+                  <div className="flex items-center gap-3 p-3 bg-white rounded-2xl hover:shadow-sm transition-all">
                     <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-medium text-sm">
                       {schedule.client.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-sm">{schedule.client.name}</p>
+                      <p className="font-medium text-sm text-gray-900">{schedule.client.name}</p>
                       <p className="text-xs text-gray-500">{schedule.programName}</p>
                     </div>
                     <p className="text-xs text-red-600">
@@ -586,8 +588,8 @@ export function DashboardClient({
                   </div>
                 </Link>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
 
