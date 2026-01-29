@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, LayoutGrid, List, Search, X } from "lucide-react";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/bulk-action-bar";
 
 interface Category {
   id: string;
@@ -52,11 +54,55 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     color: "#3B82F6",
   });
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const effectiveViewMode = isMobile ? "list" : viewMode;
+
+  // Filter categories
+  const filteredCategories = categories.filter((category) => {
+    const matchesSearch =
+      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (category.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+    return matchesSearch;
+  });
+
+  const bulk = useBulkSelect(filteredCategories);
+
+  const handleBulkDelete = async () => {
+    const res = await fetch("/api/categories/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: Array.from(bulk.selectedIds) }),
+    });
+    if (res.ok) {
+      bulk.clear();
+      setCategories(categories.filter(c => !bulk.selectedIds.has(c.id)));
+      router.refresh();
+    }
+  };
+
+  const hasFilters = searchQuery.length > 0;
+
+  const clearFilters = () => {
+    setSearchQuery("");
+  };
 
   const resetForm = () => {
     setFormData({ name: "", description: "", color: "#3B82F6" });
@@ -249,17 +295,78 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Categories grid */}
-      {categories.length === 0 ? (
+      {/* Search and View Toggle */}
+      <div className="space-y-3">
+        <div className="flex flex-col md:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Zoeken op naam of beschrijving..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* View Toggle - only on desktop */}
+          {!isMobile && (
+            <div className="flex border border-gray-100 rounded-xl overflow-hidden">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                className="rounded-none"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="rounded-none"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Filter results / clear */}
+        {hasFilters && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">
+              {filteredCategories.length} resultaten
+            </span>
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="w-4 h-4 mr-1" />
+              Filters wissen
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Categories content */}
+      {filteredCategories.length === 0 && hasFilters ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="p-8 text-center">
+            <p className="text-gray-500">Geen categorieën gevonden met deze filters</p>
+            <Button variant="link" onClick={clearFilters}>
+              Filters wissen
+            </Button>
+          </div>
+        </div>
+      ) : filteredCategories.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
           <div className="py-12 text-center text-gray-500">
             <p>Nog geen categorieën aangemaakt</p>
             <p className="text-sm mt-1">Klik op &quot;Nieuwe categorie&quot; om te beginnen</p>
           </div>
         </div>
-      ) : (
+      ) : effectiveViewMode === "grid" ? (
+        /* Grid View */
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => (
+          {filteredCategories.map((category) => (
             <div key={category.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
               <div
                 className="absolute top-0 left-0 w-full h-1"
@@ -267,6 +374,12 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
               />
               <div className="p-6 pb-2">
                 <div className="flex items-start justify-between">
+                  <input
+                    type="checkbox"
+                    checked={bulk.isSelected(category.id)}
+                    onChange={() => bulk.toggle(category.id)}
+                    className="w-4 h-4 rounded mt-1"
+                  />
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
@@ -299,6 +412,58 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <FileText className="w-4 h-4" />
                   <span>{category._count.programs} programma&apos;s</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* List View */
+        <div className="space-y-2">
+          {filteredCategories.map((category) => (
+            <div
+              key={category.id}
+              className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={bulk.isSelected(category.id)}
+                  onChange={() => bulk.toggle(category.id)}
+                  className="w-4 h-4 rounded flex-shrink-0"
+                />
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: category.color }}
+                />
+                <div className="flex-1 min-w-0 flex items-center gap-4">
+                  <h3 className="font-medium text-gray-900 whitespace-nowrap">
+                    {category.name}
+                  </h3>
+                  {category.description && (
+                    <p className="text-sm text-gray-500 truncate hidden sm:block">
+                      {category.description}
+                    </p>
+                  )}
+                </div>
+                <span className="text-sm text-gray-400 whitespace-nowrap flex-shrink-0">
+                  {category._count.programs} programma&apos;s
+                </span>
+                <div className="flex gap-1 flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEdit(category)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openDelete(category)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -398,6 +563,13 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BulkActionBar
+        count={bulk.count}
+        onDelete={handleBulkDelete}
+        onCancel={bulk.clear}
+        entityName="categorieën"
+      />
     </div>
   );
 }

@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: body.name,
         description: body.description || null,
+        imageUrl: body.imageUrl || null,
         youtubeUrl: body.youtubeUrl || null,
         audioUrl: body.audioUrl || null,
         durationMinutes: body.durationMinutes,
@@ -43,10 +44,28 @@ export async function POST(req: NextRequest) {
         holdSeconds: body.holdSeconds || null,
         requiresEquipment: body.requiresEquipment || false,
         equipment: body.equipment || null,
-        location: body.location || "GYM",
+        locations: body.locations || ["GYM"],
         creatorId: session.user.id,
       },
     });
+
+    // Create equipment links if provided
+    if (body.equipmentLinks && Array.isArray(body.equipmentLinks)) {
+      for (let i = 0; i < body.equipmentLinks.length; i++) {
+        const link = body.equipmentLinks[i];
+        if (link.equipmentId) {
+          await db.exerciseEquipment.create({
+            data: {
+              exerciseId: exercise.id,
+              equipmentId: link.equipmentId,
+              order: i,
+              alternativeEquipmentId: link.alternativeEquipmentId || null,
+              alternativeText: link.alternativeText || null,
+            },
+          });
+        }
+      }
+    }
 
     return NextResponse.json(exercise);
   } catch (error) {

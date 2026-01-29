@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/bulk-action-bar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -18,11 +21,12 @@ import {
   Archive,
   LayoutGrid,
   List,
-  ChevronRight,
   Clock,
   Search,
   X,
+  Pencil,
 } from "lucide-react";
+import { DeleteProgramButton } from "./delete-program-button";
 
 interface Exercise {
   id: string;
@@ -58,7 +62,7 @@ interface Program {
   isArchived: boolean;
   items: ProgramItem[];
   clientPrograms: ClientProgram[];
-  category?: Category | null;
+  categories: Category[];
 }
 
 interface ProgramsViewProps {
@@ -110,13 +114,52 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
       const matchesSearch = program.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (program.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
       const matchesDifficulty = selectedDifficulty === "all" || program.difficulty === selectedDifficulty;
-      const matchesCategory = selectedCategory === "all" || program.category?.id === selectedCategory;
+      const matchesCategory = selectedCategory === "all" || program.categories.some(c => c.id === selectedCategory);
       return matchesSearch && matchesDifficulty && matchesCategory;
     });
   };
 
   const filteredActive = filterPrograms(activePrograms);
   const filteredArchived = filterPrograms(archivedPrograms);
+
+  const router = useRouter();
+  const allPrograms = [...filteredActive, ...filteredArchived];
+  const bulk = useBulkSelect(allPrograms);
+
+  const handleBulkDelete = async () => {
+    const res = await fetch("/api/programs/bulk-delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: Array.from(bulk.selectedIds) }),
+    });
+    if (res.ok) {
+      bulk.clear();
+      router.refresh();
+    }
+  };
+
+  // Group active programs by category
+  const categoryGroups = useMemo(() => {
+    const groups: { category: Category | null; programs: Program[] }[] = [];
+    const categorized = new Set<string>();
+
+    // Group by each category
+    for (const cat of categories) {
+      const progs = filteredActive.filter(p => p.categories.some(c => c.id === cat.id));
+      if (progs.length > 0) {
+        groups.push({ category: cat, programs: progs });
+        progs.forEach(p => categorized.add(p.id));
+      }
+    }
+
+    // "Overig" group for uncategorized
+    const uncategorized = filteredActive.filter(p => !categorized.has(p.id));
+    if (uncategorized.length > 0) {
+      groups.push({ category: null, programs: uncategorized });
+    }
+
+    return groups;
+  }, [filteredActive, categories]);
 
   const hasFilters = searchQuery || selectedDifficulty !== "all" || selectedCategory !== "all";
 
@@ -135,71 +178,88 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
         );
 
         return (
-          <Link key={program.id} href={`/instructor/trainingen/${program.id}`}>
-            <div
-              className={`bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full ${
-                isArchived ? "opacity-60" : ""
-              }`}
-            >
-              <div className="p-6 pb-2">
-                <div className="flex justify-between items-start">
-                  <h3 className="text-lg font-semibold">{program.name}</h3>
-                  {isArchived ? (
-                    <Badge variant="secondary">Gearchiveerd</Badge>
-                  ) : (
-                    <Badge
-                      className={
-                        difficultyColors[
-                          program.difficulty as keyof typeof difficultyColors
-                        ]
-                      }
-                    >
-                      {
-                        difficultyLabels[
-                          program.difficulty as keyof typeof difficultyLabels
-                        ]
-                      }
-                    </Badge>
-                  )}
+          <div
+            key={program.id}
+            className={`bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow h-full ${
+              isArchived ? "opacity-60" : ""
+            }`}
+          >
+            <div className="p-6 pb-2">
+              <div className="flex items-start justify-between">
+                <input
+                  type="checkbox"
+                  checked={bulk.isSelected(program.id)}
+                  onChange={() => bulk.toggle(program.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 rounded mt-1"
+                />
+                <h3 className="text-lg font-semibold">{program.name}</h3>
+                <div className="flex gap-1">
+                  <Link href={`/instructor/trainingen/${program.id}`}>
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                  <DeleteProgramButton programId={program.id} />
                 </div>
               </div>
-              <div className="px-6 pb-6">
-                {program.description && !isArchived && (
-                  <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-                    {program.description}
-                  </p>
-                )}
-                {program.category && (
-                  <div className="mb-2">
+              {!isArchived ? (
+                <Badge
+                  className={`mt-1 ${
+                    difficultyColors[
+                      program.difficulty as keyof typeof difficultyColors
+                    ]
+                  }`}
+                >
+                  {
+                    difficultyLabels[
+                      program.difficulty as keyof typeof difficultyLabels
+                    ]
+                  }
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="mt-1">Gearchiveerd</Badge>
+              )}
+            </div>
+            <div className="px-6 pb-6">
+              {program.description && !isArchived && (
+                <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+                  {program.description}
+                </p>
+              )}
+              {program.categories.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {program.categories.map((cat) => (
                     <Badge
+                      key={cat.id}
                       variant="outline"
                       className="text-xs"
                       style={{
-                        borderColor: program.category.color,
-                        color: program.category.color,
+                        borderColor: cat.color,
+                        color: cat.color,
                       }}
                     >
-                      {program.category.name}
+                      {cat.name}
                     </Badge>
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <FileText className="w-4 h-4" />
-                    {program.items.length} oefeningen
-                  </span>
-                  {!isArchived && <span>~{totalDuration} min</span>}
+                  ))}
                 </div>
-                {!isArchived && (
-                  <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
-                    <Users className="w-4 h-4" />
-                    {program.clientPrograms.length} klant
-                    {program.clientPrograms.length !== 1 ? "en" : ""}
-                  </div>
-                )}
+              )}
+              <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                <span className="flex items-center gap-1">
+                  <FileText className="w-4 h-4" />
+                  {program.items.length} oefeningen
+                </span>
+                {!isArchived && <span>~{totalDuration} min</span>}
               </div>
+              {!isArchived && (
+                <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
+                  <Users className="w-4 h-4" />
+                  {program.clientPrograms.length} klant
+                  {program.clientPrograms.length !== 1 ? "en" : ""}
+                </div>
+              )}
             </div>
-          </Link>
+          </div>
         );
       })}
     </div>
@@ -214,64 +274,78 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
         );
 
         return (
-          <Link
+          <div
             key={program.id}
-            href={`/instructor/trainingen/${program.id}`}
-            className="block"
+            className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] transition-colors"
           >
-            <div className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] active:bg-gray-100 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-gray-900 truncate">
-                      {program.name}
-                    </h3>
-                    {!isArchived && (
-                      <Badge
-                        className={`text-xs px-1.5 py-0 ${
-                          difficultyColors[
-                            program.difficulty as keyof typeof difficultyColors
-                          ]
-                        }`}
-                      >
-                        {
-                          difficultyLabelsShort[
-                            program.difficulty as keyof typeof difficultyLabelsShort
-                          ]
-                        }
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <FileText className="w-3 h-3" />
-                      {program.items.length}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {totalDuration}min
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {program.clientPrograms.length}
-                    </span>
-                    {program.category && (
-                      <span
-                        className="text-xs px-1.5 py-0.5 rounded"
-                        style={{
-                          backgroundColor: `${program.category.color}20`,
-                          color: program.category.color,
-                        }}
-                      >
-                        {program.category.name}
-                      </span>
-                    )}
-                  </div>
+            <div className="flex items-center justify-between">
+              <input
+                type="checkbox"
+                checked={bulk.isSelected(program.id)}
+                onChange={() => bulk.toggle(program.id)}
+                className="w-4 h-4 rounded flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/instructor/trainingen/${program.id}`}
+                    className="font-medium text-gray-900 truncate hover:underline"
+                  >
+                    {program.name}
+                  </Link>
+                  {!isArchived && (
+                    <Badge
+                      className={`text-xs px-1.5 py-0 ${
+                        difficultyColors[
+                          program.difficulty as keyof typeof difficultyColors
+                        ]
+                      }`}
+                    >
+                      {
+                        difficultyLabelsShort[
+                          program.difficulty as keyof typeof difficultyLabelsShort
+                        ]
+                      }
+                    </Badge>
+                  )}
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 ml-2" />
+                <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    {program.items.length}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {totalDuration}min
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {program.clientPrograms.length}
+                  </span>
+                  {program.categories.map((cat) => (
+                    <span
+                      key={cat.id}
+                      className="text-xs px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: `${cat.color}20`,
+                        color: cat.color,
+                      }}
+                    >
+                      {cat.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                <Link href={`/instructor/trainingen/${program.id}`}>
+                  <Button variant="ghost" size="sm">
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <DeleteProgramButton programId={program.id} />
               </div>
             </div>
-          </Link>
+          </div>
         );
       })}
     </div>
@@ -379,15 +453,39 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
           </div>
         )}
 
-        {/* Active Programs */}
+        {/* Active Programs - grouped by category */}
         {filteredActive.length > 0 && (
-          <div>
-            <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">
+          <div className="space-y-6">
+            <h2 className="text-base md:text-lg font-semibold">
               Actief ({filteredActive.length})
             </h2>
-            {effectiveViewMode === "grid"
-              ? renderGridView(filteredActive)
-              : renderMobileListView(filteredActive)}
+            {categoryGroups.map((group) => (
+              <div key={group.category?.id || "overig"}>
+                <div className="flex items-center gap-2 mb-3">
+                  {group.category ? (
+                    <>
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: group.category.color }}
+                      />
+                      <h3 className="text-sm font-semibold text-gray-700">
+                        {group.category.name}
+                      </h3>
+                    </>
+                  ) : (
+                    <h3 className="text-sm font-semibold text-gray-400">
+                      Overig
+                    </h3>
+                  )}
+                  <span className="text-xs text-gray-400">
+                    ({group.programs.length})
+                  </span>
+                </div>
+                {effectiveViewMode === "grid"
+                  ? renderGridView(group.programs)
+                  : renderMobileListView(group.programs)}
+              </div>
+            ))}
           </div>
         )}
 
@@ -404,6 +502,12 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
           </div>
         )}
       </div>
+      <BulkActionBar
+        count={bulk.count}
+        onDelete={handleBulkDelete}
+        onCancel={bulk.clear}
+        entityName="programma's"
+      />
     </div>
   );
 }

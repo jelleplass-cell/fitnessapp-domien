@@ -30,6 +30,7 @@ export default async function ProgramDetailPage({
         clientPrograms: {
           include: { client: true },
         },
+        categories: true,
       },
     }),
     db.category.findMany({
@@ -115,7 +116,7 @@ export default async function ProgramDetailPage({
           location: program.location,
           equipmentNeeded: program.equipmentNeeded,
           isPublic: program.isPublic,
-          categoryId: program.categoryId,
+          categories: program.categories,
           items: program.items.map((item) => ({
             id: item.id,
             order: item.order,
@@ -127,7 +128,7 @@ export default async function ProgramDetailPage({
               sets: item.exercise.sets,
               reps: item.exercise.reps,
               holdSeconds: item.exercise.holdSeconds,
-              location: item.exercise.location,
+              locations: item.exercise.locations,
               equipment: item.exercise.equipment,
               caloriesPerSet: item.exercise.caloriesPerSet,
             },

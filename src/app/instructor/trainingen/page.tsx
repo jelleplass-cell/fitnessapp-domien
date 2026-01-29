@@ -23,7 +23,7 @@ export default async function TrainingenPage() {
       clientPrograms: {
         include: { client: true },
       },
-      category: true,
+      categories: true,
     },
     orderBy: { createdAt: "desc" },
   });

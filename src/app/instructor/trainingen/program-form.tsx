@@ -35,7 +35,7 @@ interface Exercise {
   sets: number;
   reps: number | null;
   holdSeconds: number | null;
-  location: string;
+  locations: string[];
   equipment: string | null;
   caloriesPerSet: number | null;
 }
@@ -64,7 +64,7 @@ interface ProgramFormProps {
     location: string;
     equipmentNeeded: string | null;
     isPublic: boolean;
-    categoryId: string | null;
+    categories: Category[];
     items: ProgramItem[];
   };
   categories?: Category[];
@@ -106,8 +106,11 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
     location: program?.location || "GYM",
     equipmentNeeded: program?.equipmentNeeded || "",
     isPublic: program?.isPublic || false,
-    categoryId: program?.categoryId || "",
   });
+
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    program?.categories?.map(c => c.id) || []
+  );
 
   useEffect(() => {
     fetch("/api/exercises")
@@ -138,8 +141,9 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
     if (selectedExercises.length > 0) {
       const locationCounts: Record<string, number> = {};
       selectedExercises.forEach((e) => {
-        const loc = e.exercise.location;
-        locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+        e.exercise.locations.forEach((loc) => {
+          locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+        });
       });
       const primaryLocation = Object.entries(locationCounts).sort(
         (a, b) => b[1] - a[1]
@@ -222,7 +226,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          categoryId: formData.categoryId || null,
+          categoryIds: selectedCategoryIds,
           exercises: selectedExercises.map((e, index) => ({
             exerciseId: e.exercise.id,
             order: index,
@@ -255,10 +259,10 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {/* Public/Private Toggle */}
       <div className={`bg-white rounded-2xl border shadow-sm ${formData.isPublic ? "border-green-200 bg-green-50/30" : "border-gray-100"}`}>
-        <div className="p-6 pb-3">
+        <div className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {formData.isPublic ? (
@@ -292,11 +296,11 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-        <div className="p-6 pb-0">
-          <h3 className="font-semibold">Programma details</h3>
+        <div className="px-6 pt-6 pb-2">
+          <h3 className="font-semibold text-lg">Programma details</h3>
         </div>
-        <div className="p-6 space-y-4">
-          <div>
+        <div className="p-6 space-y-6">
+          <div className="space-y-2">
             <Label htmlFor="name">Naam *</Label>
             <Input
               id="name"
@@ -310,7 +314,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
           </div>
 
           {formData.isPublic && (
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="shortDescription">Korte omschrijving (voor bibliotheek)</Label>
               <Input
                 id="shortDescription"
@@ -321,13 +325,13 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                 placeholder="bijv. Complete workout voor beginners"
                 maxLength={150}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500">
                 Max 150 tekens. Wordt getoond in het programma-overzicht.
               </p>
             </div>
           )}
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="description">
               {formData.isPublic ? "Uitgebreide beschrijving" : "Beschrijving"}
             </Label>
@@ -343,7 +347,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
           </div>
 
           {formData.isPublic && (
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="imageUrl">Afbeelding URL (thumbnail)</Label>
               <Input
                 id="imageUrl"
@@ -353,14 +357,14 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                 }
                 placeholder="https://example.com/image.jpg"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500">
                 Optioneel. URL naar een afbeelding voor het programma.
               </p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
               <Label htmlFor="difficulty">Niveau *</Label>
               <Select
                 value={formData.difficulty}
@@ -379,7 +383,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
               </Select>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="location">Locatie</Label>
               <Select
                 value={formData.location}
@@ -414,7 +418,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
             </div>
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="equipmentNeeded">Benodigde apparatuur</Label>
             <Input
               id="equipmentNeeded"
@@ -424,45 +428,59 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
               }
               placeholder="bijv. dumbbells, mat, weerstandsband"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500">
               Scheid items met een komma
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="category">Categorie</Label>
-            <Select
-              value={formData.categoryId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, categoryId: value === "none" ? "" : value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecteer een categorie (optioneel)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Geen categorie</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <div className="flex items-center gap-2">
+          <div className="space-y-2">
+            <Label>Categorieën</Label>
+            <div className="flex flex-wrap gap-2">
+              {categories.length === 0 ? (
+                <p className="text-sm text-gray-500">Nog geen categorieën aangemaakt</p>
+              ) : (
+                categories.map((category) => {
+                  const isSelected = selectedCategoryIds.includes(category.id);
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategoryIds(prev =>
+                          isSelected
+                            ? prev.filter(id => id !== category.id)
+                            : [...prev, category.id]
+                        );
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                        isSelected
+                          ? "text-white border-transparent"
+                          : "bg-white border-gray-200 hover:border-gray-300"
+                      }`}
+                      style={
+                        isSelected
+                          ? { backgroundColor: category.color, borderColor: category.color }
+                          : { color: category.color }
+                      }
+                    >
                       <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: category.color }}
+                        className={`w-2 h-2 rounded-full ${isSelected ? "bg-white/80" : ""}`}
+                        style={!isSelected ? { backgroundColor: category.color } : {}}
                       />
-                      <span>{category.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                      {category.name}
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-        <div className="p-6 pb-0">
+        <div className="px-6 pt-6 pb-2">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Oefeningen</h3>
+            <h3 className="font-semibold text-lg">Oefeningen</h3>
             {selectedExercises.length > 0 && (
               <div className="flex gap-2">
                 <Badge variant="secondary">
@@ -478,7 +496,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
             )}
           </div>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-5">
           {/* Add exercise dropdown */}
           <div className="flex gap-2">
             <Select onValueChange={addExercise}>
@@ -487,13 +505,13 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
               </SelectTrigger>
               <SelectContent>
                 {exercises.map((exercise) => {
-                  const LocationIcon =
-                    locationIcons[exercise.location as keyof typeof locationIcons] ||
+                  const FirstLocationIcon =
+                    locationIcons[exercise.locations[0] as keyof typeof locationIcons] ||
                     Dumbbell;
                   return (
                     <SelectItem key={exercise.id} value={exercise.id}>
                       <div className="flex items-center gap-2">
-                        <LocationIcon className="w-4 h-4" />
+                        <FirstLocationIcon className="w-4 h-4" />
                         <span>{exercise.name}</span>
                         <span className="text-gray-400">
                           ({exercise.sets} sets,{" "}
@@ -521,11 +539,6 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
           ) : (
             <div className="space-y-2">
               {selectedExercises.map((item, index) => {
-                const LocationIcon =
-                  locationIcons[
-                    item.exercise.location as keyof typeof locationIcons
-                  ] || Dumbbell;
-
                 const isDragging = draggedIndex === index;
                 const isDragOver = dragOverIndex === index;
 
@@ -568,14 +581,15 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                             ? `${item.exercise.reps} reps`
                             : `${item.exercise.holdSeconds}s vasthouden`}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <LocationIcon className="w-3 h-3" />
-                          {
-                            locationLabels[
-                              item.exercise.location as keyof typeof locationLabels
-                            ]
-                          }
-                        </span>
+                        {item.exercise.locations.map((loc) => {
+                          const LocationIcon = locationIcons[loc as keyof typeof locationIcons] || Dumbbell;
+                          return (
+                            <span key={loc} className="flex items-center gap-1">
+                              <LocationIcon className="w-3 h-3" />
+                              {locationLabels[loc as keyof typeof locationLabels]}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -614,8 +628,8 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <Button type="submit" disabled={loading || selectedExercises.length === 0} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
+      <div className="flex gap-4 pt-2 pb-6">
+        <Button type="submit" disabled={loading || selectedExercises.length === 0} className="bg-blue-500 hover:bg-blue-600 rounded-xl px-6">
           {loading
             ? "Opslaan..."
             : program

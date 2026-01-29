@@ -36,6 +36,11 @@ enum Language {
   FR
 }
 
+enum EquipmentType {
+  MACHINE     // Fitness toestellen (leg press, cable machine, etc.)
+  ACCESSORY   // Losse materialen (dumbbells, kettlebells, bands, etc.)
+}
+
 // ============ USER & AUTH ============
 
 model User {
@@ -88,6 +93,7 @@ model User {
   givenKudos            ActivityKudos[] @relation("GivenKudos")
   createdCommunities    Community[]     @relation("CreatedCommunities")
   communityMemberships  CommunityMember[]
+  createdEquipment      Equipment[]
 
   @@index([instructorId])
 }
@@ -110,7 +116,7 @@ model Exercise {
   caloriesPerSet    Int?      // estimated calories burned per set
   requiresEquipment Boolean   @default(false)
   equipment         String?
-  location          Location  @default(GYM)
+  locations         String[]  @default(["GYM"]) // GYM, HOME, OUTDOOR - supports multiple
   muscleGroups      String?   // e.g., "chest,shoulders,triceps"
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -121,8 +127,49 @@ model Exercise {
   programItems      ProgramItem[]
   clientExerciseNotes ClientExerciseNote[]
   clientProgramItems  ClientProgramItem[]
+  exerciseEquipment   ExerciseEquipment[]
 
   @@index([creatorId])
+}
+
+// ============ EQUIPMENT / MATERIALEN ============
+
+model Equipment {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  type        EquipmentType @default(ACCESSORY)
+  images      String?       // JSON array of image URLs: ["url1", "url2"]
+  steps       String?       // JSON array of usage steps: ["Step 1", "Step 2"]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  creatorId            String
+  creator              User               @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  exercises            ExerciseEquipment[]
+  alternativeForLinks  ExerciseEquipment[] @relation("AlternativeEquipment")
+
+  @@index([creatorId])
+  @@index([type])
+}
+
+model ExerciseEquipment {
+  id               String     @id @default(cuid())
+  order            Int        @default(0) // display order
+  alternativeText  String?    // free-text alternative description (e.g. "Gebruik een gewone fiets buiten")
+
+  // Relations
+  exerciseId       String
+  exercise         Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  equipmentId      String
+  equipment        Equipment  @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  alternativeEquipmentId String?
+  alternativeEquipment   Equipment? @relation("AlternativeEquipment", fields: [alternativeEquipmentId], references: [id], onDelete: SetNull)
+
+  @@unique([exerciseId, equipmentId])
+  @@index([exerciseId])
+  @@index([equipmentId])
 }
 
 // ============ CATEGORIES ============
@@ -165,8 +212,7 @@ model Program {
   // Relations
   creatorId        String
   creator          User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  categoryId       String?
-  category         Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categories       Category[]      // many-to-many
   items            ProgramItem[]
   clientPrograms   ClientProgram[]
 

@@ -21,7 +21,7 @@ interface Exercise {
   id: string;
   name: string;
   description: string | null;
-  location: string;
+  locations: string[];
   durationMinutes: number;
   sets: number;
   reps: number | null;
@@ -93,10 +93,6 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
         // Desktop Grid View
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {exercises.map((exercise) => {
-            const LocationIcon =
-              locationIcons[exercise.location as keyof typeof locationIcons] ||
-              Dumbbell;
-
             return (
               <div key={exercise.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow">
                 <div className="p-6 pb-2">
@@ -120,10 +116,15 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                   )}
 
                   <div className="flex flex-wrap gap-2 mb-3">
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <LocationIcon className="w-3 h-3" />
-                      {locationLabels[exercise.location as keyof typeof locationLabels]}
-                    </Badge>
+                    {exercise.locations.map((loc) => {
+                      const LocationIcon = locationIcons[loc as keyof typeof locationIcons] || Dumbbell;
+                      return (
+                        <Badge key={loc} variant="secondary" className="flex items-center gap-1">
+                          <LocationIcon className="w-3 h-3" />
+                          {locationLabels[loc as keyof typeof locationLabels]}
+                        </Badge>
+                      );
+                    })}
                     {exercise.requiresEquipment && (
                       <Badge variant="outline">Materiaal nodig</Badge>
                     )}
@@ -155,10 +156,6 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
         // Mobile-friendly List View (compact cards)
         <div className="space-y-2">
           {exercises.map((exercise) => {
-            const LocationIcon =
-              locationIcons[exercise.location as keyof typeof locationIcons] ||
-              Dumbbell;
-
             return (
               <Link
                 key={exercise.id}
@@ -177,10 +174,15 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                         )}
                       </div>
                       <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <LocationIcon className="w-3 h-3" />
-                          {locationLabels[exercise.location as keyof typeof locationLabels]}
-                        </span>
+                        {exercise.locations.map((loc) => {
+                          const LocationIcon = locationIcons[loc as keyof typeof locationIcons] || Dumbbell;
+                          return (
+                            <span key={loc} className="flex items-center gap-1">
+                              <LocationIcon className="w-3 h-3" />
+                              {locationLabels[loc as keyof typeof locationLabels]}
+                            </span>
+                          );
+                        })}
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {exercise.durationMinutes}min

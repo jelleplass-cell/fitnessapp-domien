@@ -37,7 +37,7 @@ interface Exercise {
   restSeconds: number;
   caloriesPerSet: number | null;
   equipment: string | null;
-  location: string;
+  locations: string[];
   muscleGroups: string | null;
 }
 
@@ -75,7 +75,7 @@ export function ProgramBuilder({ exercises, userId }: ProgramBuilderProps) {
       (e.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
       (e.muscleGroups?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesLocation =
-      locationFilter === "all" || e.location === locationFilter;
+      locationFilter === "all" || e.locations.includes(locationFilter);
     return matchesSearch && matchesLocation;
   });
 

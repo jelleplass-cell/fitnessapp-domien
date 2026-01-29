@@ -68,6 +68,7 @@ export function CreateEventForm() {
     locationDetails: "",
     meetingUrl: "",
     meetingPlatform: "",
+    imageUrl: "",
     videoUrl: "",
     equipment: "",
     difficulty: "",
@@ -111,8 +112,9 @@ export function CreateEventForm() {
           endDate: endDateTime?.toISOString() || undefined,
           location: isOnlineEvent ? "Online" : formData.location || undefined,
           locationDetails: !isOnlineEvent ? formData.locationDetails || undefined : undefined,
-          meetingUrl: isOnlineEvent ? formData.meetingUrl || undefined : undefined,
+          meetingUrl: formData.meetingUrl || undefined,
           meetingPlatform: isOnlineEvent ? formData.meetingPlatform || undefined : undefined,
+          imageUrl: formData.imageUrl || undefined,
           videoUrl: formData.videoUrl || undefined,
           equipment: formData.equipment || undefined,
           difficulty: formData.difficulty || undefined,
@@ -138,6 +140,7 @@ export function CreateEventForm() {
           locationDetails: "",
           meetingUrl: "",
           meetingPlatform: "",
+          imageUrl: "",
           videoUrl: "",
           equipment: "",
           difficulty: "",
@@ -168,14 +171,14 @@ export function CreateEventForm() {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Nieuw event aanmaken</DialogTitle>
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl">Nieuw event aanmaken</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Event Type Selection */}
-          <div>
-            <Label className="mb-2 block">Type event *</Label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <Label className="block">Type event *</Label>
+            <div className="grid grid-cols-2 gap-3">
               {eventTypeOptions.map((option) => {
                 const Icon = option.icon;
                 const isSelected = formData.eventType === option.value;
@@ -204,7 +207,7 @@ export function CreateEventForm() {
           </div>
 
           {/* Title */}
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="title">Titel *</Label>
             <Input
               id="title"
@@ -215,7 +218,7 @@ export function CreateEventForm() {
           </div>
 
           {/* Description */}
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="description">Beschrijving</Label>
             <Textarea
               id="description"
@@ -228,7 +231,7 @@ export function CreateEventForm() {
 
           {/* Date & Time */}
           <div className="grid grid-cols-3 gap-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="date">Datum *</Label>
               <Input
                 id="date"
@@ -237,7 +240,7 @@ export function CreateEventForm() {
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="time">Starttijd *</Label>
               <Input
                 id="time"
@@ -246,7 +249,7 @@ export function CreateEventForm() {
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="endTime">Eindtijd</Label>
               <Input
                 id="endTime"
@@ -260,7 +263,7 @@ export function CreateEventForm() {
           {/* Location (for non-online events) */}
           {!isOnlineEvent && (
             <div className="space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="location" className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   Locatie
@@ -272,7 +275,7 @@ export function CreateEventForm() {
                   placeholder="bijv. Sportcentrum Amsterdam"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="locationDetails">Locatie details (optioneel)</Label>
                 <Textarea
                   id="locationDetails"
@@ -292,7 +295,7 @@ export function CreateEventForm() {
                 <Video className="w-4 h-4" />
                 Online meeting instellingen
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="meetingPlatform">Platform</Label>
                 <Select
                   value={formData.meetingPlatform}
@@ -310,7 +313,7 @@ export function CreateEventForm() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="meetingUrl">Meeting URL *</Label>
                 <Input
                   id="meetingUrl"
@@ -328,7 +331,7 @@ export function CreateEventForm() {
           {/* Training specific options */}
           {(formData.eventType === "TRAINING" || formData.eventType === "WORKSHOP") && (
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="difficulty">Niveau</Label>
                 <Select
                   value={formData.difficulty}
@@ -346,7 +349,7 @@ export function CreateEventForm() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="equipment">Benodigdheden</Label>
                 <Input
                   id="equipment"
@@ -358,8 +361,38 @@ export function CreateEventForm() {
             </div>
           )}
 
+          {/* Meeting URL for OTHER type */}
+          {formData.eventType === "OTHER" && (
+            <div className="space-y-2">
+              <Label htmlFor="meetingUrlOther" className="flex items-center gap-2">
+                <Video className="w-4 h-4" />
+                Meeting link (optioneel)
+              </Label>
+              <Input
+                id="meetingUrlOther"
+                value={formData.meetingUrl}
+                onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
+                placeholder="https://zoom.us/j/... of andere link"
+              />
+            </div>
+          )}
+
+          {/* Image URL */}
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Afbeelding URL (optioneel)</Label>
+            <Input
+              id="imageUrl"
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="text-xs text-gray-500">
+              Wordt getoond als header afbeelding bij het event
+            </p>
+          </div>
+
           {/* Video URL (for promo) */}
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="videoUrl">Promo video URL (optioneel)</Label>
             <Input
               id="videoUrl"
@@ -394,7 +427,7 @@ export function CreateEventForm() {
             {formData.requiresRegistration && (
               <>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="maxAttendees">Max. deelnemers</Label>
                     <Input
                       id="maxAttendees"
@@ -407,7 +440,7 @@ export function CreateEventForm() {
                       placeholder="Onbeperkt"
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="registrationDeadlineHours">Aanmelddeadline</Label>
                     <Select
                       value={formData.registrationDeadlineHours}
@@ -473,7 +506,7 @@ export function CreateEventForm() {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
+          <div className="flex gap-3 pt-2 pb-2">
             <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
               {loading ? "Aanmaken..." : "Event aanmaken"}
             </Button>

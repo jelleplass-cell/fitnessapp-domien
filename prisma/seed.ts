@@ -1,4 +1,4 @@
-import { PrismaClient, Role, Difficulty, Location, Language, EventType } from "@prisma/client";
+import { PrismaClient, Role, Difficulty, Location, Language, EventType, EquipmentType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -1240,7 +1240,7 @@ async function main() {
   // Create programs
   const programs = [];
   for (const progData of programsData) {
-    const { exercises: exerciseIds, ...programInfo } = progData;
+    const { exercises: exerciseIds, categoryId, ...programInfo } = progData;
 
     const program = await prisma.program.upsert({
       where: { id: progData.id },
@@ -1248,6 +1248,7 @@ async function main() {
       create: {
         ...programInfo,
         creatorId: instructor.id,
+        categories: categoryId ? { connect: [{ id: categoryId }] } : undefined,
       },
     });
     programs.push(program);
@@ -1495,6 +1496,464 @@ async function main() {
   console.log("Registered client for bootcamp event");
 
   // ============================================================
+  // EQUIPMENT / MATERIALEN
+  // ============================================================
+
+  // First, delete existing equipment for this instructor to avoid duplicates
+  await prisma.equipment.deleteMany({
+    where: { creatorId: instructor.id },
+  });
+
+  const machineData = [
+    {
+      name: "Leg Press",
+      description: "Machine voor het trainen van quadriceps, hamstrings en bilspieren. Geschikt voor zware belasting met minimale belasting op de rug.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten en plaats je voeten op schouderbreed op het platform", imageUrl: "", videoUrl: "" },
+        { text: "Ontgrendel het veiligheidsslot en buig je knieën tot 90 graden", imageUrl: "", videoUrl: "" },
+        { text: "Duw het platform weg door je benen te strekken zonder je knieën volledig te locken", imageUrl: "", videoUrl: "" },
+        { text: "Laat het platform gecontroleerd terugkomen naar de startpositie", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Kabelmachine",
+      description: "Veelzijdige machine met verstelbare katrol. Geschikt voor honderden oefeningen voor alle spiergroepen.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stel de katrol in op de gewenste hoogte", imageUrl: "", videoUrl: "" },
+        { text: "Bevestig het juiste handvat of accessoire", imageUrl: "", videoUrl: "" },
+        { text: "Selecteer het gewenste gewicht via de pin", imageUrl: "", videoUrl: "" },
+        { text: "Voer de oefening uit met gecontroleerde bewegingen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Smith Machine",
+      description: "Geleide halterstang voor veilig squatten, bankdrukken en andere compound oefeningen.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stel de veiligheidsstops in op de juiste hoogte", imageUrl: "", videoUrl: "" },
+        { text: "Plaats de stang op schouderhoogte en laad het gewenste gewicht", imageUrl: "", videoUrl: "" },
+        { text: "Draai de stang om te ontgrendelen en voer de oefening uit", imageUrl: "", videoUrl: "" },
+        { text: "Draai de stang terug om te vergrendelen op de hooks", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Lat Pulldown",
+      description: "Machine voor het trainen van de brede rugspieren (latissimus dorsi) en biceps.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten en klem je bovenbenen onder de pads", imageUrl: "", videoUrl: "" },
+        { text: "Pak de brede stang vast met een overhandse grip", imageUrl: "", videoUrl: "" },
+        { text: "Trek de stang naar je borst door je ellebogen naar beneden te brengen", imageUrl: "", videoUrl: "" },
+        { text: "Laat de stang gecontroleerd terugkeren naar boven", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Chest Press Machine",
+      description: "Machine voor het trainen van borstspieren, schouders en triceps. Veilig alternatief voor bankdrukken.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stel de zithoogte zo in dat de handgrepen op borsthoogte zitten", imageUrl: "", videoUrl: "" },
+        { text: "Ga zitten met je rug plat tegen de rugleuning", imageUrl: "", videoUrl: "" },
+        { text: "Duw de handgrepen naar voren tot je armen bijna gestrekt zijn", imageUrl: "", videoUrl: "" },
+        { text: "Laat gecontroleerd terugkomen zonder het gewicht neer te laten vallen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Leg Extension",
+      description: "Isolatie-machine voor de quadriceps (voorkant bovenbeen).",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten en plaats de pad net boven je enkels", imageUrl: "", videoUrl: "" },
+        { text: "Stel de rugleuning zo in dat je knieën op de rand van de zitting zitten", imageUrl: "", videoUrl: "" },
+        { text: "Strek je benen volledig door je voeten omhoog te brengen", imageUrl: "", videoUrl: "" },
+        { text: "Laat langzaam terugkomen tot 90 graden kniebuiging", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Leg Curl",
+      description: "Machine voor het trainen van de hamstrings (achterkant bovenbeen). Beschikbaar als liggend of zittend model.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga liggen/zitten en plaats de pad net boven je hielen", imageUrl: "", videoUrl: "" },
+        { text: "Buig je knieën en breng je hielen richting je billen", imageUrl: "", videoUrl: "" },
+        { text: "Houd kort vast bovenaan de beweging", imageUrl: "", videoUrl: "" },
+        { text: "Laat gecontroleerd terugkomen naar de startpositie", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Pec Deck / Butterfly",
+      description: "Isolatie-machine voor de borstspieren. Ideaal voor het opbouwen van borstmassa.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten met je rug tegen de rugleuning en stel de armsteunen in", imageUrl: "", videoUrl: "" },
+        { text: "Plaats je onderarmen tegen de pads", imageUrl: "", videoUrl: "" },
+        { text: "Breng de armen naar elkaar toe voor je borst", imageUrl: "", videoUrl: "" },
+        { text: "Laat gecontroleerd terugkomen tot je een stretch voelt in je borst", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Seated Row Machine",
+      description: "Machine voor het trainen van de middenrug, lats en biceps.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten en plaats je voeten op de voetsteunen", imageUrl: "", videoUrl: "" },
+        { text: "Pak de handgrepen vast met gestrekte armen", imageUrl: "", videoUrl: "" },
+        { text: "Trek de handgrepen naar je buik door je schouderbladen samen te knijpen", imageUrl: "", videoUrl: "" },
+        { text: "Laat gecontroleerd terugkeren naar de startpositie", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Shoulder Press Machine",
+      description: "Machine voor het trainen van de schouders (deltaspieren) en triceps.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stel de zithoogte in zodat de handgrepen op schouderhoogte beginnen", imageUrl: "", videoUrl: "" },
+        { text: "Ga zitten met je rug tegen de rugleuning", imageUrl: "", videoUrl: "" },
+        { text: "Duw de handgrepen omhoog tot je armen bijna gestrekt zijn", imageUrl: "", videoUrl: "" },
+        { text: "Laat gecontroleerd terugkomen tot schouderhoogte", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Hip Abductor / Adductor",
+      description: "Machine voor het trainen van de binnen- en buitenkant van de bovenbenen. Twee functies in één machine.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten en plaats je benen tegen de binnenkant (adductie) of buitenkant (abductie) van de pads", imageUrl: "", videoUrl: "" },
+        { text: "Selecteer het gewicht en stel de startpositie in", imageUrl: "", videoUrl: "" },
+        { text: "Duw je benen naar buiten (abductie) of naar binnen (adductie)", imageUrl: "", videoUrl: "" },
+        { text: "Houd kort vast en keer gecontroleerd terug", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Calf Raise Machine",
+      description: "Machine voor het trainen van de kuitspieren. Beschikbaar als staand of zittend model.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Plaats je schouders onder de pads en de ballen van je voeten op het platform", imageUrl: "", videoUrl: "" },
+        { text: "Strek je enkels en kom zo hoog mogelijk op je tenen", imageUrl: "", videoUrl: "" },
+        { text: "Houd kort vast bovenaan de beweging", imageUrl: "", videoUrl: "" },
+        { text: "Laat je hielen langzaam zakken tot onder het platform voor een volledige stretch", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Hack Squat",
+      description: "Machine voor het trainen van quadriceps en bilspieren met minder belasting op de rug dan een vrije squat.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga met je rug tegen het schuine pad staan en plaats je voeten op het platform", imageUrl: "", videoUrl: "" },
+        { text: "Ontgrendel het veiligheidsslot", imageUrl: "", videoUrl: "" },
+        { text: "Zak langzaam naar beneden tot je bovenbenen parallel aan het platform zijn", imageUrl: "", videoUrl: "" },
+        { text: "Duw krachtig omhoog naar de startpositie", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Ab Crunch Machine",
+      description: "Machine voor het isoleren en trainen van de buikspieren.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten en pak de handgrepen vast", imageUrl: "", videoUrl: "" },
+        { text: "Plaats je voeten achter de rollers", imageUrl: "", videoUrl: "" },
+        { text: "Buig je bovenlichaam naar voren door je buikspieren aan te spannen", imageUrl: "", videoUrl: "" },
+        { text: "Keer langzaam terug naar de startpositie", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Roeimachine (Ergometer)",
+      description: "Cardio-apparaat dat een roeibeweging simuleert. Traint het hele lichaam: benen, rug, armen en core.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Ga zitten, bevestig je voeten in de voetsteunen en pak het handvat", imageUrl: "", videoUrl: "" },
+        { text: "Begin met gestrekte armen en gebogen knieën (catch positie)", imageUrl: "", videoUrl: "" },
+        { text: "Duw eerst met je benen, leun daarna achterover en trek het handvat naar je borst", imageUrl: "", videoUrl: "" },
+        { text: "Keer terug: armen strekken, bovenlichaam voorover, knieën buigen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Crosstrainer (Elliptical)",
+      description: "Low-impact cardio-apparaat dat een loop/ski beweging combineert. Spaart de gewrichten.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stap op de pedalen en pak de bewegende handgrepen vast", imageUrl: "", videoUrl: "" },
+        { text: "Begin met een vloeiende, ovale beweging", imageUrl: "", videoUrl: "" },
+        { text: "Stel de weerstand en eventueel de helling in", imageUrl: "", videoUrl: "" },
+        { text: "Houd een comfortabel tempo aan gedurende de gewenste tijd", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Loopband (Treadmill)",
+      description: "Cardio-apparaat voor wandelen, joggen en hardlopen. Verstelbare snelheid en helling.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stap op de zijranden en start de band op lage snelheid", imageUrl: "", videoUrl: "" },
+        { text: "Stap op de band en bouw geleidelijk snelheid op", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik de noodstop clip aan je kleding bevestigd", imageUrl: "", videoUrl: "" },
+        { text: "Verlaag de snelheid geleidelijk voor de cooldown", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Hometrainer (Stationary Bike)",
+      description: "Cardio-apparaat dat fietsen simuleert. Beschikbaar als rechtop en recumbent model.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stel het zadel in op de juiste hoogte (heup-hoogte als je naast de fiets staat)", imageUrl: "", videoUrl: "" },
+        { text: "Ga zitten en plaats je voeten in de pedalen", imageUrl: "", videoUrl: "" },
+        { text: "Stel de weerstand in op het gewenste niveau", imageUrl: "", videoUrl: "" },
+        { text: "Trap in een constant ritme en gebruik eventueel de hartslagmeter", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Assault Bike",
+      description: "Intensieve cardio-fiets met luchtremweerstand die je bovenarmen en benen tegelijk traint. Populair bij HIIT en CrossFit.",
+      type: EquipmentType.MACHINE,
+      steps: JSON.stringify([
+        { text: "Stel het zadel in op de juiste hoogte", imageUrl: "", videoUrl: "" },
+        { text: "Ga zitten en pak de bewegende handgrepen vast", imageUrl: "", videoUrl: "" },
+        { text: "Trap en duw/trek tegelijk - de weerstand neemt toe naarmate je harder gaat", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik het display om je afstand, calorieën of vermogen te monitoren", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+  ];
+
+  const accessoryData = [
+    {
+      name: "Dumbbells",
+      description: "Losse gewichten met korte stang. Beschikbaar in vaste gewichten (1-50+ kg) of als verstelbaar model. Essentieel voor krachttraining.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Kies het juiste gewicht voor je oefening en fitnessniveau", imageUrl: "", videoUrl: "" },
+        { text: "Pak de dumbbells met een stevige grip in het midden van de stang", imageUrl: "", videoUrl: "" },
+        { text: "Houd je polsen recht en neutraal tijdens de oefening", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Halterstang (Barbell)",
+      description: "Olympische stang (20 kg) of standaard stang voor zware compound lifts. Gebruikt met gewichtsschijven.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Controleer of de clips goed vastzitten en het gewicht gelijkmatig verdeeld is", imageUrl: "", videoUrl: "" },
+        { text: "Pak de stang op schouderbreedte (of zoals de oefening vereist)", imageUrl: "", videoUrl: "" },
+        { text: "Houd je core aangespannen en je rug recht tijdens alle oefeningen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Kettlebell",
+      description: "Gietijzeren gewicht met handvat. Ideaal voor functionele, explosieve en swing-oefeningen.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Kies een kettlebell die je met goede techniek kunt tillen", imageUrl: "", videoUrl: "" },
+        { text: "Pak het handvat met een of twee handen, afhankelijk van de oefening", imageUrl: "", videoUrl: "" },
+        { text: "Bij swings: gebruik je heupen als krachtbron, niet je armen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Weerstandsband (Resistance Band)",
+      description: "Elastische band in verschillende sterktes. Licht en draagbaar, ideaal voor warming-up, revalidatie en thuis trainen.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Kies de juiste weerstand: licht (geel/groen), medium (rood/blauw), zwaar (zwart/paars)", imageUrl: "", videoUrl: "" },
+        { text: "Controleer de band op scheurtjes of slijtage voor gebruik", imageUrl: "", videoUrl: "" },
+        { text: "Bevestig de band stevig of houd vast met voldoende spanning", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Yoga Mat",
+      description: "Antislip mat voor vloeroefeningen, yoga, pilates en stretching. Standaard dikte 4-6mm.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Rol de mat uit op een vlakke, schone ondergrond", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik de antislipzijde naar boven voor grip", imageUrl: "", videoUrl: "" },
+        { text: "Reinig de mat regelmatig met een licht reinigingsmiddel", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Foam Roller",
+      description: "Schuimrol voor zelfmassage (myofasciale release), warming-up en cooldown. Helpt bij het losmaken van spierknopen.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Leg de foam roller op de grond en ga met de te behandelen spiergroep erop liggen", imageUrl: "", videoUrl: "" },
+        { text: "Rol langzaam heen en weer over de spier (30-60 seconden per spiergroep)", imageUrl: "", videoUrl: "" },
+        { text: "Pauzeer op gevoelige punten en adem rustig door", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Ab Wheel",
+      description: "Klein wieltje met handgrepen voor intensieve core-training. Traint de volledige buik en stabilisatoren.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Kniel op een mat en pak het ab wheel met beide handen vast", imageUrl: "", videoUrl: "" },
+        { text: "Rol langzaam naar voren met een rechte rug en aangespannen core", imageUrl: "", videoUrl: "" },
+        { text: "Ga zo ver als je kunt zonder je onderrug te laten doorzakken", imageUrl: "", videoUrl: "" },
+        { text: "Trek jezelf terug naar de startpositie door je buikspieren aan te spannen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Optrekstang (Pull-up Bar)",
+      description: "Stang voor pull-ups, chin-ups en hanging exercises. Kan in deuropening, aan de muur of vrijstaand.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Controleer of de stang stevig bevestigd is en je gewicht kan dragen", imageUrl: "", videoUrl: "" },
+        { text: "Pak de stang vast in de gewenste grip (overhand, onderhand of neutraal)", imageUrl: "", videoUrl: "" },
+        { text: "Trek jezelf omhoog tot je kin boven de stang komt", imageUrl: "", videoUrl: "" },
+        { text: "Laat jezelf gecontroleerd zakken tot volledig gestrekte armen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "TRX / Suspension Trainer",
+      description: "Ophangbaar bandensysteem voor bodyweight training. Traint kracht, balans en stabiliteit tegelijk.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Bevestig de TRX stevig aan een deur, balk of stevig ophangpunt", imageUrl: "", videoUrl: "" },
+        { text: "Controleer of beide banden even lang zijn", imageUrl: "", videoUrl: "" },
+        { text: "Pak de handgrepen vast en leun achterover of voorover (afhankelijk van oefening)", imageUrl: "", videoUrl: "" },
+        { text: "Houd je lichaam in een rechte lijn en gebruik je core voor stabiliteit", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Medicijnbal (Medicine Ball)",
+      description: "Verzwaarde bal (1-12 kg) voor explosieve worpen, rotaties en functionele oefeningen.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Kies een gewicht dat je met controle kunt gooien en vangen", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik je hele lichaam bij worpen, niet alleen je armen", imageUrl: "", videoUrl: "" },
+        { text: "Bij wall balls: gooi tegen een stevig oppervlak en vang op borsthoogte", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Fitnessbal (Swiss Ball)",
+      description: "Grote opblaasbare bal voor core-training, balans en stabiliteit. Ook geschikt als alternatief voor een bankje.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Kies de juiste maat: als je erop zit moeten je knieën op 90° zijn", imageUrl: "", videoUrl: "" },
+        { text: "Pomp de bal op tot stevig maar nog licht indrukbaar", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik de bal op een antislip ondergrond voor veiligheid", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Springtouw (Jump Rope)",
+      description: "Effectief cardio-hulpmiddel voor coördinatie, uithoudingsvermogen en vetverbranding.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Stel de lengte in: sta op het midden van het touw, de handgrepen moeten tot je oksels komen", imageUrl: "", videoUrl: "" },
+        { text: "Draai het touw vanuit je polsen, niet je hele armen", imageUrl: "", videoUrl: "" },
+        { text: "Spring laag en land op de ballen van je voeten", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Bosu Ball",
+      description: "Half-bol op een platform voor balans- en stabiliteitstraining. Kan met de bolle kant of platte kant naar boven.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Plaats de Bosu op een vlakke ondergrond", imageUrl: "", videoUrl: "" },
+        { text: "Bol naar boven: stap er voorzichtig op en zoek je balans", imageUrl: "", videoUrl: "" },
+        { text: "Bol naar beneden: gebruik als instabiel platform voor push-ups of squats", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Gewichtsschijven (Weight Plates)",
+      description: "Schijven in diverse gewichten (1.25-25 kg) voor op halterstangen. Olympisch (50mm) of standaard (25mm) gat.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Schuif de schijven gelijkmatig aan beide kanten van de stang", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik altijd sluitklemmen om de schijven op hun plaats te houden", imageUrl: "", videoUrl: "" },
+        { text: "Til schijven op met je benen (niet je rug) bij het laden/ontladen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "EZ Curl Bar",
+      description: "Gebogen korte stang speciaal ontworpen voor bicep curls en tricep extensions. Vermindert polsbelasting.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Pak de stang in de gebogen secties die het meest comfortabel aanvoelen", imageUrl: "", videoUrl: "" },
+        { text: "Houd je ellebogen langs je lichaam bij curls", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik sluitklemmen wanneer je gewichtsschijven toevoegt", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Parallettes",
+      description: "Kleine parallelle stangen voor push-ups, L-sits, handstanden en gymnastiekoefeningen.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Plaats de parallettes op schouderbreed op een vlakke, antislip ondergrond", imageUrl: "", videoUrl: "" },
+        { text: "Pak de stangen stevig vast met je hele hand", imageUrl: "", videoUrl: "" },
+        { text: "Begin met basis oefeningen zoals push-ups en L-sits voor je naar geavanceerde moves gaat", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Plyobox (Jump Box)",
+      description: "Stevige kist voor box jumps, step-ups en plyometrische oefeningen. Beschikbaar in 50/60/75 cm.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Plaats de box op een vlakke, stabiele ondergrond", imageUrl: "", videoUrl: "" },
+        { text: "Kies de juiste hoogte voor je niveau", imageUrl: "", videoUrl: "" },
+        { text: "Spring met beide voeten tegelijk en land met je hele voet op de box", imageUrl: "", videoUrl: "" },
+        { text: "Stap gecontroleerd naar beneden (niet springen) om je gewrichten te sparen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Battle Ropes",
+      description: "Zware touwen (9-15 meter) voor intensieve cardio- en krachttraining van het bovenlichaam.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Bevestig het midden van het touw aan een stevig ankerpunt", imageUrl: "", videoUrl: "" },
+        { text: "Pak beide uiteinden vast en ga in een halve squat positie staan", imageUrl: "", videoUrl: "" },
+        { text: "Maak golvende bewegingen: afwisselend (alternating waves) of gelijktijdig (double waves)", imageUrl: "", videoUrl: "" },
+        { text: "Houd je core aangespannen en beweeg vanuit je schouders", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Sliding Discs (Gliders)",
+      description: "Gladde schijven voor glijdende bewegingen op de vloer. Traint core-stabiliteit en coördinatie.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Plaats de discs onder je handen of voeten (afhankelijk van de oefening)", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik de gladde kant op harde vloeren, de stofkant op tapijt", imageUrl: "", videoUrl: "" },
+        { text: "Beweeg langzaam en gecontroleerd - de instabiliteit maakt het zwaarder dan het lijkt", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Enkelgewichten (Ankle Weights)",
+      description: "Verstelbare gewichten die om de enkels worden gedragen. Ideaal voor been- en bilspier oefeningen.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Bevestig de enkelgewichten stevig maar comfortabel om je enkels", imageUrl: "", videoUrl: "" },
+        { text: "Begin met licht gewicht (0.5-1 kg) en bouw geleidelijk op", imageUrl: "", videoUrl: "" },
+        { text: "Gebruik bij leg lifts, donkey kicks en andere isolatie-oefeningen", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+    {
+      name: "Dip Station",
+      description: "Parallelle stangen of bars voor dips (triceps, borst) en beenheffen. Kan vrijstaand of aan de muur.",
+      type: EquipmentType.ACCESSORY,
+      steps: JSON.stringify([
+        { text: "Pak de bars vast en hef jezelf op met gestrekte armen", imageUrl: "", videoUrl: "" },
+        { text: "Voor tricep dips: houd je lichaam recht en ellebogen naar achteren", imageUrl: "", videoUrl: "" },
+        { text: "Voor borst dips: leun licht voorover en laat je ellebogen naar de zijkant gaan", imageUrl: "", videoUrl: "" },
+        { text: "Zak tot je bovenarmen parallel aan de grond zijn, en duw terug omhoog", imageUrl: "", videoUrl: "" },
+      ]),
+    },
+  ];
+
+  const allEquipment = [...machineData, ...accessoryData];
+
+  const createdEquipment = [];
+  for (const item of allEquipment) {
+    const eq = await prisma.equipment.create({
+      data: {
+        name: item.name,
+        description: item.description,
+        type: item.type,
+        steps: item.steps,
+        images: null,
+        creatorId: instructor.id,
+      },
+    });
+    createdEquipment.push(eq);
+  }
+  console.log(`Created ${createdEquipment.length} equipment items (${machineData.length} machines, ${accessoryData.length} accessories)`);
+
+  // ============================================================
   // SUMMARY
   // ============================================================
   console.log("\n✅ Database seeded successfully!");
@@ -1507,6 +1966,7 @@ async function main() {
   console.log(`  - ${exercises.length} exercises`);
   console.log(`  - ${programs.length} programs`);
   console.log("  - 4 events");
+  console.log(`  - ${createdEquipment.length} equipment items (${machineData.length} toestellen, ${accessoryData.length} materialen)`);
   console.log("\nCategories:");
   console.log("  - Krachttraining, Cardio, Yoga, Pilates");
   console.log("  - HIIT, Stretching & Mobility, Thuis Workouts, Buiten Sporten");

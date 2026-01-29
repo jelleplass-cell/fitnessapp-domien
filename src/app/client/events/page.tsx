@@ -37,53 +37,32 @@ export default async function EventsPage() {
           userId: true,
           status: true,
           isWaitlist: true,
-        },
-      },
-    },
-  });
-
-  // Get user's registered events
-  const myRegistrations = await db.eventRegistration.findMany({
-    where: {
-      userId: session.user.id,
-      status: { in: ["REGISTERED", "WAITLIST"] },
-      event: {
-        startDate: { gte: now },
-      },
-    },
-    include: {
-      event: {
-        include: {
-          creator: {
+          user: {
             select: {
               id: true,
               name: true,
               firstName: true,
             },
           },
-          registrations: {
-            select: {
-              id: true,
-              userId: true,
-              status: true,
-              isWaitlist: true,
-            },
-          },
         },
-      },
-    },
-    orderBy: {
-      event: {
-        startDate: "asc",
+        orderBy: { createdAt: "asc" },
       },
     },
   });
 
+  const userId = session.user.id;
+
   // Transform events for the client component
   const transformedEvents = events.map((e) => {
-    const userRegistration = e.registrations.find(r => r.userId === session.user!.id);
-    const registeredCount = e.registrations.filter(r => r.status === "REGISTERED").length;
-    const waitlistCount = e.registrations.filter(r => r.isWaitlist).length;
+    const userRegistration = e.registrations.find(r => r.userId === userId);
+    const registeredUsers = e.registrations.filter(r => r.status === "REGISTERED" && !r.isWaitlist);
+    const waitlistUsers = e.registrations.filter(r => r.isWaitlist);
+
+    // Find user's waitlist position
+    let waitlistPosition: number | null = null;
+    if (userRegistration?.isWaitlist) {
+      waitlistPosition = waitlistUsers.findIndex(r => r.userId === userId) + 1;
+    }
 
     return {
       id: e.id,
@@ -98,7 +77,6 @@ export default async function EventsPage() {
       videoUrl: e.videoUrl,
       equipment: e.equipment,
       difficulty: e.difficulty,
-      attachments: e.attachments,
       startDate: e.startDate.toISOString(),
       endDate: e.endDate?.toISOString() || null,
       maxAttendees: e.maxAttendees,
@@ -107,51 +85,18 @@ export default async function EventsPage() {
       allowWaitlist: e.allowWaitlist,
       organizer: {
         id: e.creator.id,
-        name: e.creator.firstName || e.creator.name,
+        name: e.creator.firstName || e.creator.name || "Instructeur",
       },
       isRegistered: userRegistration?.status === "REGISTERED" && !userRegistration?.isWaitlist,
       isOnWaitlist: userRegistration?.isWaitlist || false,
       registrationId: userRegistration?.id || null,
-      registeredCount,
-      waitlistCount,
-    };
-  });
-
-  // Transform my registrations
-  const myEvents = myRegistrations.map((r) => {
-    const e = r.event;
-    const registeredCount = e.registrations.filter(reg => reg.status === "REGISTERED").length;
-    const waitlistCount = e.registrations.filter(reg => reg.isWaitlist).length;
-
-    return {
-      id: e.id,
-      title: e.title,
-      description: e.description,
-      eventType: e.eventType,
-      location: e.location,
-      locationDetails: e.locationDetails,
-      meetingUrl: e.meetingUrl,
-      meetingPlatform: e.meetingPlatform,
-      imageUrl: e.imageUrl,
-      videoUrl: e.videoUrl,
-      equipment: e.equipment,
-      difficulty: e.difficulty,
-      attachments: e.attachments,
-      startDate: e.startDate.toISOString(),
-      endDate: e.endDate?.toISOString() || null,
-      maxAttendees: e.maxAttendees,
-      requiresRegistration: e.requiresRegistration,
-      registrationDeadlineHours: e.registrationDeadlineHours,
-      allowWaitlist: e.allowWaitlist,
-      organizer: {
-        id: e.creator.id,
-        name: e.creator.firstName || e.creator.name,
-      },
-      isRegistered: r.status === "REGISTERED" && !r.isWaitlist,
-      isOnWaitlist: r.isWaitlist,
-      registrationId: r.id,
-      registeredCount,
-      waitlistCount,
+      registeredCount: registeredUsers.length,
+      waitlistCount: waitlistUsers.length,
+      waitlistPosition,
+      attendees: registeredUsers.map(r => ({
+        id: r.user.id,
+        name: r.user.firstName || r.user.name || "Onbekend",
+      })),
     };
   });
 
@@ -164,10 +109,7 @@ export default async function EventsPage() {
         </p>
       </div>
 
-      <EventsClient
-        events={transformedEvents}
-        myEvents={myEvents}
-      />
+      <EventsClient events={transformedEvents} />
     </div>
   );
 }

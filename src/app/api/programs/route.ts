@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       location: body.location || "GYM",
       equipmentNeeded: body.equipmentNeeded || null,
       isPublic: body.isPublic || false,
-      categoryId: body.categoryId || null,
+      categories: body.categoryIds?.length ? { connect: body.categoryIds.map((id: string) => ({ id })) } : undefined,
       creatorId: session.user.id,
       items: {
         create: body.exercises.map(

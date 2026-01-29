@@ -48,7 +48,7 @@ interface Program {
   isArchived: boolean;
   items: ProgramItem[];
   clientPrograms: ClientProgram[];
-  category?: Category | null;
+  categories: Category[];
 }
 
 interface ProgramsViewProps {
@@ -133,18 +133,21 @@ export function ProgramsView({ activePrograms, archivedPrograms }: ProgramsViewP
                     {program.description}
                   </p>
                 )}
-                {program.category && (
-                  <div className="mb-2">
-                    <Badge
-                      variant="outline"
-                      className="text-xs"
-                      style={{
-                        borderColor: program.category.color,
-                        color: program.category.color,
-                      }}
-                    >
-                      {program.category.name}
-                    </Badge>
+                {program.categories.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    {program.categories.map((cat) => (
+                      <Badge
+                        key={cat.id}
+                        variant="outline"
+                        className="text-xs"
+                        style={{
+                          borderColor: cat.color,
+                          color: cat.color,
+                        }}
+                      >
+                        {cat.name}
+                      </Badge>
+                    ))}
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2 text-sm text-gray-600">
@@ -219,17 +222,18 @@ export function ProgramsView({ activePrograms, archivedPrograms }: ProgramsViewP
                       <Users className="w-3 h-3" />
                       {program.clientPrograms.length}
                     </span>
-                    {program.category && (
+                    {program.categories.map((cat) => (
                       <span
+                        key={cat.id}
                         className="text-xs px-1.5 py-0.5 rounded"
                         style={{
-                          backgroundColor: `${program.category.color}20`,
-                          color: program.category.color,
+                          backgroundColor: `${cat.color}20`,
+                          color: cat.color,
                         }}
                       >
-                        {program.category.name}
+                        {cat.name}
                       </span>
-                    )}
+                    ))}
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0 ml-2" />

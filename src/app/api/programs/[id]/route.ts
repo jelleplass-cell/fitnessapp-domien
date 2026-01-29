@@ -68,7 +68,7 @@ export async function PUT(
       location: body.location || existing.location,
       equipmentNeeded: body.equipmentNeeded || null,
       isPublic: body.isPublic ?? existing.isPublic,
-      categoryId: body.categoryId || null,
+      categories: { set: body.categoryIds?.map((id: string) => ({ id })) || [] },
       items: {
         create: body.exercises.map(
           (item: { exerciseId: string; order: number }) => ({

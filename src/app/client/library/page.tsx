@@ -57,7 +57,7 @@ export default async function LibraryPage({
   };
 
   if (params.category) {
-    where.categoryId = params.category;
+    where.categories = { some: { id: params.category } };
   }
 
   if (params.difficulty) {
@@ -78,7 +78,7 @@ export default async function LibraryPage({
   const programs = await db.program.findMany({
     where,
     include: {
-      category: true,
+      categories: true,
       creator: {
         select: {
           name: true,
@@ -165,14 +165,19 @@ export default async function LibraryPage({
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3 className="font-semibold group-hover:text-blue-600 transition-colors">{program.name}</h3>
-                        {program.category && (
-                          <Badge
-                            variant="outline"
-                            className="mt-1 text-xs"
-                            style={{ borderColor: program.category.color }}
-                          >
-                            {program.category.name}
-                          </Badge>
+                        {program.categories?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {program.categories.map((cat) => (
+                              <Badge
+                                key={cat.id}
+                                variant="outline"
+                                className="text-xs"
+                                style={{ borderColor: cat.color }}
+                              >
+                                {cat.name}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
                       <Badge

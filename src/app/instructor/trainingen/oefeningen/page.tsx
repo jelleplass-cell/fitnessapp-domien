@@ -16,6 +16,15 @@ export default async function OefeningenPage() {
   const exercises = await db.exercise.findMany({
     where: { creatorId: session.user.id },
     orderBy: { createdAt: "desc" },
+    include: {
+      exerciseEquipment: {
+        include: {
+          equipment: { select: { id: true, name: true, type: true } },
+          alternativeEquipment: { select: { id: true, name: true, type: true } },
+        },
+        orderBy: { order: "asc" },
+      },
+    },
   });
 
   return (
@@ -50,7 +59,7 @@ export default async function OefeningenPage() {
           </div>
         </div>
       ) : (
-        <ExercisesView exercises={exercises} />
+        <ExercisesView exercises={exercises.map(e => ({ ...e, createdAt: e.createdAt.toISOString() }))} />
       )}
     </div>
   );

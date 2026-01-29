@@ -232,8 +232,8 @@ export function DashboardClient({
 
       {/* Stats Cards - VitalView Style */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Link href="/instructor/clients">
-          <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <Link href="/instructor/clients" className="h-full">
+          <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
                 <Users className="w-5 h-5 text-blue-500" />
@@ -244,7 +244,7 @@ export function DashboardClient({
           </div>
         </Link>
 
-        <div className="bg-[#E8F5F0] rounded-2xl p-5">
+        <div className="bg-[#E8F5F0] rounded-2xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <div className="w-10 h-10 rounded-xl bg-emerald-200 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
@@ -254,7 +254,7 @@ export function DashboardClient({
           <p className="text-sm text-emerald-600">Actief (laatste 3 dagen)</p>
         </div>
 
-        <div className="bg-[#FFF0E8] rounded-2xl p-5">
+        <div className="bg-[#FFF0E8] rounded-2xl p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <div className="w-10 h-10 rounded-xl bg-orange-200 flex items-center justify-center">
               <TrendingDown className="w-5 h-5 text-orange-500" />
@@ -264,7 +264,7 @@ export function DashboardClient({
           <p className="text-sm text-orange-500">Inactief (7+ dagen)</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-2">
             <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
               <Activity className="w-5 h-5 text-purple-500" />
@@ -274,8 +274,8 @@ export function DashboardClient({
           <p className="text-sm text-gray-500">Sessies deze week</p>
         </div>
 
-        <Link href="/instructor/trainingen/oefeningen">
-          <div className="bg-[#E8F5F0] rounded-2xl p-5 hover:shadow-sm transition-shadow cursor-pointer">
+        <Link href="/instructor/trainingen/oefeningen" className="h-full">
+          <div className="bg-[#E8F5F0] rounded-2xl p-5 hover:shadow-sm transition-shadow cursor-pointer h-full flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 rounded-xl bg-emerald-200 flex items-center justify-center">
                 <Dumbbell className="w-5 h-5 text-emerald-600" />
@@ -286,15 +286,15 @@ export function DashboardClient({
           </div>
         </Link>
 
-        <Link href="/instructor/trainingen">
-          <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+        <Link href="/instructor/trainingen" className="h-full">
+          <div className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
               <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
                 <ClipboardList className="w-5 h-5 text-purple-500" />
               </div>
               <span className="text-3xl font-bold text-gray-900">{stats.programCount}</span>
             </div>
-            <p className="text-sm text-gray-500">Programma's</p>
+            <p className="text-sm text-gray-500">Programma&apos;s</p>
           </div>
         </Link>
       </div>
@@ -448,7 +448,7 @@ export function DashboardClient({
               </p>
             ) : (
               upcomingEvents.map((event) => (
-                <Link key={event.id} href={`/instructor/events`}>
+                <Link key={event.id} href={`/instructor/events`} className="block">
                   <div className="p-4 bg-[#FFF8E8] rounded-2xl hover:shadow-sm transition-all">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-sm text-gray-900">{event.title}</p>
@@ -504,7 +504,7 @@ export function DashboardClient({
               </p>
             ) : (
               recentComments.map((comment) => (
-                <Link key={comment.id} href={`/instructor/community`}>
+                <Link key={comment.id} href={`/instructor/community`} className="block">
                   <div className="p-4 bg-[#FCE8F0] rounded-2xl hover:shadow-sm transition-all">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-6 h-6 rounded-full bg-pink-200 flex items-center justify-center text-pink-600 text-xs font-medium">

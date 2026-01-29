@@ -52,7 +52,7 @@ export default async function BuilderPage() {
           restSeconds: e.restSeconds,
           caloriesPerSet: e.caloriesPerSet,
           equipment: e.equipment,
-          location: e.location,
+          locations: e.locations,
           muscleGroups: e.muscleGroups,
         }))}
           userId={session.user.id}

@@ -12,6 +12,7 @@ import {
   Users,
   CheckCircle,
   Play,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { AddProgramButton } from "../add-program-button";
@@ -55,7 +56,7 @@ export default async function LibraryProgramDetailPage({
   const program = await db.program.findUnique({
     where: { id, isPublic: true, isArchived: false },
     include: {
-      category: true,
+      categories: true,
       creator: {
         select: {
           id: true,
@@ -147,14 +148,15 @@ export default async function LibraryProgramDetailPage({
           )}
           <div className="absolute bottom-4 left-4 right-4 text-white">
             <div className="flex items-center gap-2 mb-2">
-              {program.category && (
+              {program.categories?.map((cat) => (
                 <Badge
+                  key={cat.id}
                   variant="secondary"
                   className="bg-white/20 text-white border-0"
                 >
-                  {program.category.name}
+                  {cat.name}
                 </Badge>
-              )}
+              ))}
               <Badge
                 className={
                   difficultyColors[
@@ -255,39 +257,39 @@ export default async function LibraryProgramDetailPage({
           </h2>
           <div className="space-y-3">
             {program.items.map((item, index) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-4 p-3 rounded-2xl bg-gray-50"
-              >
-                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold text-sm">
-                  {index + 1}
-                </div>
-                {item.exercise.imageUrl ? (
-                  <div
-                    className="w-16 h-16 rounded-xl bg-cover bg-center flex-shrink-0"
-                    style={{ backgroundImage: `url(${item.exercise.imageUrl})` }}
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-xl bg-gray-200 flex items-center justify-center flex-shrink-0">
-                    <Dumbbell className="w-6 h-6 text-gray-400" />
+              <Link key={item.id} href={`/client/exercises/${item.exercise.id}`} className="block">
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-semibold text-sm">
+                    {index + 1}
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.exercise.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {item.customSets || item.exercise.sets} sets
-                    {item.customReps || item.exercise.reps
-                      ? ` × ${item.customReps || item.exercise.reps} reps`
-                      : ""}
-                    {item.exercise.holdSeconds
-                      ? ` × ${item.exercise.holdSeconds}s`
-                      : ""}
-                  </p>
+                  {item.exercise.imageUrl ? (
+                    <div
+                      className="w-16 h-16 rounded-xl bg-cover bg-center flex-shrink-0"
+                      style={{ backgroundImage: `url(${item.exercise.imageUrl})` }}
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-gray-200 flex items-center justify-center flex-shrink-0">
+                      <Dumbbell className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{item.exercise.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {item.customSets || item.exercise.sets} sets
+                      {item.customReps || item.exercise.reps
+                        ? ` × ${item.customReps || item.exercise.reps} reps`
+                        : ""}
+                      {item.exercise.holdSeconds
+                        ? ` × ${item.exercise.holdSeconds}s`
+                        : ""}
+                    </p>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {item.customDuration || item.exercise.durationMinutes} min
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </div>
-                <div className="text-sm text-gray-500">
-                  {item.customDuration || item.exercise.durationMinutes} min
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

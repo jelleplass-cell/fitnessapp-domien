@@ -131,15 +131,15 @@ export function SettingsForm({ user }: SettingsFormProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Profile Settings */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-        <div className="p-4 md:p-6">
-          <h3 className="text-base md:text-lg font-semibold">Profiel</h3>
+        <div className="px-6 pt-6 pb-2">
+          <h3 className="font-semibold text-lg">Profiel</h3>
           <p className="text-sm text-muted-foreground">Pas je persoonlijke gegevens aan</p>
         </div>
-        <div className="p-4 md:p-6 pt-0 md:pt-0">
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
+        <div className="p-6">
+          <form onSubmit={handleProfileSubmit} className="space-y-6">
             {profileError && (
               <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
                 {profileError}
@@ -152,8 +152,8 @@ export function SettingsForm({ user }: SettingsFormProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
                 <Label htmlFor="firstName">Voornaam</Label>
                 <Input
                   id="firstName"
@@ -163,7 +163,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
                   }
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="lastName">Achternaam</Label>
                 <Input
                   id="lastName"
@@ -175,7 +175,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="name">Weergavenaam</Label>
               <Input
                 id="name"
@@ -186,7 +186,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="email">E-mailadres</Label>
               <Input
                 id="email"
@@ -198,7 +198,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="phone">Telefoonnummer</Label>
               <Input
                 id="phone"
@@ -214,7 +214,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               </p>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="language">Taal</Label>
               <Select
                 value={profileData.language}
@@ -238,23 +238,25 @@ export function SettingsForm({ user }: SettingsFormProps) {
               </p>
             </div>
 
-            <Button type="submit" disabled={profileLoading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
-              {profileLoading ? "Opslaan..." : "Profiel opslaan"}
-            </Button>
+            <div className="pt-2">
+              <Button type="submit" disabled={profileLoading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
+                {profileLoading ? "Opslaan..." : "Profiel opslaan"}
+              </Button>
+            </div>
           </form>
         </div>
       </div>
 
       {/* Password Settings */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-        <div className="p-4 md:p-6">
-          <h3 className="text-base md:text-lg font-semibold">Wachtwoord wijzigen</h3>
+        <div className="px-6 pt-6 pb-2">
+          <h3 className="font-semibold text-lg">Wachtwoord wijzigen</h3>
           <p className="text-sm text-muted-foreground">
             Wijzig je wachtwoord om je account te beveiligen
           </p>
         </div>
-        <div className="p-4 md:p-6 pt-0 md:pt-0">
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+        <div className="p-6">
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
             {passwordError && (
               <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
                 {passwordError}
@@ -267,7 +269,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               </div>
             )}
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="currentPassword">Huidig wachtwoord</Label>
               <Input
                 id="currentPassword"
@@ -279,7 +281,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="newPassword">Nieuw wachtwoord</Label>
               <Input
                 id="newPassword"
@@ -292,7 +294,7 @@ export function SettingsForm({ user }: SettingsFormProps) {
               <p className="text-xs text-gray-500 mt-1">Minimaal 8 tekens</p>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="confirmPassword">Bevestig nieuw wachtwoord</Label>
               <Input
                 id="confirmPassword"
@@ -304,9 +306,11 @@ export function SettingsForm({ user }: SettingsFormProps) {
               />
             </div>
 
-            <Button type="submit" disabled={passwordLoading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
-              {passwordLoading ? "Wijzigen..." : "Wachtwoord wijzigen"}
-            </Button>
+            <div className="pt-2">
+              <Button type="submit" disabled={passwordLoading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
+                {passwordLoading ? "Wijzigen..." : "Wachtwoord wijzigen"}
+              </Button>
+            </div>
           </form>
         </div>
       </div>

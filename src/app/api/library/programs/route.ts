@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   };
 
   if (categoryId) {
-    where.categoryId = categoryId;
+    where.categories = { some: { id: categoryId } };
   }
 
   if (difficulty) {
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   const programs = await db.program.findMany({
     where,
     include: {
-      category: true,
+      categories: true,
       creator: {
         select: {
           name: true,

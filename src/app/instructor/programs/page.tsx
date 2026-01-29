@@ -22,7 +22,7 @@ export default async function ProgramsPage() {
       clientPrograms: {
         include: { client: true },
       },
-      category: true,
+      categories: true,
     },
     orderBy: { createdAt: "desc" },
   });

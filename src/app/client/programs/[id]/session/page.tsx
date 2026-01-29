@@ -76,7 +76,7 @@ export default async function SessionPage({
         reps: item.exercise.reps,
         holdSeconds: item.exercise.holdSeconds,
         equipment: item.exercise.equipment,
-        location: item.exercise.location,
+        locations: item.exercise.locations,
       },
       completed: activeSession.completedItems.some(
         (ci) => ci.programItemId === item.id && !ci.skipped

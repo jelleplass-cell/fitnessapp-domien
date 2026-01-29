@@ -20,7 +20,7 @@ interface ExerciseFormProps {
     holdSeconds: number | null;
     requiresEquipment: boolean;
     equipment: string | null;
-    location: string;
+    locations: string[];
   };
 }
 
@@ -43,7 +43,7 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
     holdSeconds: exercise?.holdSeconds || 30,
     requiresEquipment: exercise?.requiresEquipment || false,
     equipment: exercise?.equipment || "",
-    location: exercise?.location || "GYM",
+    locations: exercise?.locations || ["GYM"],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,20 +122,31 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
             />
           </div>
 
-          <div>
-            <Label htmlFor="location">Locatie *</Label>
-            <select
-              id="location"
-              className="w-full h-10 px-3 rounded-md border border-input bg-background"
-              value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
-              }
-            >
-              <option value="GYM">Gym</option>
-              <option value="HOME">Thuis</option>
-              <option value="OUTDOOR">Buiten</option>
-            </select>
+          <div className="space-y-2">
+            <Label>Locatie(s) *</Label>
+            <div className="flex gap-4 mt-1">
+              {[
+                { value: "GYM", label: "Gym" },
+                { value: "HOME", label: "Thuis" },
+                { value: "OUTDOOR", label: "Buiten" },
+              ].map((loc) => (
+                <label key={loc.value} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.locations.includes(loc.value)}
+                    onChange={(e) => {
+                      const updated = e.target.checked
+                        ? [...formData.locations, loc.value]
+                        : formData.locations.filter((l) => l !== loc.value);
+                      if (updated.length > 0) {
+                        setFormData({ ...formData, locations: updated });
+                      }
+                    }}
+                  />
+                  <span>{loc.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
       </div>

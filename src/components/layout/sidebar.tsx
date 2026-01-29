@@ -104,6 +104,7 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
               { href: "/instructor/trainingen", label: "Alle programma's" },
               { href: "/instructor/trainingen/categorieen", label: "Categorieën" },
               { href: "/instructor/trainingen/oefeningen", label: "Oefeningen" },
+              { href: "/instructor/trainingen/materialen", label: "Materialen" },
             ],
           },
           {

@@ -1,9 +1,9 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { CreateEventForm } from "./create-event-form";
-import { DeleteEventButton } from "./delete-event-button";
+import { EventsList } from "./events-list";
 
 export default async function InstructorEventsPage() {
   const session = await auth();
@@ -33,23 +33,44 @@ export default async function InstructorEventsPage() {
     },
   });
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("nl-NL", {
-      weekday: "short",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
+  const now = new Date();
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("nl-NL", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const serializeEvent = (event: (typeof events)[number]) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    eventType: event.eventType,
+    startDate: event.startDate.toISOString(),
+    endDate: event.endDate?.toISOString() || null,
+    location: event.location,
+    locationDetails: event.locationDetails,
+    meetingUrl: event.meetingUrl,
+    meetingPlatform: event.meetingPlatform,
+    imageUrl: event.imageUrl,
+    videoUrl: event.videoUrl,
+    equipment: event.equipment,
+    difficulty: event.difficulty,
+    maxAttendees: event.maxAttendees,
+    registrationCount: event._count.registrations,
+    registrations: event.registrations.map((reg) => ({
+      id: reg.id,
+      user: {
+        id: reg.user.id,
+        name: reg.user.name,
+        email: reg.user.email,
+      },
+    })),
+  });
 
-  const isPast = (date: Date) => date < new Date();
+  const upcomingEvents = events
+    .filter((e) => e.startDate >= now)
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+    .map(serializeEvent);
+
+  const pastEvents = events
+    .filter((e) => e.startDate < now)
+    .sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
+    .map(serializeEvent);
 
   return (
     <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
@@ -71,62 +92,7 @@ export default async function InstructorEventsPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          {events.map((event) => (
-            <div key={event.id} className={`bg-white rounded-3xl shadow-sm p-6 ${isPast(event.startDate) ? "opacity-60" : ""}`}>
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold flex items-center gap-2">
-                    {event.title}
-                    {isPast(event.startDate) && (
-                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
-                        Afgelopen
-                      </span>
-                    )}
-                  </h3>
-                  <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(event.startDate)} om {formatTime(event.startDate)}
-                    </span>
-                    {event.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {event.location}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      {event._count.registrations}
-                      {event.maxAttendees && ` / ${event.maxAttendees}`} aanmeldingen
-                    </span>
-                  </div>
-                </div>
-                <DeleteEventButton eventId={event.id} eventTitle={event.title} />
-              </div>
-              {event.description && (
-                <p className="text-gray-700 text-sm mb-4">{event.description}</p>
-              )}
-
-              {event.registrations.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium mb-2">Aanmeldingen:</p>
-                  <div className="space-y-2">
-                    {event.registrations.map((reg) => (
-                      <div
-                        key={reg.id}
-                        className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
-                      >
-                        <span>{reg.user.name}</span>
-                        <span className="text-gray-500">{reg.user.email}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <EventsList upcomingEvents={upcomingEvents} pastEvents={pastEvents} />
       )}
     </div>
   );

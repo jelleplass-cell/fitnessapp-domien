@@ -15,6 +15,15 @@ export async function GET(
 
   const exercise = await db.exercise.findUnique({
     where: { id },
+    include: {
+      exerciseEquipment: {
+        include: {
+          equipment: { select: { id: true, name: true, type: true } },
+          alternativeEquipment: { select: { id: true, name: true, type: true } },
+        },
+        orderBy: { order: "asc" },
+      },
+    },
   });
 
   if (!exercise) {
@@ -45,21 +54,47 @@ export async function PUT(
 
   const body = await req.json();
 
-  const updated = await db.exercise.update({
-    where: { id },
-    data: {
-      name: body.name,
-      description: body.description || null,
-      youtubeUrl: body.youtubeUrl || null,
-      audioUrl: body.audioUrl || null,
-      durationMinutes: body.durationMinutes,
-      sets: body.sets,
-      reps: body.reps || null,
-      holdSeconds: body.holdSeconds || null,
-      requiresEquipment: body.requiresEquipment,
-      equipment: body.equipment || null,
-      location: body.location,
-    },
+  const updated = await db.$transaction(async (tx) => {
+    const ex = await tx.exercise.update({
+      where: { id },
+      data: {
+        name: body.name,
+        description: body.description || null,
+        imageUrl: body.imageUrl || null,
+        youtubeUrl: body.youtubeUrl || null,
+        audioUrl: body.audioUrl || null,
+        durationMinutes: body.durationMinutes,
+        sets: body.sets,
+        reps: body.reps || null,
+        holdSeconds: body.holdSeconds || null,
+        requiresEquipment: body.requiresEquipment,
+        equipment: body.equipment || null,
+        locations: body.locations,
+      },
+    });
+
+    // Update equipment links if provided
+    if (body.equipmentLinks !== undefined) {
+      await tx.exerciseEquipment.deleteMany({ where: { exerciseId: id } });
+      if (Array.isArray(body.equipmentLinks)) {
+        for (let i = 0; i < body.equipmentLinks.length; i++) {
+          const link = body.equipmentLinks[i];
+          if (link.equipmentId) {
+            await tx.exerciseEquipment.create({
+              data: {
+                exerciseId: id,
+                equipmentId: link.equipmentId,
+                order: i,
+                alternativeEquipmentId: link.alternativeEquipmentId || null,
+                alternativeText: link.alternativeText || null,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    return ex;
   });
 
   return NextResponse.json(updated);

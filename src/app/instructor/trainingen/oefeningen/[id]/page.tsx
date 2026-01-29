@@ -17,6 +17,15 @@ export default async function EditOefeningPage({
 
   const exercise = await db.exercise.findUnique({
     where: { id },
+    include: {
+      exerciseEquipment: {
+        include: {
+          equipment: { select: { id: true, name: true, type: true } },
+          alternativeEquipment: { select: { id: true, name: true, type: true } },
+        },
+        orderBy: { order: "asc" },
+      },
+    },
   });
 
   if (!exercise) {

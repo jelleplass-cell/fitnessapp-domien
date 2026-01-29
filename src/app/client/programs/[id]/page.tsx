@@ -13,6 +13,7 @@ import {
   Music,
   User,
   Calendar,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { startSession } from "./actions";
@@ -187,62 +188,75 @@ export default async function ProgramDetailPage({
           <div className="space-y-4">
             {program.items.map((item, index) => {
               const exercise = item.exercise;
-              const LocationIcon =
-                locationIcons[exercise.location as keyof typeof locationIcons] ||
-                Dumbbell;
+              const exerciseLocations: string[] = (exercise as any).locations || [];
 
               return (
-                <div
-                  key={item.id}
-                  className="flex gap-4 p-4 bg-gray-50 rounded-2xl"
-                >
-                  <div className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium flex-shrink-0">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium">{exercise.name}</h3>
-                    {exercise.description && (
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                        {exercise.description}
-                      </p>
+                <Link key={item.id} href={`/client/exercises/${exercise.id}`} className="block">
+                  <div className="flex gap-4 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors">
+                    <div className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium flex-shrink-0 mt-1">
+                      {index + 1}
+                    </div>
+                    {exercise.imageUrl ? (
+                      <div
+                        className="w-14 h-14 rounded-xl bg-cover bg-center flex-shrink-0"
+                        style={{ backgroundImage: `url(${exercise.imageUrl})` }}
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <Dumbbell className="w-5 h-5 text-gray-400" />
+                      </div>
                     )}
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <Badge variant="secondary" className="text-xs">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {exercise.durationMinutes} min
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {exercise.sets} sets
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs">
-                        {exercise.reps
-                          ? `${exercise.reps} reps`
-                          : `${exercise.holdSeconds}s vasthouden`}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        <LocationIcon className="w-3 h-3 mr-1" />
-                        {locationLabels[exercise.location as keyof typeof locationLabels]}
-                      </Badge>
-                      {exercise.youtubeUrl && (
-                        <Badge variant="outline" className="text-xs">
-                          <Youtube className="w-3 h-3 mr-1" />
-                          Video
-                        </Badge>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium">{exercise.name}</h3>
+                      {exercise.description && (
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                          {exercise.description}
+                        </p>
                       )}
-                      {exercise.audioUrl && (
-                        <Badge variant="outline" className="text-xs">
-                          <Music className="w-3 h-3 mr-1" />
-                          Audio
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="secondary" className="text-xs">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {exercise.durationMinutes} min
                         </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {exercise.sets} sets
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {exercise.reps
+                            ? `${exercise.reps} reps`
+                            : `${exercise.holdSeconds}s vasthouden`}
+                        </Badge>
+                        {exerciseLocations.map((loc) => {
+                          const LocIcon = locationIcons[loc as keyof typeof locationIcons] || Dumbbell;
+                          return (
+                            <Badge key={loc} variant="outline" className="text-xs">
+                              <LocIcon className="w-3 h-3 mr-1" />
+                              {locationLabels[loc as keyof typeof locationLabels] || loc}
+                            </Badge>
+                          );
+                        })}
+                        {exercise.youtubeUrl && (
+                          <Badge variant="outline" className="text-xs">
+                            <Youtube className="w-3 h-3 mr-1" />
+                            Video
+                          </Badge>
+                        )}
+                        {exercise.audioUrl && (
+                          <Badge variant="outline" className="text-xs">
+                            <Music className="w-3 h-3 mr-1" />
+                            Audio
+                          </Badge>
+                        )}
+                      </div>
+                      {exercise.requiresEquipment && exercise.equipment && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Materiaal: {exercise.equipment}
+                        </p>
                       )}
                     </div>
-                    {exercise.requiresEquipment && exercise.equipment && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        Materiaal: {exercise.equipment}
-                      </p>
-                    )}
+                    <ChevronRight className="w-5 h-5 text-gray-400 self-center flex-shrink-0" />
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

@@ -2,9 +2,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Users, ClipboardList, Activity } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import Link from "next/link";
+import { ClientsList } from "./clients-list";
 
 export default async function ClientsPage() {
   const session = await auth();
@@ -27,6 +27,15 @@ export default async function ClientsPage() {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  const clientsData = clients.map((client) => ({
+    id: client.id,
+    name: client.name || "",
+    email: client.email || "",
+    createdAt: client.createdAt.toISOString(),
+    programCount: client.clientPrograms.length,
+    lastSessionDate: client.sessions[0]?.finishedAt?.toISOString() || null,
+  }));
 
   return (
     <div className="p-4 md:p-6 bg-[#F8FAFC] min-h-screen">
@@ -55,82 +64,7 @@ export default async function ClientsPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
-          {clients.map((client) => {
-            const lastSession = client.sessions[0];
-
-            return (
-              <Link key={client.id} href={`/instructor/clients/${client.id}`}>
-                {/* Mobile: compact list item */}
-                <div className="md:hidden bg-white border rounded-lg p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">{client.name}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <ClipboardList className="w-3 h-3" />
-                          {client.clientPrograms.length}
-                        </span>
-                        {lastSession ? (
-                          <span className="flex items-center gap-1 text-green-600">
-                            <Activity className="w-3 h-3" />
-                            {lastSession.finishedAt
-                              ? new Date(lastSession.finishedAt).toLocaleDateString("nl-NL", {
-                                  day: "numeric",
-                                  month: "short",
-                                })
-                              : "-"}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">Nog niet getraind</span>
-                        )}
-                      </div>
-                    </div>
-                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Desktop: card */}
-                <div className="hidden md:block bg-white rounded-3xl shadow-sm p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
-                  <div className="pb-2">
-                    <h3 className="text-lg font-semibold">{client.name}</h3>
-                    <p className="text-sm text-gray-500">{client.email}</p>
-                  </div>
-                  <div>
-                    <div className="flex gap-4 mb-3">
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <ClipboardList className="w-4 h-4" />
-                        <span>{client.clientPrograms.length} programma&apos;s</span>
-                      </div>
-                    </div>
-
-                    {lastSession ? (
-                      <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-green-500" />
-                        <span className="text-sm text-gray-500">
-                          Laatst getraind:{" "}
-                          {lastSession.finishedAt
-                            ? new Date(lastSession.finishedAt).toLocaleDateString(
-                                "nl-NL",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                }
-                              )
-                            : "-"}
-                        </span>
-                      </div>
-                    ) : (
-                      <Badge variant="secondary">Nog niet getraind</Badge>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <ClientsList clients={clientsData} />
       )}
     </div>
   );

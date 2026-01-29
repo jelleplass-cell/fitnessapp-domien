@@ -39,7 +39,7 @@ interface Exercise {
   reps: number | null;
   holdSeconds: number | null;
   equipment: string | null;
-  location: string;
+  locations: string[];
 }
 
 interface SessionItem {
@@ -182,9 +182,7 @@ export function SessionView({ session, clientProgramId }: SessionViewProps) {
     }
   };
 
-  const LocationIcon =
-    locationIcons[currentItem.exercise.location as keyof typeof locationIcons] ||
-    Dumbbell;
+  const exerciseLocations = currentItem.exercise.locations || [];
   const embedUrl = currentItem.exercise.youtubeUrl
     ? getYouTubeEmbedUrl(currentItem.exercise.youtubeUrl)
     : null;
@@ -216,14 +214,18 @@ export function SessionView({ session, clientProgramId }: SessionViewProps) {
               <Badge variant="outline">
                 Oefening {currentIndex + 1} van {items.length}
               </Badge>
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <LocationIcon className="w-3 h-3" />
-                {currentItem.exercise.location === "GYM"
-                  ? "Gym"
-                  : currentItem.exercise.location === "HOME"
-                  ? "Thuis"
-                  : "Buiten"}
-              </Badge>
+              <div className="flex gap-1">
+                {exerciseLocations.map((loc) => {
+                  const LocIcon = locationIcons[loc as keyof typeof locationIcons] || Dumbbell;
+                  const label = loc === "GYM" ? "Gym" : loc === "HOME" ? "Thuis" : "Buiten";
+                  return (
+                    <Badge key={loc} variant="secondary" className="flex items-center gap-1">
+                      <LocIcon className="w-3 h-3" />
+                      {label}
+                    </Badge>
+                  );
+                })}
+              </div>
             </div>
             <CardTitle className="text-2xl mt-2">
               {currentItem.exercise.name}

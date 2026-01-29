@@ -48,6 +48,7 @@ interface CreateEventBody {
   locationDetails?: string;
   meetingUrl?: string;
   meetingPlatform?: string;
+  imageUrl?: string;
   videoUrl?: string;
   equipment?: string;
   difficulty?: string;
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
       locationDetails: body.locationDetails,
       meetingUrl: body.meetingUrl,
       meetingPlatform: body.meetingPlatform,
+      imageUrl: body.imageUrl,
       videoUrl: body.videoUrl,
       equipment: body.equipment,
       difficulty: body.difficulty,
