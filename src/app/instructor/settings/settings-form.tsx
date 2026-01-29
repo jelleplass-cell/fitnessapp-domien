@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,20 +133,20 @@ export function SettingsForm({ user }: SettingsFormProps) {
   return (
     <div className="space-y-6">
       {/* Profile Settings */}
-      <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-base md:text-lg">Profiel</CardTitle>
-          <CardDescription className="text-sm">Pas je persoonlijke gegevens aan</CardDescription>
-        </CardHeader>
-        <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold">Profiel</h3>
+          <p className="text-sm text-muted-foreground">Pas je persoonlijke gegevens aan</p>
+        </div>
+        <div className="p-4 md:p-6 pt-0 md:pt-0">
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             {profileError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+              <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
                 {profileError}
               </div>
             )}
             {profileSuccess && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm flex items-center gap-2">
+              <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
                 <Check className="w-4 h-4" />
                 Profiel bijgewerkt
               </div>
@@ -239,30 +238,30 @@ export function SettingsForm({ user }: SettingsFormProps) {
               </p>
             </div>
 
-            <Button type="submit" disabled={profileLoading}>
+            <Button type="submit" disabled={profileLoading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
               {profileLoading ? "Opslaan..." : "Profiel opslaan"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Password Settings */}
-      <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-base md:text-lg">Wachtwoord wijzigen</CardTitle>
-          <CardDescription className="text-sm">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-semibold">Wachtwoord wijzigen</h3>
+          <p className="text-sm text-muted-foreground">
             Wijzig je wachtwoord om je account te beveiligen
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+          </p>
+        </div>
+        <div className="p-4 md:p-6 pt-0 md:pt-0">
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             {passwordError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+              <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
                 {passwordError}
               </div>
             )}
             {passwordSuccess && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm flex items-center gap-2">
+              <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
                 <Check className="w-4 h-4" />
                 Wachtwoord gewijzigd
               </div>
@@ -305,12 +304,12 @@ export function SettingsForm({ user }: SettingsFormProps) {
               />
             </div>
 
-            <Button type="submit" disabled={passwordLoading}>
+            <Button type="submit" disabled={passwordLoading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
               {passwordLoading ? "Wijzigen..." : "Wachtwoord wijzigen"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

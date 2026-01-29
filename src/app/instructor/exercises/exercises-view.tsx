@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -69,7 +68,7 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
       {/* View Toggle - only show on desktop */}
       {!isMobile && (
         <div className="flex justify-end mb-4">
-          <div className="flex border rounded-lg overflow-hidden">
+          <div className="flex border border-gray-100 rounded-xl overflow-hidden">
             <Button
               variant={viewMode === "grid" ? "default" : "ghost"}
               size="sm"
@@ -99,10 +98,10 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
               Dumbbell;
 
             return (
-              <Card key={exercise.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
+              <div key={exercise.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow">
+                <div className="p-6 pb-2">
                   <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">{exercise.name}</CardTitle>
+                    <h3 className="text-lg font-semibold">{exercise.name}</h3>
                     <div className="flex gap-1">
                       <Link href={`/instructor/exercises/${exercise.id}`}>
                         <Button variant="ghost" size="sm">
@@ -112,8 +111,8 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                       <DeleteExerciseButton exerciseId={exercise.id} />
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div className="px-6 pb-6">
                   {exercise.description && (
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                       {exercise.description}
@@ -147,8 +146,8 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                       </Badge>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -166,7 +165,7 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                 href={`/instructor/exercises/${exercise.id}`}
                 className="block"
               >
-                <div className="bg-white border rounded-lg p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                <div className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] active:bg-gray-100 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

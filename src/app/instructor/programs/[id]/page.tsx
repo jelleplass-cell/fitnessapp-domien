@@ -2,7 +2,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import ProgramForm from "../program-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Archive, ArchiveRestore, Trash2, Users } from "lucide-react";
@@ -67,7 +66,7 @@ export default async function ProgramDetailPage({
               redirect("/instructor/programs");
             }}
           >
-            <Button variant="outline" type="submit">
+            <Button variant="outline" type="submit" className="rounded-xl">
               {program.isArchived ? (
                 <>
                   <ArchiveRestore className="w-4 h-4 mr-2" />
@@ -86,15 +85,15 @@ export default async function ProgramDetailPage({
 
       {/* Assigned clients info */}
       {program.clientPrograms.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6">
+          <div className="p-6 pb-0">
+            <h3 className="text-base font-semibold flex items-center gap-2">
               <Users className="w-4 h-4" />
               Toegewezen aan {program.clientPrograms.length} klant
               {program.clientPrograms.length !== 1 ? "en" : ""}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div>
+          <div className="p-6">
             <div className="flex flex-wrap gap-2">
               {program.clientPrograms.map((cp) => (
                 <Link key={cp.id} href={`/instructor/clients/${cp.clientId}`}>
@@ -104,8 +103,8 @@ export default async function ProgramDetailPage({
                 </Link>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       <ProgramForm

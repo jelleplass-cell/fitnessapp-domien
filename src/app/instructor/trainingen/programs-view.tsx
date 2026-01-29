@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -69,9 +68,9 @@ interface ProgramsViewProps {
 }
 
 const difficultyColors = {
-  BEGINNER: "bg-green-100 text-green-800",
-  INTERMEDIATE: "bg-yellow-100 text-yellow-800",
-  ADVANCED: "bg-red-100 text-red-800",
+  BEGINNER: "bg-[#E8F5F0] text-[#2D7A5F]",
+  INTERMEDIATE: "bg-[#FFF8E8] text-[#9B7A3F]",
+  ADVANCED: "bg-[#FCE8F0] text-[#9B3A5A]",
 };
 
 const difficultyLabels = {
@@ -137,14 +136,14 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
 
         return (
           <Link key={program.id} href={`/instructor/trainingen/${program.id}`}>
-            <Card
-              className={`hover:shadow-md transition-shadow cursor-pointer h-full ${
+            <div
+              className={`bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full ${
                 isArchived ? "opacity-60" : ""
               }`}
             >
-              <CardHeader className="pb-2">
+              <div className="p-6 pb-2">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{program.name}</CardTitle>
+                  <h3 className="text-lg font-semibold">{program.name}</h3>
                   {isArchived ? (
                     <Badge variant="secondary">Gearchiveerd</Badge>
                   ) : (
@@ -163,8 +162,8 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
                     </Badge>
                   )}
                 </div>
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="px-6 pb-6">
                 {program.description && !isArchived && (
                   <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                     {program.description}
@@ -198,8 +197,8 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
                     {program.clientPrograms.length !== 1 ? "en" : ""}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </Link>
         );
       })}
@@ -220,7 +219,7 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
             href={`/instructor/trainingen/${program.id}`}
             className="block"
           >
-            <div className="bg-white border rounded-lg p-3 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+            <div className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] active:bg-gray-100 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -346,7 +345,7 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
       {/* View Toggle - only show on desktop */}
       {!isMobile && (
         <div className="flex justify-end mb-4">
-          <div className="flex border rounded-lg overflow-hidden">
+          <div className="flex border border-gray-100 rounded-xl overflow-hidden">
             <Button
               variant={viewMode === "grid" ? "default" : "ghost"}
               size="sm"
@@ -370,14 +369,14 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
       <div className="space-y-6">
         {/* No results */}
         {filteredActive.length === 0 && filteredArchived.length === 0 && hasFilters && (
-          <Card>
-            <CardContent className="p-8 text-center">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="p-8 text-center">
               <p className="text-gray-500">Geen programma&apos;s gevonden met deze filters</p>
               <Button variant="link" onClick={clearFilters}>
                 Filters wissen
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* Active Programs */}

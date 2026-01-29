@@ -122,7 +122,7 @@ export default function AssignProgramForm({
       </div>
 
       {showDates && selectedProgramId && (
-        <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+        <div className="p-4 bg-[#F8FAFC] rounded-xl space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
             <Calendar className="w-4 h-4" />
             Periode (optioneel)
@@ -153,7 +153,7 @@ export default function AssignProgramForm({
           <Button
             onClick={handleAssign}
             disabled={!selectedProgramId || loading}
-            className="w-full"
+            className="w-full bg-blue-500 hover:bg-blue-600 rounded-xl"
           >
             <Plus className="w-4 h-4 mr-2" />
             {loading ? "Bezig..." : "Programma toewijzen"}

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,8 +90,8 @@ export function NewCommunityForm({ clients }: NewCommunityFormProps) {
         Terug naar overzicht
       </Link>
 
-      <Card>
-        <CardContent className="p-6 space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-6 space-y-6">
           {/* Name */}
           <div>
             <label className="text-sm font-medium">Naam *</label>
@@ -138,7 +137,7 @@ export function NewCommunityForm({ clients }: NewCommunityFormProps) {
           </div>
 
           {/* Clients Can Post */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-[#F8FAFC] rounded-xl">
             <div>
               <label className="text-sm font-medium">Klanten kunnen posten</label>
               <p className="text-xs text-gray-500 mt-0.5">
@@ -159,15 +158,15 @@ export function NewCommunityForm({ clients }: NewCommunityFormProps) {
               Klanten toevoegen ({selectedClients.length} geselecteerd)
             </label>
             {clients.length === 0 ? (
-              <p className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500 p-4 bg-[#F8FAFC] rounded-xl">
                 Je hebt nog geen klanten. Voeg eerst klanten toe via Klanten beheer.
               </p>
             ) : (
-              <div className="border rounded-lg max-h-64 overflow-y-auto">
+              <div className="border border-gray-100 rounded-xl max-h-64 overflow-y-auto">
                 {clients.map((client) => (
                   <label
                     key={client.id}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                    className="flex items-center gap-3 p-3 hover:bg-[#F8FAFC] cursor-pointer border-b last:border-b-0"
                   >
                     <Checkbox
                       checked={selectedClients.includes(client.id)}
@@ -201,19 +200,20 @@ export function NewCommunityForm({ clients }: NewCommunityFormProps) {
             <Button
               onClick={handleSubmit}
               disabled={submitting || !formData.name.trim()}
-              className="flex-1"
+              className="flex-1 bg-blue-500 hover:bg-blue-600 rounded-xl"
             >
               {submitting ? "Aanmaken..." : "Community aanmaken"}
             </Button>
             <Button
               variant="outline"
               onClick={() => router.push("/instructor/community/beheer")}
+              className="rounded-xl"
             >
               Annuleren
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

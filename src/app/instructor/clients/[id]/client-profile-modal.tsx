@@ -209,7 +209,7 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="rounded-xl">
           <User className="w-4 h-4 mr-2" />
           Profiel beheren
         </Button>
@@ -224,7 +224,7 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
 
         {newPassword ? (
           <div className="space-y-4">
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="p-4 bg-[#E8F5F0] border border-gray-100 rounded-xl">
               <p className="text-sm text-green-800 font-medium mb-2">
                 Nieuw wachtwoord gegenereerd
               </p>
@@ -236,7 +236,7 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                   variant="outline"
                   size="sm"
                   onClick={copyPassword}
-                  className="shrink-0"
+                  className="shrink-0 rounded-xl"
                 >
                   {copied ? (
                     <Check className="w-4 h-4" />
@@ -250,7 +250,7 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                 meer getoond.
               </p>
             </div>
-            <Button onClick={() => setNewPassword(null)} className="w-full">
+            <Button onClick={() => setNewPassword(null)} className="w-full bg-blue-500 hover:bg-blue-600 rounded-xl">
               Terug naar profiel
             </Button>
           </div>
@@ -442,7 +442,7 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                   {exclusiveCommunities.map((community) => (
                     <div
                       key={community.id}
-                      className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50"
+                      className="flex items-center space-x-3 p-3 border border-gray-100 rounded-xl hover:bg-[#F8FAFC]"
                     >
                       <Checkbox
                         id={`community-${community.id}`}
@@ -474,7 +474,7 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                 {/* Reset Password */}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button type="button" variant="outline" size="sm">
+                    <Button type="button" variant="outline" size="sm" className="rounded-xl">
                       <KeyRound className="w-4 h-4 mr-2" />
                       Reset wachtwoord
                     </Button>
@@ -491,10 +491,11 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                      <AlertDialogCancel className="rounded-xl">Annuleren</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleResetPassword}
                         disabled={loading}
+                        className="rounded-xl"
                       >
                         Reset wachtwoord
                       </AlertDialogAction>
@@ -509,7 +510,7 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Verwijderen
@@ -526,11 +527,11 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                      <AlertDialogCancel className="rounded-xl">Annuleren</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
                         disabled={loading}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 rounded-xl"
                       >
                         Verwijderen
                       </AlertDialogAction>
@@ -544,10 +545,11 @@ export function ClientProfileModal({ client, communities = [], clientMemberships
                   type="button"
                   variant="outline"
                   onClick={() => setOpen(false)}
+                  className="rounded-xl"
                 >
                   Annuleren
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
                   {loading ? "Opslaan..." : "Opslaan"}
                 </Button>
               </div>

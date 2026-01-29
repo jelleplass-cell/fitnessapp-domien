@@ -117,7 +117,7 @@ export function ScheduleForm({ clientId, clientPrograms }: ScheduleFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="rounded-xl">
           <CalendarPlus className="w-4 h-4 mr-2" />
           Inplannen
         </Button>
@@ -132,7 +132,7 @@ export function ScheduleForm({ clientId, clientPrograms }: ScheduleFormProps) {
 
         <div className="space-y-4 py-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -242,10 +242,10 @@ export function ScheduleForm({ clientId, clientPrograms }: ScheduleFormProps) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">
             Annuleren
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleSubmit} disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
             {loading ? "Inplannen..." : "Inplannen"}
           </Button>
         </DialogFooter>

@@ -184,10 +184,10 @@ export function CreateEventForm() {
                     key={option.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, eventType: option.value })}
-                    className={`flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
+                    className={`flex items-start gap-3 p-3 rounded-xl border text-left transition-colors ${
                       isSelected
                         ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-gray-100 hover:border-gray-200"
                     }`}
                   >
                     <Icon className={`w-5 h-5 mt-0.5 ${isSelected ? "text-blue-600" : "text-gray-400"}`} />
@@ -287,7 +287,7 @@ export function CreateEventForm() {
 
           {/* Online Meeting Details */}
           {isOnlineEvent && (
-            <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
+            <div className="space-y-4 p-4 bg-blue-50 rounded-xl">
               <div className="flex items-center gap-2 text-blue-700 font-medium">
                 <Video className="w-4 h-4" />
                 Online meeting instellingen
@@ -370,7 +370,7 @@ export function CreateEventForm() {
           </div>
 
           {/* Registration Settings */}
-          <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+          <div className="space-y-4 p-4 bg-[#F8FAFC] rounded-xl">
             <h3 className="font-medium text-sm">Aanmeldinstellingen</h3>
 
             <div className="flex items-center justify-between">
@@ -452,7 +452,7 @@ export function CreateEventForm() {
           </div>
 
           {/* Community Post Option */}
-          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
             <Checkbox
               id="createCommunityPost"
               checked={createCommunityPost}
@@ -474,10 +474,10 @@ export function CreateEventForm() {
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
               {loading ? "Aanmaken..." : "Event aanmaken"}
             </Button>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-xl">
               Annuleren
             </Button>
           </div>

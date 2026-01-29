@@ -53,11 +53,12 @@ export function DeleteExerciseButton({ exerciseId }: { exerciseId: string }) {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" className="rounded-xl" onClick={() => setOpen(false)}>
             Annuleren
           </Button>
           <Button
             variant="destructive"
+            className="rounded-xl"
             onClick={handleDelete}
             disabled={loading}
           >

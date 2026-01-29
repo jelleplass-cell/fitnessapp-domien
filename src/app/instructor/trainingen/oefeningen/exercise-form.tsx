@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExerciseFormProps {
   exercise?: {
@@ -88,15 +87,15 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
       )}
-      <Card>
-        <CardHeader>
-          <CardTitle>Basisinformatie</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-6 pb-0">
+          <h3 className="font-semibold">Basisinformatie</h3>
+        </div>
+        <div className="p-6 space-y-4">
           <div>
             <Label htmlFor="name">Naam oefening *</Label>
             <Input
@@ -138,14 +137,14 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
               <option value="OUTDOOR">Buiten</option>
             </select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Training details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-6 pb-0">
+          <h3 className="font-semibold">Training details</h3>
+        </div>
+        <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="durationMinutes">Geschatte duur (minuten) *</Label>
@@ -241,14 +240,14 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
               />
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Materiaal</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-6 pb-0">
+          <h3 className="font-semibold">Materiaal</h3>
+        </div>
+        <div className="p-6 space-y-4">
           <div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -278,14 +277,14 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
               />
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Media (optioneel)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-6 pb-0">
+          <h3 className="font-semibold">Media (optioneel)</h3>
+        </div>
+        <div className="p-6 space-y-4">
           <div>
             <Label htmlFor="youtubeUrl">YouTube video URL</Label>
             <Input
@@ -311,11 +310,11 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
               placeholder="https://drive.google.com/..."
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
           {loading
             ? "Opslaan..."
             : exercise
@@ -325,6 +324,7 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
         <Button
           type="button"
           variant="outline"
+          className="rounded-xl"
           onClick={() => router.back()}
         >
           Annuleren

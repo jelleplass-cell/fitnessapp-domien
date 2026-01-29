@@ -127,10 +127,10 @@ export function ExerciseNotesModal({
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">
             Annuleren
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
             <Save className="w-4 h-4 mr-2" />
             {saving ? "Opslaan..." : "Opslaan"}
           </Button>

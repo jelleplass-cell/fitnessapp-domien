@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Trash2, Check } from "lucide-react";
 
 interface ScheduledProgram {
@@ -102,10 +100,10 @@ export function ScheduleCalendar({ scheduledPrograms, clientId }: ScheduleCalend
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="p-5 border-b border-gray-50">
         <div className="flex items-center justify-between">
-          <CardTitle>Planning</CardTitle>
+          <h3 className="font-semibold text-gray-900 text-lg">Planning</h3>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={prevMonth}>
               <ChevronLeft className="w-4 h-4" />
@@ -118,8 +116,8 @@ export function ScheduleCalendar({ scheduledPrograms, clientId }: ScheduleCalend
             </Button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="p-5">
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {DAYS.map((day) => (
@@ -142,7 +140,7 @@ export function ScheduleCalendar({ scheduledPrograms, clientId }: ScheduleCalend
             return (
               <div
                 key={day}
-                className={`min-h-[80px] p-1 border rounded-lg ${
+                className={`min-h-[80px] p-1 border rounded-xl ${
                   isToday(day)
                     ? "border-blue-500 bg-blue-50"
                     : isPast
@@ -159,7 +157,7 @@ export function ScheduleCalendar({ scheduledPrograms, clientId }: ScheduleCalend
                   {scheduled.map((sp) => (
                     <div
                       key={sp.id}
-                      className={`text-xs p-1 rounded flex items-center justify-between group ${
+                      className={`text-xs p-1 rounded-lg flex items-center justify-between group ${
                         sp.completed
                           ? "bg-green-100 text-green-700"
                           : "bg-blue-100 text-blue-700"
@@ -187,15 +185,15 @@ export function ScheduleCalendar({ scheduledPrograms, clientId }: ScheduleCalend
         {/* Legend */}
         <div className="flex gap-4 mt-4 text-xs text-gray-500">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-100 rounded" />
+            <div className="w-3 h-3 bg-blue-100 rounded-md" />
             <span>Gepland</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-100 rounded" />
+            <div className="w-3 h-3 bg-green-100 rounded-md" />
             <span>Voltooid</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

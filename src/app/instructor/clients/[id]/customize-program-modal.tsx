@@ -457,16 +457,16 @@ export function CustomizeProgramModal({
                   onDragEnd={handleDragEnd}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDrop={(e) => handleDrop(e, index)}
-                  className={`p-4 border rounded-lg transition-all ${
+                  className={`p-4 border rounded-xl transition-all ${
                     dragOverIndex === index ? "border-blue-400 border-2" : ""
                   } ${
                     customization.isRemoved
-                      ? "bg-red-50 border-red-200 opacity-60"
+                      ? "bg-[#FCE8F0] border-red-100 opacity-60"
                       : isAdded
-                        ? "bg-green-50 border-green-200"
+                        ? "bg-[#E8F5F0] border-green-100"
                         : hasChanges
-                          ? "bg-blue-50 border-blue-200"
-                          : "bg-gray-50"
+                          ? "bg-blue-50 border-blue-100"
+                          : "bg-[#F8FAFC]"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -681,10 +681,10 @@ export function CustomizeProgramModal({
         </div>
 
         <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">
             Annuleren
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
             <Save className="w-4 h-4 mr-2" />
             {saving ? "Opslaan..." : "Aanpassingen opslaan"}
           </Button>

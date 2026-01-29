@@ -135,10 +135,11 @@ export function CreateCommunityModal() {
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              className="rounded-xl"
             >
               Annuleren
             </Button>
-            <Button type="submit" disabled={loading || !formData.name}>
+            <Button type="submit" disabled={loading || !formData.name} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
               {loading ? "Aanmaken..." : "Community aanmaken"}
             </Button>
           </DialogFooter>

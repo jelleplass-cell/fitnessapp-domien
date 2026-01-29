@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -258,28 +257,28 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Public/Private Toggle */}
-      <Card className={formData.isPublic ? "border-green-200 bg-green-50/30" : ""}>
-        <CardHeader className="pb-3">
+      <div className={`bg-white rounded-2xl border shadow-sm ${formData.isPublic ? "border-green-200 bg-green-50/30" : "border-gray-100"}`}>
+        <div className="p-6 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {formData.isPublic ? (
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 bg-green-100 rounded-xl">
                   <Globe className="w-5 h-5 text-green-600" />
                 </div>
               ) : (
-                <div className="p-2 bg-gray-100 rounded-lg">
+                <div className="p-2 bg-gray-100 rounded-xl">
                   <Lock className="w-5 h-5 text-gray-600" />
                 </div>
               )}
               <div>
-                <CardTitle className="text-base">
+                <h3 className="text-base font-semibold">
                   {formData.isPublic ? "Publiek programma" : "Privé programma"}
-                </CardTitle>
-                <CardDescription className="text-sm">
+                </h3>
+                <p className="text-sm text-muted-foreground">
                   {formData.isPublic
                     ? "Zichtbaar in de bibliotheek voor alle klanten"
                     : "Alleen zichtbaar na toewijzing aan een klant"}
-                </CardDescription>
+                </p>
               </div>
             </div>
             <Switch
@@ -289,14 +288,14 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
               }
             />
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Programma details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-6 pb-0">
+          <h3 className="font-semibold">Programma details</h3>
+        </div>
+        <div className="p-6 space-y-4">
           <div>
             <Label htmlFor="name">Naam *</Label>
             <Input
@@ -457,13 +456,13 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="p-6 pb-0">
           <div className="flex justify-between items-center">
-            <CardTitle>Oefeningen</CardTitle>
+            <h3 className="font-semibold">Oefeningen</h3>
             {selectedExercises.length > 0 && (
               <div className="flex gap-2">
                 <Badge variant="secondary">
@@ -478,8 +477,8 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
               </div>
             )}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </div>
+        <div className="p-6 space-y-4">
           {/* Add exercise dropdown */}
           <div className="flex gap-2">
             <Select onValueChange={addExercise}>
@@ -539,12 +538,12 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, index)}
                     onDragEnd={handleDragEnd}
-                    className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
                       isDragging
                         ? "bg-blue-100 opacity-50 scale-[0.98]"
                         : isDragOver
                         ? "bg-blue-50 border-2 border-dashed border-blue-300"
-                        : "bg-gray-50"
+                        : "bg-[#F8FAFC]"
                     }`}
                   >
                     <div
@@ -612,11 +611,11 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={loading || selectedExercises.length === 0}>
+        <Button type="submit" disabled={loading || selectedExercises.length === 0} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
           {loading
             ? "Opslaan..."
             : program
@@ -626,6 +625,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
         <Button
           type="button"
           variant="outline"
+          className="rounded-xl"
           onClick={() => router.push("/instructor/trainingen")}
         >
           Annuleren

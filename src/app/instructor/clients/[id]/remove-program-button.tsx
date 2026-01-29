@@ -43,7 +43,7 @@ export function RemoveProgramButton({ clientProgramId }: RemoveProgramButtonProp
       size="sm"
       onClick={handleRemove}
       disabled={loading}
-      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+      className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl"
     >
       <X className="w-4 h-4" />
     </Button>

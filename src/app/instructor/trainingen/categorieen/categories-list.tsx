@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -203,7 +196,7 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
           </DialogHeader>
           <div className="space-y-4 py-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+              <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded text-sm">
                 {error}
               </div>
             )}
@@ -246,10 +239,10 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>
+            <Button variant="outline" className="rounded-xl" onClick={() => setIsAddOpen(false)}>
               Annuleren
             </Button>
-            <Button onClick={handleAdd} disabled={loading}>
+            <Button onClick={handleAdd} disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
               {loading ? "Opslaan..." : "Categorie aanmaken"}
             </Button>
           </DialogFooter>
@@ -258,28 +251,28 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
 
       {/* Categories grid */}
       {categories.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-gray-500">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="py-12 text-center text-gray-500">
             <p>Nog geen categorieën aangemaakt</p>
             <p className="text-sm mt-1">Klik op &quot;Nieuwe categorie&quot; om te beginnen</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
-            <Card key={category.id} className="relative overflow-hidden">
+            <div key={category.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
               <div
                 className="absolute top-0 left-0 w-full h-1"
                 style={{ backgroundColor: category.color }}
               />
-              <CardHeader className="pb-2">
+              <div className="p-6 pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: category.color }}
                     />
-                    <CardTitle className="text-lg">{category.name}</CardTitle>
+                    <h3 className="text-lg font-semibold">{category.name}</h3>
                   </div>
                   <div className="flex gap-1">
                     <Button
@@ -299,16 +292,16 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
                   </div>
                 </div>
                 {category.description && (
-                  <CardDescription>{category.description}</CardDescription>
+                  <p className="text-sm text-muted-foreground">{category.description}</p>
                 )}
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="px-6 pb-6">
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <FileText className="w-4 h-4" />
                   <span>{category._count.programs} programma&apos;s</span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -324,7 +317,7 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
           </DialogHeader>
           <div className="space-y-4 py-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+              <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded text-sm">
                 {error}
               </div>
             )}
@@ -365,10 +358,10 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+            <Button variant="outline" className="rounded-xl" onClick={() => setIsEditOpen(false)}>
               Annuleren
             </Button>
-            <Button onClick={handleEdit} disabled={loading}>
+            <Button onClick={handleEdit} disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
               {loading ? "Opslaan..." : "Wijzigingen opslaan"}
             </Button>
           </DialogFooter>
@@ -391,15 +384,15 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
             </DialogDescription>
           </DialogHeader>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+            <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded text-sm">
               {error}
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+            <Button variant="outline" className="rounded-xl" onClick={() => setIsDeleteOpen(false)}>
               Annuleren
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+            <Button variant="destructive" onClick={handleDelete} disabled={loading} className="rounded-xl">
               {loading ? "Verwijderen..." : "Verwijderen"}
             </Button>
           </DialogFooter>

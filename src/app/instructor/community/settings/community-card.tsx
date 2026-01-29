@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -145,8 +144,8 @@ export function CommunityCard({ community, allClients }: CommunityCardProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="pb-3 p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div
@@ -154,7 +153,7 @@ export function CommunityCard({ community, allClients }: CommunityCardProps) {
               style={{ backgroundColor: community.color }}
             />
             <div>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
                 {community.name}
                 {community.isDefault && (
                   <Badge variant="secondary" className="text-xs">
@@ -162,7 +161,7 @@ export function CommunityCard({ community, allClients }: CommunityCardProps) {
                     Standaard
                   </Badge>
                 )}
-              </CardTitle>
+              </h3>
               {community.description && (
                 <p className="text-sm text-gray-500 mt-1">
                   {community.description}
@@ -193,10 +192,10 @@ export function CommunityCard({ community, allClients }: CommunityCardProps) {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                  <AlertDialogCancel className="rounded-xl">Annuleren</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteCommunity}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 rounded-xl"
                   >
                     Verwijderen
                   </AlertDialogAction>
@@ -218,17 +217,17 @@ export function CommunityCard({ community, allClients }: CommunityCardProps) {
             </span>
           )}
         </div>
-      </CardHeader>
+      </div>
 
       {!community.isDefault && (
-        <CardContent className="pt-0">
+        <div className="px-6 pb-6 pt-0">
           <div className="border-t pt-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-medium">Leden</h4>
 
               <Popover open={addMemberOpen} onOpenChange={setAddMemberOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="rounded-xl">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Lid toevoegen
                   </Button>
@@ -278,7 +277,7 @@ export function CommunityCard({ community, allClients }: CommunityCardProps) {
                 {community.members.map((member) => (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-2 bg-[#F8FAFC] rounded-xl"
                   >
                     <div>
                       <p className="text-sm font-medium">{member.userName}</p>
@@ -298,16 +297,16 @@ export function CommunityCard({ community, allClients }: CommunityCardProps) {
               </div>
             )}
           </div>
-        </CardContent>
+        </div>
       )}
 
       {community.isDefault && (
-        <CardContent className="pt-0">
-          <p className="text-sm text-gray-500 border-t pt-4">
+        <div className="px-6 pb-6 pt-0">
+          <p className="text-sm text-gray-500 border-t border-gray-100 pt-4">
             Alle klanten hebben automatisch toegang tot deze community.
           </p>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }

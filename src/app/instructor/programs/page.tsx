@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
@@ -41,7 +40,7 @@ export default async function ProgramsPage() {
           </p>
         </div>
         <Link href="/instructor/programs/new" className="flex-shrink-0">
-          <Button size="sm" className="md:size-default">
+          <Button size="sm" className="md:size-default bg-blue-500 hover:bg-blue-600 rounded-xl">
             <Plus className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Nieuw programma</span>
           </Button>
@@ -49,21 +48,21 @@ export default async function ProgramsPage() {
       </div>
 
       {activePrograms.length === 0 && archivedPrograms.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="p-12 text-center">
             <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-medium mb-2">Nog geen programma&apos;s</h3>
             <p className="text-gray-500 mb-4">
               Maak je eerste programma template aan
             </p>
             <Link href="/instructor/programs/new">
-              <Button>
+              <Button className="bg-blue-500 hover:bg-blue-600 rounded-xl">
                 <Plus className="w-4 h-4 mr-2" />
                 Programma aanmaken
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <ProgramsView
           activePrograms={activePrograms}
