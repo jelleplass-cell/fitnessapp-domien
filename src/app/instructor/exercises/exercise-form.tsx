@@ -14,8 +14,8 @@ interface ExerciseFormProps {
     description: string | null;
     youtubeUrl: string | null;
     audioUrl: string | null;
-    durationMinutes: number;
-    sets: number;
+    durationMinutes: number | null;
+    sets: number | null;
     reps: number | null;
     holdSeconds: number | null;
     requiresEquipment: boolean;

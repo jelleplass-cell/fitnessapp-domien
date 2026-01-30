@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaPicker } from "@/components/media/media-picker";
 import {
   Select,
   SelectContent,
@@ -624,14 +625,14 @@ function EventEditView({
           </div>
         )}
 
-        {/* Image URL */}
+        {/* Image */}
         <div className="space-y-2">
-          <Label htmlFor="edit-imageUrl">Afbeelding URL</Label>
-          <Input
-            id="edit-imageUrl"
+          <Label>Afbeelding</Label>
+          <MediaPicker
             value={formData.imageUrl}
-            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            placeholder="https://example.com/image.jpg"
+            onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+            accept="image/*"
+            label="Afbeelding"
           />
         </div>
 

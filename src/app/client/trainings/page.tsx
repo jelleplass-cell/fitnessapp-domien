@@ -129,7 +129,7 @@ export default async function ScheduledTrainingsPage() {
     const { clientProgram, scheduledDate, scheduledTime, id } = scheduledProgram;
     const program = clientProgram.program;
     const totalDuration = program.items.reduce(
-      (acc, item) => acc + item.exercise.durationMinutes,
+      (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
       0
     );
     const instructorLabel = getInstructorLabel(program, clientProgram.assignedBy);

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaPicker } from "@/components/media/media-picker";
 import {
   Search,
   X,
@@ -28,6 +29,12 @@ interface SelectedEquipmentLink {
   alternativeText?: string;
 }
 
+interface ExerciseCategory {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface ExerciseFormProps {
   exercise?: {
     id: string;
@@ -36,8 +43,8 @@ interface ExerciseFormProps {
     imageUrl: string | null;
     youtubeUrl: string | null;
     audioUrl: string | null;
-    durationMinutes: number;
-    sets: number;
+    durationMinutes: number | null;
+    sets: number | null;
     reps: number | null;
     holdSeconds: number | null;
     requiresEquipment: boolean;
@@ -49,7 +56,10 @@ interface ExerciseFormProps {
       alternativeText?: string | null;
       order: number;
     }[];
+    exerciseCategories?: ExerciseCategory[];
   };
+  onSave?: (exercise: { id: string; name: string }) => void;
+  inModal?: boolean;
 }
 
 // Equipment picker popup
@@ -265,14 +275,19 @@ function AlternativePickerPopup({
   );
 }
 
-export function ExerciseForm({ exercise }: ExerciseFormProps) {
+export function ExerciseForm({ exercise, onSave, inModal }: ExerciseFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [exerciseType, setExerciseType] = useState<"reps" | "hold">(
     exercise?.holdSeconds ? "hold" : "reps"
   );
   const [equipmentList, setEquipmentList] = useState<EquipmentItem[]>([]);
+  const [exerciseCategories, setExerciseCategories] = useState<ExerciseCategory[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
+    exercise?.exerciseCategories?.map((c) => c.id) || []
+  );
   const [showPicker, setShowPicker] = useState(false);
   const [showAltChoicePopup, setShowAltChoicePopup] = useState<number | null>(null);
   const [showAltEquipmentPicker, setShowAltEquipmentPicker] = useState<number | null>(null);
@@ -294,14 +309,14 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
     imageUrl: exercise?.imageUrl || "",
     youtubeUrl: exercise?.youtubeUrl || "",
     audioUrl: exercise?.audioUrl || "",
-    durationMinutes: exercise?.durationMinutes || 10,
-    sets: exercise?.sets || 3,
-    reps: exercise?.reps || 10,
-    holdSeconds: exercise?.holdSeconds || 30,
+    durationMinutes: exercise?.durationMinutes ?? "",
+    sets: exercise?.sets ?? "",
+    reps: exercise?.reps ?? "",
+    holdSeconds: exercise?.holdSeconds ?? "",
     locations: exercise?.locations || ["GYM"],
   });
 
-  // Fetch equipment list
+  // Fetch equipment list and exercise categories
   useEffect(() => {
     fetch("/api/equipment")
       .then((res) => res.json())
@@ -310,6 +325,15 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
           setEquipmentList(data);
         } else if (data?.equipment && Array.isArray(data.equipment)) {
           setEquipmentList(data.equipment);
+        }
+      })
+      .catch(console.error);
+
+    fetch("/api/exercise-categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setExerciseCategories(data);
         }
       })
       .catch(console.error);
@@ -366,11 +390,14 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
     const body = {
       ...formData,
       imageUrl: formData.imageUrl || null,
-      reps: exerciseType === "reps" ? formData.reps : null,
-      holdSeconds: exerciseType === "hold" ? formData.holdSeconds : null,
+      durationMinutes: formData.durationMinutes !== "" ? Number(formData.durationMinutes) : null,
+      sets: formData.sets !== "" ? Number(formData.sets) : null,
+      reps: exerciseType === "reps" && formData.reps !== "" ? Number(formData.reps) : null,
+      holdSeconds: exerciseType === "hold" && formData.holdSeconds !== "" ? Number(formData.holdSeconds) : null,
       requiresEquipment: selectedEquipment.length > 0,
       equipment: selectedNames.length > 0 ? selectedNames.join(", ") : null,
       equipmentLinks,
+      exerciseCategoryIds: selectedCategoryIds,
     };
 
     try {
@@ -386,8 +413,20 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
       });
 
       if (res.ok) {
-        router.push("/instructor/trainingen/oefeningen");
-        router.refresh();
+        if (onSave) {
+          const data = await res.json();
+          onSave({ id: data.id, name: data.name || formData.name });
+        } else {
+          setSuccess(
+            exercise
+              ? "Oefening is succesvol bijgewerkt"
+              : "Oefening is succesvol aangemaakt"
+          );
+          setTimeout(() => {
+            router.push("/instructor/trainingen/oefeningen");
+            router.refresh();
+          }, 1500);
+        }
       } else {
         const data = await res.json().catch(() => ({}));
         setError(data.error || `Fout bij opslaan (${res.status})`);
@@ -404,11 +443,6 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {error && (
-        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
-          {error}
-        </div>
-      )}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         <div className="px-6 pt-6 pb-2">
           <h3 className="font-semibold text-lg">Basisinformatie</h3>
@@ -469,41 +503,77 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Afbeelding URL</Label>
-            <Input
-              id="imageUrl"
-              type="url"
+            <Label>Afbeelding</Label>
+            <MediaPicker
               value={formData.imageUrl}
-              onChange={(e) =>
-                setFormData({ ...formData, imageUrl: e.target.value })
+              onChange={(url) =>
+                setFormData({ ...formData, imageUrl: url })
               }
-              placeholder="https://example.com/afbeelding.jpg"
+              accept="image/*"
+              label="Afbeelding"
             />
             <p className="text-xs text-gray-400">
               Wordt gebruikt als thumbnail in overzichten
             </p>
-            {formData.imageUrl && (
-              <img
-                src={formData.imageUrl}
-                alt="Preview"
-                className="w-32 h-32 object-cover rounded-xl border border-gray-200"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            )}
           </div>
         </div>
       </div>
 
+      {/* Exercise Categories */}
+      {exerciseCategories.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="px-6 pt-6 pb-2">
+            <h3 className="font-semibold text-lg">Oefeningencategorieën</h3>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-wrap gap-2">
+              {exerciseCategories.map((cat) => {
+                const isSelected = selectedCategoryIds.includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategoryIds((prev) =>
+                        isSelected
+                          ? prev.filter((id) => id !== cat.id)
+                          : [...prev, cat.id]
+                      );
+                    }}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+                      isSelected
+                        ? "border-transparent text-white shadow-sm"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                    style={isSelected ? { backgroundColor: cat.color } : undefined}
+                  >
+                    {!isSelected && (
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                    )}
+                    {cat.name}
+                    {isSelected && <X className="w-3 h-3" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         <div className="px-6 pt-6 pb-2">
-          <h3 className="font-semibold text-lg">Training details</h3>
+          <h3 className="font-semibold text-lg">Template waarden (optioneel)</h3>
+          <p className="text-sm text-gray-400 mt-1">
+            Standaardwaarden die als template dienen bij het toevoegen aan een programma
+          </p>
         </div>
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="durationMinutes">Geschatte duur (minuten) *</Label>
+              <Label htmlFor="durationMinutes">Geschatte duur (minuten)</Label>
               <Input
                 id="durationMinutes"
                 type="number"
@@ -512,15 +582,15 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    durationMinutes: parseInt(e.target.value) || 0,
+                    durationMinutes: e.target.value === "" ? "" : parseInt(e.target.value) || "",
                   })
                 }
-                required
+                placeholder="—"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sets">Aantal sets *</Label>
+              <Label htmlFor="sets">Aantal sets</Label>
               <Input
                 id="sets"
                 type="number"
@@ -529,10 +599,10 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    sets: parseInt(e.target.value) || 0,
+                    sets: e.target.value === "" ? "" : parseInt(e.target.value) || "",
                   })
                 }
-                required
+                placeholder="—"
               />
             </div>
           </div>
@@ -563,7 +633,7 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
 
           {exerciseType === "reps" ? (
             <div className="space-y-2">
-              <Label htmlFor="reps">Aantal herhalingen per set *</Label>
+              <Label htmlFor="reps">Aantal herhalingen per set</Label>
               <Input
                 id="reps"
                 type="number"
@@ -572,15 +642,15 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    reps: parseInt(e.target.value) || 0,
+                    reps: e.target.value === "" ? "" : parseInt(e.target.value) || "",
                   })
                 }
-                required
+                placeholder="—"
               />
             </div>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="holdSeconds">Vasthoudtijd (seconden) *</Label>
+              <Label htmlFor="holdSeconds">Vasthoudtijd (seconden)</Label>
               <Input
                 id="holdSeconds"
                 type="number"
@@ -589,10 +659,10 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    holdSeconds: parseInt(e.target.value) || 0,
+                    holdSeconds: e.target.value === "" ? "" : parseInt(e.target.value) || "",
                   })
                 }
-                required
+                placeholder="—"
               />
             </div>
           )}
@@ -786,22 +856,35 @@ export function ExerciseForm({ exercise }: ExerciseFormProps) {
         </div>
       </div>
 
+      {success && (
+        <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-xl text-sm">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="flex gap-4 pt-2">
-        <Button type="submit" disabled={loading} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
+        <Button type="submit" disabled={loading || !!success} className="bg-blue-500 hover:bg-blue-600 rounded-xl">
           {loading
             ? "Opslaan..."
             : exercise
             ? "Oefening bijwerken"
             : "Oefening aanmaken"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-xl"
-          onClick={() => router.back()}
-        >
-          Annuleren
-        </Button>
+        {!inModal && (
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => router.back()}
+          >
+            Annuleren
+          </Button>
+        )}
       </div>
 
       {/* Equipment picker popup */}

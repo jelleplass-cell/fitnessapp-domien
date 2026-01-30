@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, ChevronUp, ChevronDown, ImageIcon, Video } from "lucide-react";
+import { MediaPicker } from "@/components/media/media-picker";
 
 interface EquipmentFormProps {
   equipment?: {
@@ -56,6 +57,7 @@ export function EquipmentForm({ equipment }: EquipmentFormProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchSuggestions() {
@@ -172,8 +174,15 @@ export function EquipmentForm({ equipment }: EquipmentFormProps) {
         );
       }
 
-      router.push("/instructor/trainingen/materialen");
-      router.refresh();
+      setSuccess(
+        equipment
+          ? "Materiaal is succesvol bijgewerkt"
+          : "Materiaal is succesvol aangemaakt"
+      );
+      setTimeout(() => {
+        router.push("/instructor/trainingen/materialen");
+        router.refresh();
+      }, 1500);
     } catch (err) {
       setError(
         err instanceof Error
@@ -187,12 +196,6 @@ export function EquipmentForm({ equipment }: EquipmentFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {error && (
-        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
-          {error}
-        </div>
-      )}
-
       {/* Card 1: Basisinformatie */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         <div className="px-6 pt-6 pb-2">
@@ -300,14 +303,14 @@ export function EquipmentForm({ equipment }: EquipmentFormProps) {
             <div key={index} className="space-y-2">
               <div className="flex items-center gap-2">
                 <div className="flex-1">
-                  <Input
-                    type="url"
+                  <MediaPicker
                     value={url}
-                    onChange={(e) => handleImageChange(index, e.target.value)}
-                    placeholder="https://voorbeeld.nl/foto.jpg"
+                    onChange={(newUrl) => handleImageChange(index, newUrl)}
+                    accept="image/*"
+                    label={`Foto ${index + 1}`}
                   />
                 </div>
-                {images.length > 0 && (
+                {images.length > 0 && url.trim() === "" && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -319,16 +322,6 @@ export function EquipmentForm({ equipment }: EquipmentFormProps) {
                   </Button>
                 )}
               </div>
-              {url.trim() !== "" && (
-                <img
-                  src={url}
-                  alt={`Foto ${index + 1}`}
-                  className="h-20 w-20 object-cover rounded-lg"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              )}
             </div>
           ))}
           {images.length < 5 && (
@@ -401,25 +394,14 @@ export function EquipmentForm({ equipment }: EquipmentFormProps) {
                 <div className="space-y-1.5">
                   <Label className="text-xs text-gray-500 flex items-center gap-1">
                     <ImageIcon className="w-3 h-3" />
-                    Foto URL (optioneel)
+                    Foto (optioneel)
                   </Label>
-                  <Input
-                    type="url"
+                  <MediaPicker
                     value={step.imageUrl}
-                    onChange={(e) => updateStep(index, "imageUrl", e.target.value)}
-                    placeholder="https://..."
-                    className="text-sm"
+                    onChange={(url) => updateStep(index, "imageUrl", url)}
+                    accept="image/*"
+                    label="Stap foto"
                   />
-                  {step.imageUrl.trim() !== "" && (
-                    <img
-                      src={step.imageUrl}
-                      alt={`Stap ${index + 1}`}
-                      className="h-20 w-20 object-cover rounded-lg mt-1"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-gray-500 flex items-center gap-1">
@@ -450,10 +432,20 @@ export function EquipmentForm({ equipment }: EquipmentFormProps) {
       </div>
 
       {/* Submit */}
+      {success && (
+        <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-xl text-sm">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-sm">
+          {error}
+        </div>
+      )}
       <div className="flex justify-end">
         <Button
           type="submit"
-          disabled={loading}
+          disabled={loading || !!success}
           className="bg-blue-500 hover:bg-blue-600 rounded-xl"
         >
           {loading

@@ -303,7 +303,7 @@ export default async function ClientDetailPage({
                   {activePrograms.map((cp, index) => {
                     const program = cp.program;
                     const totalDuration = program.items.reduce(
-                      (acc, item) => acc + item.exercise.durationMinutes,
+                      (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
                       0
                     );
                     const completedCount = cp.sessions.length;

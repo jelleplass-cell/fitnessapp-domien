@@ -25,13 +25,14 @@ import {
   Search,
   X,
   Pencil,
+  SquareCheckBig,
 } from "lucide-react";
 import { DeleteProgramButton } from "./delete-program-button";
 
 interface Exercise {
   id: string;
   name: string;
-  durationMinutes: number;
+  durationMinutes: number | null;
 }
 
 interface ProgramItem {
@@ -95,6 +96,7 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [bulkMode, setBulkMode] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -173,7 +175,7 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {programs.map((program) => {
         const totalDuration = program.items.reduce(
-          (acc, item) => acc + item.exercise.durationMinutes,
+          (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
           0
         );
 
@@ -186,13 +188,15 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
           >
             <div className="p-6 pb-2">
               <div className="flex items-start justify-between">
-                <input
-                  type="checkbox"
-                  checked={bulk.isSelected(program.id)}
-                  onChange={() => bulk.toggle(program.id)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-4 h-4 rounded mt-1"
-                />
+                {bulkMode && (
+                  <input
+                    type="checkbox"
+                    checked={bulk.isSelected(program.id)}
+                    onChange={() => bulk.toggle(program.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-4 h-4 rounded mt-1"
+                  />
+                )}
                 <h3 className="text-lg font-semibold">{program.name}</h3>
                 <div className="flex gap-1">
                   <Link href={`/instructor/trainingen/${program.id}`}>
@@ -269,7 +273,7 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
     <div className={`space-y-2 ${isArchived ? "opacity-60" : ""}`}>
       {programs.map((program) => {
         const totalDuration = program.items.reduce(
-          (acc, item) => acc + item.exercise.durationMinutes,
+          (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
           0
         );
 
@@ -279,12 +283,14 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
             className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] transition-colors"
           >
             <div className="flex items-center justify-between">
-              <input
-                type="checkbox"
-                checked={bulk.isSelected(program.id)}
-                onChange={() => bulk.toggle(program.id)}
-                className="w-4 h-4 rounded flex-shrink-0"
-              />
+              {bulkMode && (
+                <input
+                  type="checkbox"
+                  checked={bulk.isSelected(program.id)}
+                  onChange={() => bulk.toggle(program.id)}
+                  className="w-4 h-4 rounded flex-shrink-0"
+                />
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <Link
@@ -416,9 +422,25 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
         )}
       </div>
 
-      {/* View Toggle - only show on desktop */}
-      {!isMobile && (
-        <div className="flex justify-end mb-4">
+      {/* Bulk select toggle + View Toggle */}
+      <div className="flex justify-end mb-4 gap-2">
+        <Button
+          variant={bulkMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => {
+            if (bulkMode) {
+              bulk.clear();
+            }
+            setBulkMode(!bulkMode);
+          }}
+          className="rounded-xl"
+        >
+          <SquareCheckBig className="w-4 h-4 mr-1" />
+          {bulkMode ? "Annuleren" : "Selecteren"}
+        </Button>
+
+        {/* View Toggle - only show on desktop */}
+        {!isMobile && (
           <div className="flex border border-gray-100 rounded-xl overflow-hidden">
             <Button
               variant={viewMode === "grid" ? "default" : "ghost"}
@@ -437,8 +459,8 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
               <List className="w-4 h-4" />
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="space-y-6">
         {/* No results */}
@@ -461,23 +483,23 @@ export function ProgramsView({ activePrograms, archivedPrograms, categories }: P
             </h2>
             {categoryGroups.map((group) => (
               <div key={group.category?.id || "overig"}>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-3 mb-4">
                   {group.category ? (
                     <>
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-4 h-4 rounded-full"
                         style={{ backgroundColor: group.category.color }}
                       />
-                      <h3 className="text-sm font-semibold text-gray-700">
+                      <h3 className="text-xl font-bold text-gray-800">
                         {group.category.name}
                       </h3>
                     </>
                   ) : (
-                    <h3 className="text-sm font-semibold text-gray-400">
+                    <h3 className="text-xl font-bold text-gray-400">
                       Overig
                     </h3>
                   )}
-                  <span className="text-xs text-gray-400">
+                  <span className="text-sm text-gray-400">
                     ({group.programs.length})
                   </span>
                 </div>

@@ -94,6 +94,8 @@ model User {
   createdCommunities    Community[]     @relation("CreatedCommunities")
   communityMemberships  CommunityMember[]
   createdEquipment      Equipment[]
+  createdExerciseCategories ExerciseCategory[]
+  mediaUploads          Media[]
 
   @@index([instructorId])
 }
@@ -108,11 +110,11 @@ model Exercise {
   youtubeUrl        String?
   imageUrl          String?
   audioUrl          String?
-  durationMinutes   Int       // estimated duration for full exercise
-  sets              Int
+  durationMinutes   Int?      // estimated duration for full exercise (template, optional)
+  sets              Int?      // template value (optional)
   reps              Int?
   holdSeconds       Int?
-  restSeconds       Int       @default(60) // rest between sets
+  restSeconds       Int?      @default(60) // rest between sets
   caloriesPerSet    Int?      // estimated calories burned per set
   requiresEquipment Boolean   @default(false)
   equipment         String?
@@ -128,6 +130,7 @@ model Exercise {
   clientExerciseNotes ClientExerciseNote[]
   clientProgramItems  ClientProgramItem[]
   exerciseEquipment   ExerciseEquipment[]
+  exerciseCategories  ExerciseCategory[]
 
   @@index([creatorId])
 }
@@ -191,6 +194,48 @@ model Category {
   @@index([creatorId])
 }
 
+// ============ EXERCISE CATEGORIES ============
+
+model ExerciseCategory {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String   @default("#3B82F6")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creatorId   String
+  creator     User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  exercises   Exercise[] // implicit many-to-many
+
+  @@index([creatorId])
+}
+
+// ============ MEDIA ============
+
+model Media {
+  id            String   @id @default(cuid())
+  url           String   // Vercel Blob public URL
+  pathname      String   // Blob pathname (needed for deletion)
+  filename      String   // Generated safe filename
+  originalName  String   // User's original filename
+  mimeType      String   // e.g., "image/jpeg", "application/pdf"
+  size          Int      // File size in bytes
+  width         Int?     // Image width (null for non-images)
+  height        Int?     // Image height (null for non-images)
+
+  // Relations
+  creatorId     String
+  creator       User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([creatorId])
+  @@index([createdAt])
+}
+
 // ============ PROGRAMS ============
 
 model Program {
@@ -221,18 +266,26 @@ model Program {
 }
 
 model ProgramItem {
-  id             String   @id @default(cuid())
-  order          Int
-  customSets     Int?     // override exercise default
-  customReps     Int?     // override exercise default
-  customDuration Int?     // override exercise default (minutes)
-  notes          String?  // instructor notes for this exercise in this program
+  id              String   @id @default(cuid())
+  order           Int
+  section         String   @default("CORE") // WARMUP | CORE | COOLDOWN
+
+  // Training details (overrides exercise template):
+  sets            Int?
+  reps            Int?
+  holdSeconds     Int?
+  durationMinutes Int?
+  restSeconds     Int?
+  exerciseType    String?  // "reps" | "hold"
+  weightPerSet    String?  // JSON: [10, 12, 14]
+  intensity       String?  // For cardio: "70% max HR" or "zwaar"
+  notes           String?  // instructor notes for this exercise in this program
 
   // Relations
-  programId      String
-  program        Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
-  exerciseId     String
-  exercise       Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  programId       String
+  program         Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exerciseId      String
+  exercise        Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
 
   @@index([programId])
 }

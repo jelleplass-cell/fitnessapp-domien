@@ -28,7 +28,7 @@ interface Program {
     name: string;
     description: string | null;
     difficulty: string;
-    items: { exercise: { durationMinutes: number } }[];
+    items: { exercise: { durationMinutes: number | null } }[];
     creator: { id: string; name: string; firstName: string | null };
   };
   lastSession: { finishedAt: string | null } | null;
@@ -162,7 +162,7 @@ export function ProgramsList({ programs: initialPrograms }: ProgramsListProps) {
       {programs.map((cp) => {
         const program = cp.program;
         const totalDuration = program.items.reduce(
-          (acc, item) => acc + item.exercise.durationMinutes,
+          (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
           0
         );
         const instructorLabel = getInstructorLabel(cp);

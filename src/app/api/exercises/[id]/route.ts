@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 export async function GET(
   req: NextRequest,
@@ -23,6 +24,7 @@ export async function GET(
         },
         orderBy: { order: "asc" },
       },
+      exerciseCategories: true,
     },
   });
 
@@ -54,8 +56,9 @@ export async function PUT(
 
   const body = await req.json();
 
-  const updated = await db.$transaction(async (tx) => {
-    const ex = await tx.exercise.update({
+  try {
+    // Update exercise fields + categories
+    const updated = await db.exercise.update({
       where: { id },
       data: {
         name: body.name,
@@ -63,41 +66,50 @@ export async function PUT(
         imageUrl: body.imageUrl || null,
         youtubeUrl: body.youtubeUrl || null,
         audioUrl: body.audioUrl || null,
-        durationMinutes: body.durationMinutes,
-        sets: body.sets,
-        reps: body.reps || null,
-        holdSeconds: body.holdSeconds || null,
+        durationMinutes: body.durationMinutes ?? null,
+        sets: body.sets ?? null,
+        reps: body.reps ?? null,
+        holdSeconds: body.holdSeconds ?? null,
         requiresEquipment: body.requiresEquipment,
         equipment: body.equipment || null,
         locations: body.locations,
+        ...(body.exerciseCategoryIds !== undefined
+          ? { exerciseCategories: { set: body.exerciseCategoryIds.map((catId: string) => ({ id: catId })) } }
+          : {}),
+      },
+      include: {
+        exerciseCategories: true,
       },
     });
 
-    // Update equipment links if provided
+    // Update equipment links if provided (separate queries to avoid transaction timeout)
     if (body.equipmentLinks !== undefined) {
-      await tx.exerciseEquipment.deleteMany({ where: { exerciseId: id } });
+      await db.exerciseEquipment.deleteMany({ where: { exerciseId: id } });
       if (Array.isArray(body.equipmentLinks)) {
-        for (let i = 0; i < body.equipmentLinks.length; i++) {
-          const link = body.equipmentLinks[i];
-          if (link.equipmentId) {
-            await tx.exerciseEquipment.create({
-              data: {
-                exerciseId: id,
-                equipmentId: link.equipmentId,
-                order: i,
-                alternativeEquipmentId: link.alternativeEquipmentId || null,
-                alternativeText: link.alternativeText || null,
-              },
-            });
-          }
+        const linksToCreate = body.equipmentLinks
+          .filter((link: { equipmentId?: string }) => link.equipmentId)
+          .map((link: { equipmentId: string; alternativeEquipmentId?: string; alternativeText?: string }, i: number) => ({
+            exerciseId: id,
+            equipmentId: link.equipmentId,
+            order: i,
+            alternativeEquipmentId: link.alternativeEquipmentId || null,
+            alternativeText: link.alternativeText || null,
+          }));
+        if (linksToCreate.length > 0) {
+          await db.exerciseEquipment.createMany({ data: linksToCreate });
         }
       }
     }
 
-    return ex;
-  });
-
-  return NextResponse.json(updated);
+    revalidatePath("/instructor/trainingen/oefeningen");
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("Error updating exercise:", error);
+    return NextResponse.json(
+      { error: "Er is een fout opgetreden bij het bijwerken van de oefening" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(

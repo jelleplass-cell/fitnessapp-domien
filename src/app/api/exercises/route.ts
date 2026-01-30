@@ -11,6 +11,9 @@ export async function GET() {
 
   const exercises = await db.exercise.findMany({
     where: { creatorId: session.user.id },
+    include: {
+      exerciseCategories: true,
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -27,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    if (!body.name || !body.durationMinutes || !body.sets) {
+    if (!body.name) {
       return NextResponse.json({ error: "Vul alle verplichte velden in" }, { status: 400 });
     }
 
@@ -38,14 +41,20 @@ export async function POST(req: NextRequest) {
         imageUrl: body.imageUrl || null,
         youtubeUrl: body.youtubeUrl || null,
         audioUrl: body.audioUrl || null,
-        durationMinutes: body.durationMinutes,
-        sets: body.sets,
+        durationMinutes: body.durationMinutes || null,
+        sets: body.sets || null,
         reps: body.reps || null,
         holdSeconds: body.holdSeconds || null,
         requiresEquipment: body.requiresEquipment || false,
         equipment: body.equipment || null,
         locations: body.locations || ["GYM"],
         creatorId: session.user.id,
+        ...(body.exerciseCategoryIds?.length
+          ? { exerciseCategories: { connect: body.exerciseCategoryIds.map((id: string) => ({ id })) } }
+          : {}),
+      },
+      include: {
+        exerciseCategories: true,
       },
     });
 

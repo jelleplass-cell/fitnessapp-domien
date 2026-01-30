@@ -25,6 +25,9 @@ export default async function EditOefeningPage({
         },
         orderBy: { order: "asc" },
       },
+      exerciseCategories: {
+        select: { id: true, name: true, color: true },
+      },
     },
   });
 

@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, FileText, LayoutGrid, List, Search, X } from "lucide-react";
+import { Plus, Pencil, Trash2, FileText, LayoutGrid, List, Search, X, SquareCheckBig } from "lucide-react";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/bulk-action-bar";
 
@@ -57,6 +57,7 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -309,27 +310,45 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
             />
           </div>
 
-          {/* View Toggle - only on desktop */}
-          {!isMobile && (
-            <div className="flex border border-gray-100 rounded-xl overflow-hidden">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className="rounded-none"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className="rounded-none"
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Bulk select toggle */}
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                if (bulkMode) {
+                  bulk.clear();
+                }
+                setBulkMode(!bulkMode);
+              }}
+              className="rounded-xl"
+            >
+              <SquareCheckBig className="w-4 h-4 mr-1" />
+              {bulkMode ? "Annuleren" : "Selecteren"}
+            </Button>
+
+            {/* View Toggle - only on desktop */}
+            {!isMobile && (
+              <div className="flex border border-gray-100 rounded-xl overflow-hidden">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="rounded-none"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className="rounded-none"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Filter results / clear */}
@@ -374,12 +393,14 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
               />
               <div className="p-6 pb-2">
                 <div className="flex items-start justify-between">
-                  <input
-                    type="checkbox"
-                    checked={bulk.isSelected(category.id)}
-                    onChange={() => bulk.toggle(category.id)}
-                    className="w-4 h-4 rounded mt-1"
-                  />
+                  {bulkMode && (
+                    <input
+                      type="checkbox"
+                      checked={bulk.isSelected(category.id)}
+                      onChange={() => bulk.toggle(category.id)}
+                      className="w-4 h-4 rounded mt-1"
+                    />
+                  )}
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
@@ -426,12 +447,14 @@ export function CategoriesList({ initialCategories }: CategoriesListProps) {
               className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] transition-colors"
             >
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={bulk.isSelected(category.id)}
-                  onChange={() => bulk.toggle(category.id)}
-                  className="w-4 h-4 rounded flex-shrink-0"
-                />
+                {bulkMode && (
+                  <input
+                    type="checkbox"
+                    checked={bulk.isSelected(category.id)}
+                    onChange={() => bulk.toggle(category.id)}
+                    className="w-4 h-4 rounded flex-shrink-0"
+                  />
+                )}
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: category.color }}

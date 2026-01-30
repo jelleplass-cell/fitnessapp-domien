@@ -133,14 +133,14 @@ export default async function LibraryPage({
             const totalDuration =
               program.durationMinutes ||
               program.items.reduce(
-                (acc, item) => acc + item.exercise.durationMinutes,
+                (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
                 0
               );
             const totalCalories =
               program.caloriesBurn ||
               program.items.reduce(
                 (acc, item) =>
-                  acc + (item.exercise.caloriesPerSet || 0) * item.exercise.sets,
+                  acc + (item.exercise.caloriesPerSet || 0) * (item.exercise.sets ?? 0),
                 0
               );
             const LocationIcon =

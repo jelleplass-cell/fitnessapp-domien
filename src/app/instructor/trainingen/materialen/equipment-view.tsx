@@ -16,6 +16,7 @@ import {
   Pencil,
   ChevronRight,
   X,
+  SquareCheckBig,
 } from "lucide-react";
 import { DeleteEquipmentButton } from "./delete-button";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
@@ -60,6 +61,7 @@ export function EquipmentView({ equipment }: EquipmentViewProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
+  const [bulkMode, setBulkMode] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -135,6 +137,22 @@ export function EquipmentView({ equipment }: EquipmentViewProps) {
                 {option.label}
               </Button>
             ))}
+
+            {/* Bulk select toggle */}
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                if (bulkMode) {
+                  bulk.clear();
+                }
+                setBulkMode(!bulkMode);
+              }}
+              className="rounded-xl"
+            >
+              <SquareCheckBig className="w-4 h-4 mr-1" />
+              {bulkMode ? "Annuleren" : "Selecteren"}
+            </Button>
           </div>
         </div>
 
@@ -199,13 +217,15 @@ export function EquipmentView({ equipment }: EquipmentViewProps) {
               <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow">
                 <div className="p-6 pb-2">
                   <div className="flex items-start justify-between">
-                    <input
-                      type="checkbox"
-                      checked={bulk.isSelected(item.id)}
-                      onChange={() => bulk.toggle(item.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-4 h-4 rounded mt-1"
-                    />
+                    {bulkMode && (
+                      <input
+                        type="checkbox"
+                        checked={bulk.isSelected(item.id)}
+                        onChange={() => bulk.toggle(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-4 h-4 rounded mt-1"
+                      />
+                    )}
                     <div className="flex items-center gap-3">
                       {imageUrl ? (
                         <img
@@ -269,12 +289,14 @@ export function EquipmentView({ equipment }: EquipmentViewProps) {
             return (
               <div key={item.id} className="bg-white border border-gray-100 rounded-xl p-3 hover:bg-[#F8FAFC] active:bg-gray-100 transition-colors">
                 <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={bulk.isSelected(item.id)}
-                    onChange={() => bulk.toggle(item.id)}
-                    className="w-4 h-4 rounded flex-shrink-0"
-                  />
+                  {bulkMode && (
+                    <input
+                      type="checkbox"
+                      checked={bulk.isSelected(item.id)}
+                      onChange={() => bulk.toggle(item.id)}
+                      className="w-4 h-4 rounded flex-shrink-0"
+                    />
+                  )}
                   <Link href={`/instructor/trainingen/materialen/${item.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                     {imageUrl ? (
                       <img

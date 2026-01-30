@@ -94,14 +94,14 @@ export default async function LibraryProgramDetailPage({
   const totalDuration =
     program.durationMinutes ||
     program.items.reduce(
-      (acc, item) => acc + item.exercise.durationMinutes,
+      (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
       0
     );
   const totalCalories =
     program.caloriesBurn ||
     program.items.reduce(
       (acc, item) =>
-        acc + (item.exercise.caloriesPerSet || 0) * item.exercise.sets,
+        acc + (item.exercise.caloriesPerSet || 0) * (item.exercise.sets ?? 0),
       0
     );
 
@@ -275,9 +275,9 @@ export default async function LibraryProgramDetailPage({
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{item.exercise.name}</p>
                     <p className="text-sm text-gray-500">
-                      {item.customSets || item.exercise.sets} sets
-                      {item.customReps || item.exercise.reps
-                        ? ` × ${item.customReps || item.exercise.reps} reps`
+                      {item.sets || item.exercise.sets || 0} sets
+                      {item.reps || item.exercise.reps
+                        ? ` × ${item.reps || item.exercise.reps} reps`
                         : ""}
                       {item.exercise.holdSeconds
                         ? ` × ${item.exercise.holdSeconds}s`
@@ -285,7 +285,7 @@ export default async function LibraryProgramDetailPage({
                     </p>
                   </div>
                   <div className="text-sm text-gray-500">
-                    {item.customDuration || item.exercise.durationMinutes} min
+                    {item.durationMinutes || item.exercise.durationMinutes || 0} min
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </div>

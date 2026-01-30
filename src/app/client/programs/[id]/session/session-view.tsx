@@ -34,8 +34,8 @@ interface Exercise {
   description: string | null;
   youtubeUrl: string | null;
   audioUrl: string | null;
-  durationMinutes: number;
-  sets: number;
+  durationMinutes: number | null;
+  sets: number | null;
   reps: number | null;
   holdSeconds: number | null;
   equipment: string | null;
@@ -235,7 +235,7 @@ export function SessionView({ session, clientProgramId }: SessionViewProps) {
             {/* Stats */}
             <div className="flex gap-4 text-sm">
               <Badge variant="secondary">
-                {currentItem.exercise.sets} sets
+                {currentItem.exercise.sets ?? 0} sets
               </Badge>
               <Badge variant="secondary">
                 {currentItem.exercise.reps
@@ -243,7 +243,7 @@ export function SessionView({ session, clientProgramId }: SessionViewProps) {
                   : `${currentItem.exercise.holdSeconds} sec vasthouden`}
               </Badge>
               <Badge variant="secondary">
-                ~{currentItem.exercise.durationMinutes} min
+                ~{currentItem.exercise.durationMinutes ?? 0} min
               </Badge>
             </div>
 

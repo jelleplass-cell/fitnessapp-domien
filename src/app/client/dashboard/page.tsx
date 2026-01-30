@@ -374,11 +374,11 @@ export default async function ClientDashboard() {
                 {todayTrainings.map((training) => {
                   const program = training.clientProgram.program;
                   const totalDuration = program.items.reduce(
-                    (acc, item) => acc + item.exercise.durationMinutes,
+                    (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
                     0
                   );
                   const estimatedCalories = program.items.reduce(
-                    (acc, item) => acc + (item.exercise.caloriesPerSet || 10) * (item.customSets || item.exercise.sets || 1),
+                    (acc, item) => acc + (item.exercise.caloriesPerSet || 10) * (item.sets || item.exercise.sets || 1),
                     0
                   );
 
@@ -439,7 +439,7 @@ export default async function ClientDashboard() {
                   const isToday =
                     new Date(sp.scheduledDate).toDateString() === new Date().toDateString();
                   const totalDuration = program.items.reduce(
-                    (acc, item) => acc + item.exercise.durationMinutes,
+                    (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
                     0
                   );
                   const instructorLabel = getInstructorLabel(program, sp.clientProgram.assignedBy);

@@ -22,8 +22,8 @@ interface Exercise {
   name: string;
   description: string | null;
   locations: string[];
-  durationMinutes: number;
-  sets: number;
+  durationMinutes: number | null;
+  sets: number | null;
   reps: number | null;
   holdSeconds: number | null;
   requiresEquipment: boolean;
@@ -131,8 +131,8 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                   </div>
 
                   <div className="flex gap-4 text-sm text-gray-500">
-                    <span>{exercise.durationMinutes} min</span>
-                    <span>{exercise.sets} sets</span>
+                    <span>{exercise.durationMinutes ?? "—"} min</span>
+                    <span>{exercise.sets ?? "—"} sets</span>
                     <span>
                       {exercise.reps
                         ? `${exercise.reps} reps`
@@ -185,10 +185,10 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                         })}
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {exercise.durationMinutes}min
+                          {exercise.durationMinutes ?? "—"}min
                         </span>
                         <span>
-                          {exercise.sets}x{exercise.reps || `${exercise.holdSeconds}s`}
+                          {exercise.sets ?? "—"}x{exercise.reps || `${exercise.holdSeconds}s`}
                         </span>
                       </div>
                     </div>

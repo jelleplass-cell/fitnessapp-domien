@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { MediaPicker } from "@/components/media/media-picker";
 import {
   X,
   GripVertical,
@@ -31,8 +32,8 @@ import {
 interface Exercise {
   id: string;
   name: string;
-  durationMinutes: number;
-  sets: number;
+  durationMinutes: number | null;
+  sets: number | null;
   reps: number | null;
   holdSeconds: number | null;
   locations: string[];
@@ -249,12 +250,12 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
   };
 
   const totalDuration = selectedExercises.reduce(
-    (acc, e) => acc + e.exercise.durationMinutes,
+    (acc, e) => acc + (e.exercise.durationMinutes ?? 0),
     0
   );
 
   const totalCalories = selectedExercises.reduce(
-    (acc, e) => acc + (e.exercise.caloriesPerSet || 0) * e.exercise.sets,
+    (acc, e) => acc + (e.exercise.caloriesPerSet || 0) * (e.exercise.sets ?? 0),
     0
   );
 
@@ -348,17 +349,17 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
 
           {formData.isPublic && (
             <div>
-              <Label htmlFor="imageUrl">Afbeelding URL (thumbnail)</Label>
-              <Input
-                id="imageUrl"
+              <Label>Afbeelding (thumbnail)</Label>
+              <MediaPicker
                 value={formData.imageUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, imageUrl: e.target.value })
+                onChange={(url) =>
+                  setFormData({ ...formData, imageUrl: url })
                 }
-                placeholder="https://example.com/image.jpg"
+                accept="image/*"
+                label="Afbeelding"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Optioneel. URL naar een afbeelding voor het programma.
+                Optioneel. Wordt als thumbnail getoond.
               </p>
             </div>
           )}
@@ -573,10 +574,10 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                       <div className="text-sm text-gray-500 flex flex-wrap gap-2">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {item.exercise.durationMinutes} min
+                          {item.exercise.durationMinutes ?? "—"} min
                         </span>
                         <span>
-                          {item.exercise.sets} sets,{" "}
+                          {item.exercise.sets ?? "—"} sets,{" "}
                           {item.exercise.reps
                             ? `${item.exercise.reps} reps`
                             : `${item.exercise.holdSeconds}s vasthouden`}

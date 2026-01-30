@@ -28,17 +28,26 @@ import {
   Search,
   X,
   Package,
+  ArrowUp,
+  ArrowDown,
   ArrowUpDown,
+  SquareCheckBig,
 } from "lucide-react";
 import { DeleteExerciseButton } from "./delete-button";
+
+interface ExerciseCategory {
+  id: string;
+  name: string;
+  color: string;
+}
 
 interface Exercise {
   id: string;
   name: string;
   description: string | null;
   locations: string[];
-  durationMinutes: number;
-  sets: number;
+  durationMinutes: number | null;
+  sets: number | null;
   reps: number | null;
   holdSeconds: number | null;
   requiresEquipment: boolean;
@@ -52,6 +61,7 @@ interface Exercise {
     alternativeText?: string | null;
     order: number;
   }[];
+  exerciseCategories?: ExerciseCategory[];
 }
 
 interface ExercisesViewProps {
@@ -70,7 +80,8 @@ const locationLabels = {
   OUTDOOR: "Buiten",
 };
 
-type SortOption = "newest" | "oldest" | "az" | "za";
+type SortField = "name" | "location" | "duration" | "sets" | "created";
+type SortDir = "asc" | "desc";
 
 export function ExercisesView({ exercises }: ExercisesViewProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
@@ -78,7 +89,26 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [selectedEquipment, setSelectedEquipment] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField>("created");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [bulkMode, setBulkMode] = useState(false);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDir(field === "name" ? "asc" : "desc");
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="w-3 h-3 text-gray-300" />;
+    return sortDir === "asc"
+      ? <ArrowUp className="w-3 h-3 text-gray-900" />
+      : <ArrowDown className="w-3 h-3 text-gray-900" />;
+  };
   const router = useRouter();
 
   useEffect(() => {
@@ -92,6 +122,15 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
 
   const effectiveViewMode = isMobile ? "list" : viewMode;
 
+  // Get unique categories for filter dropdown
+  const allCategories = useMemo(() => {
+    const catMap = new Map<string, ExerciseCategory>();
+    exercises.forEach((e) => {
+      e.exerciseCategories?.forEach((c) => catMap.set(c.id, c));
+    });
+    return Array.from(catMap.values()).sort((a, b) => a.name.localeCompare(b.name, "nl"));
+  }, [exercises]);
+
   // Filter and sort exercises
   const filteredExercises = useMemo(() => {
     const filtered = exercises.filter((exercise) => {
@@ -101,31 +140,37 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
       const matchesEquipment = selectedEquipment === "all" ||
         (selectedEquipment === "yes" && exercise.requiresEquipment) ||
         (selectedEquipment === "no" && !exercise.requiresEquipment);
-      return matchesSearch && matchesLocation && matchesEquipment;
+      const matchesCategory = selectedCategory === "all" ||
+        exercise.exerciseCategories?.some((c) => c.id === selectedCategory);
+      return matchesSearch && matchesLocation && matchesEquipment && matchesCategory;
     });
 
+    const dir = sortDir === "asc" ? 1 : -1;
     return filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case "az":
-          return a.name.localeCompare(b.name, "nl");
-        case "za":
-          return b.name.localeCompare(a.name, "nl");
+      switch (sortField) {
+        case "name":
+          return dir * a.name.localeCompare(b.name, "nl");
+        case "location":
+          return dir * (a.locations[0] || "").localeCompare(b.locations[0] || "");
+        case "duration":
+          return dir * ((a.durationMinutes ?? 0) - (b.durationMinutes ?? 0));
+        case "sets":
+          return dir * ((a.sets ?? 0) - (b.sets ?? 0));
+        case "created":
+          return dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         default:
           return 0;
       }
     });
-  }, [exercises, searchQuery, selectedLocation, selectedEquipment, sortBy]);
+  }, [exercises, searchQuery, selectedLocation, selectedEquipment, selectedCategory, sortField, sortDir]);
 
-  const hasFilters = searchQuery || selectedLocation !== "all" || selectedEquipment !== "all";
+  const hasFilters = searchQuery || selectedLocation !== "all" || selectedEquipment !== "all" || selectedCategory !== "all";
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedLocation("all");
     setSelectedEquipment("all");
+    setSelectedCategory("all");
   };
 
   const bulk = useBulkSelect(filteredExercises);
@@ -183,19 +228,29 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
             </SelectContent>
           </Select>
 
-          {/* Sort */}
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-full md:w-44">
-              <ArrowUpDown className="w-4 h-4 mr-2 text-gray-400" />
-              <SelectValue placeholder="Sorteren" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Nieuwste eerst</SelectItem>
-              <SelectItem value="oldest">Oudste eerst</SelectItem>
-              <SelectItem value="az">A → Z</SelectItem>
-              <SelectItem value="za">Z → A</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Category filter */}
+          {allCategories.length > 0 && (
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full md:w-44">
+                <SelectValue placeholder="Categorie" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle categorieën</SelectItem>
+                {allCategories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full inline-block"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      {cat.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
         </div>
 
         {/* Clear filters + View Toggle */}
@@ -214,27 +269,45 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
             )}
           </div>
 
-          {/* View Toggle - only show on desktop */}
-          {!isMobile && (
-            <div className="flex border border-gray-100 rounded-xl overflow-hidden">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className="rounded-none"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className="rounded-none"
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Bulk select toggle */}
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                if (bulkMode) {
+                  bulk.clear();
+                }
+                setBulkMode(!bulkMode);
+              }}
+              className="rounded-xl"
+            >
+              <SquareCheckBig className="w-4 h-4 mr-1" />
+              {bulkMode ? "Annuleren" : "Selecteren"}
+            </Button>
+
+            {/* View Toggle - only show on desktop */}
+            {!isMobile && (
+              <div className="flex border border-gray-100 rounded-xl overflow-hidden">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="rounded-none"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className="rounded-none"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -297,6 +370,16 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                       Materiaal
                     </Badge>
                   )}
+                  {exercise.exerciseCategories?.map((cat) => (
+                    <Badge
+                      key={cat.id}
+                      variant="secondary"
+                      className="text-xs text-white"
+                      style={{ backgroundColor: cat.color }}
+                    >
+                      {cat.name}
+                    </Badge>
+                  ))}
                   {exercise.exerciseEquipment?.map((link) => (
                     <Badge
                       key={link.equipment.id}
@@ -313,8 +396,8 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                 </div>
 
                 <div className="flex gap-4 text-sm text-gray-500">
-                  <span>{exercise.durationMinutes} min</span>
-                  <span>{exercise.sets} sets</span>
+                  <span>{exercise.durationMinutes ?? "—"} min</span>
+                  <span>{exercise.sets ?? "—"} sets</span>
                   <span>
                     {exercise.reps
                       ? `${exercise.reps} reps`
@@ -337,12 +420,23 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
         // Table/List View
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Desktop table header */}
-          <div className="hidden md:grid md:grid-cols-[40px_1fr_140px_80px_80px_160px_80px] gap-4 px-4 py-3 border-b border-gray-100 bg-gray-50/50 text-xs font-medium text-gray-500 uppercase tracking-wider">
-            <input type="checkbox" checked={bulk.isAllSelected} onChange={bulk.toggleAll} className="w-4 h-4 rounded" />
-            <span>Naam</span>
-            <span>Locatie</span>
-            <span>Duur</span>
-            <span>Sets</span>
+          <div className={`hidden md:grid ${bulkMode ? "md:grid-cols-[40px_1fr_120px_120px_80px_80px_140px_80px]" : "md:grid-cols-[1fr_120px_120px_80px_80px_140px_80px]"} gap-4 px-4 py-3 border-b border-gray-100 bg-gray-50/50 text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+            {bulkMode && (
+              <input type="checkbox" checked={bulk.isAllSelected} onChange={bulk.toggleAll} className="w-4 h-4 rounded" />
+            )}
+            <button onClick={() => toggleSort("name")} className="flex items-center gap-1 hover:text-gray-900 transition-colors text-left">
+              Naam <SortIcon field="name" />
+            </button>
+            <span>Categorie</span>
+            <button onClick={() => toggleSort("location")} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+              Locatie <SortIcon field="location" />
+            </button>
+            <button onClick={() => toggleSort("duration")} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+              Duur <SortIcon field="duration" />
+            </button>
+            <button onClick={() => toggleSort("sets")} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+              Sets <SortIcon field="sets" />
+            </button>
             <span>Materiaal</span>
             <span className="text-right">Acties</span>
           </div>
@@ -356,11 +450,13 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
               return (
                 <div key={exercise.id}>
                   {/* Desktop table row */}
-                  <div className="hidden md:grid md:grid-cols-[40px_1fr_140px_80px_80px_160px_80px] gap-4 px-4 py-3 items-center hover:bg-gray-50/50 transition-colors">
+                  <div className={`hidden md:grid ${bulkMode ? "md:grid-cols-[40px_1fr_120px_120px_80px_80px_140px_80px]" : "md:grid-cols-[1fr_120px_120px_80px_80px_140px_80px]"} gap-4 px-4 py-3 items-center hover:bg-gray-50/50 transition-colors`}>
                     {/* Checkbox */}
-                    <div className="flex items-center">
-                      <input type="checkbox" checked={bulk.isSelected(exercise.id)} onChange={() => bulk.toggle(exercise.id)} className="w-4 h-4 rounded" />
-                    </div>
+                    {bulkMode && (
+                      <div className="flex items-center">
+                        <input type="checkbox" checked={bulk.isSelected(exercise.id)} onChange={() => bulk.toggle(exercise.id)} className="w-4 h-4 rounded" />
+                      </div>
+                    )}
 
                     {/* Name + thumbnail */}
                     <Link
@@ -387,6 +483,22 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                       </div>
                     </Link>
 
+                    {/* Categories */}
+                    <div className="flex flex-wrap gap-1">
+                      {exercise.exerciseCategories?.map((cat) => (
+                        <span
+                          key={cat.id}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                          style={{ backgroundColor: cat.color }}
+                        >
+                          {cat.name}
+                        </span>
+                      ))}
+                      {(!exercise.exerciseCategories || exercise.exerciseCategories.length === 0) && (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
+                    </div>
+
                     {/* Locations */}
                     <div className="flex flex-wrap gap-1">
                       {exercise.locations.map((loc) => {
@@ -401,11 +513,11 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                     </div>
 
                     {/* Duration */}
-                    <span className="text-sm text-gray-600">{exercise.durationMinutes} min</span>
+                    <span className="text-sm text-gray-600">{exercise.durationMinutes ?? "—"} min</span>
 
                     {/* Sets × reps */}
                     <span className="text-sm text-gray-600">
-                      {exercise.sets}×{exercise.reps || `${exercise.holdSeconds}s`}
+                      {exercise.sets ?? "—"}×{exercise.reps || `${exercise.holdSeconds}s`}
                     </span>
 
                     {/* Equipment */}
@@ -431,14 +543,16 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                   >
                     <div className="p-3 hover:bg-gray-50/50 active:bg-gray-100 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={bulk.isSelected(exercise.id)}
-                            onChange={(e) => { e.preventDefault(); bulk.toggle(exercise.id); }}
-                            className="w-4 h-4 rounded flex-shrink-0"
-                          />
-                        </div>
+                        {bulkMode && (
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={bulk.isSelected(exercise.id)}
+                              onChange={(e) => { e.preventDefault(); bulk.toggle(exercise.id); }}
+                              className="w-4 h-4 rounded flex-shrink-0"
+                            />
+                          </div>
+                        )}
                         {exercise.imageUrl ? (
                           <div
                             className="w-10 h-10 rounded-lg bg-cover bg-center flex-shrink-0"
@@ -470,10 +584,10 @@ export function ExercisesView({ exercises }: ExercisesViewProps) {
                             })}
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {exercise.durationMinutes}min
+                              {exercise.durationMinutes ?? "—"}min
                             </span>
                             <span>
-                              {exercise.sets}x{exercise.reps || `${exercise.holdSeconds}s`}
+                              {exercise.sets ?? "—"}x{exercise.reps || `${exercise.holdSeconds}s`}
                             </span>
                             {exercise.requiresEquipment && (
                               <Package className="w-3 h-3 text-gray-400" />

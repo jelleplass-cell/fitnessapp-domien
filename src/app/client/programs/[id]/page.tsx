@@ -94,7 +94,7 @@ export default async function ProgramDetailPage({
   });
 
   const totalDuration = program.items.reduce(
-    (acc, item) => acc + item.exercise.durationMinutes,
+    (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
     0
   );
 
@@ -216,10 +216,10 @@ export default async function ProgramDetailPage({
                       <div className="flex flex-wrap gap-2 mt-2">
                         <Badge variant="secondary" className="text-xs">
                           <Clock className="w-3 h-3 mr-1" />
-                          {exercise.durationMinutes} min
+                          {exercise.durationMinutes ?? 0} min
                         </Badge>
                         <Badge variant="secondary" className="text-xs">
-                          {exercise.sets} sets
+                          {exercise.sets ?? 0} sets
                         </Badge>
                         <Badge variant="secondary" className="text-xs">
                           {exercise.reps

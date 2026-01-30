@@ -24,6 +24,9 @@ export default async function OefeningenPage() {
         },
         orderBy: { order: "asc" },
       },
+      exerciseCategories: {
+        select: { id: true, name: true, color: true },
+      },
     },
   });
 

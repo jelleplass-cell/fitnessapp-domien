@@ -30,11 +30,11 @@ interface Exercise {
   id: string;
   name: string;
   description: string | null;
-  durationMinutes: number;
-  sets: number;
+  durationMinutes: number | null;
+  sets: number | null;
   reps: number | null;
   holdSeconds: number | null;
-  restSeconds: number;
+  restSeconds: number | null;
   caloriesPerSet: number | null;
   equipment: string | null;
   locations: string[];
@@ -44,8 +44,8 @@ interface Exercise {
 interface SelectedExercise {
   exerciseId: string;
   exercise: Exercise;
-  customSets?: number;
-  customReps?: number;
+  sets?: number;
+  reps?: number;
 }
 
 interface ProgramBuilderProps {
@@ -81,14 +81,14 @@ export function ProgramBuilder({ exercises, userId }: ProgramBuilderProps) {
 
   // Calculate totals
   const totalDuration = selectedExercises.reduce((acc, se) => {
-    const sets = se.customSets || se.exercise.sets;
-    const exerciseTime = se.exercise.durationMinutes;
-    const restTime = (sets - 1) * (se.exercise.restSeconds / 60);
+    const sets = se.sets || (se.exercise.sets ?? 0);
+    const exerciseTime = se.exercise.durationMinutes ?? 0;
+    const restTime = (sets - 1) * ((se.exercise.restSeconds ?? 0) / 60);
     return acc + exerciseTime + restTime;
   }, 0);
 
   const totalCalories = selectedExercises.reduce((acc, se) => {
-    const sets = se.customSets || se.exercise.sets;
+    const sets = se.sets || (se.exercise.sets ?? 0);
     const cals = se.exercise.caloriesPerSet || 0;
     return acc + sets * cals;
   }, 0);
@@ -148,8 +148,8 @@ export function ProgramBuilder({ exercises, userId }: ProgramBuilderProps) {
           exercises: selectedExercises.map((se, index) => ({
             exerciseId: se.exerciseId,
             order: index,
-            customSets: se.customSets,
-            customReps: se.customReps,
+            sets: se.sets,
+            reps: se.reps,
           })),
         }),
       });
@@ -225,12 +225,12 @@ export function ProgramBuilder({ exercises, userId }: ProgramBuilderProps) {
                       <div>
                         <p className="font-medium text-sm">{exercise.name}</p>
                         <div className="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
-                          <span>{exercise.sets} sets</span>
+                          <span>{exercise.sets ?? 0} sets</span>
                           {exercise.reps && <span>{exercise.reps} reps</span>}
                           {exercise.holdSeconds && (
                             <span>{exercise.holdSeconds}s hold</span>
                           )}
-                          <span>~{exercise.durationMinutes} min</span>
+                          <span>~{exercise.durationMinutes ?? 0} min</span>
                         </div>
                         {exercise.muscleGroups && (
                           <p className="text-xs text-gray-400 mt-1">
@@ -361,10 +361,10 @@ export function ProgramBuilder({ exercises, userId }: ProgramBuilderProps) {
                               type="number"
                               min={1}
                               className="w-16 h-8 text-sm"
-                              value={se.customSets || se.exercise.sets}
+                              value={se.sets || (se.exercise.sets ?? 0)}
                               onChange={(e) =>
                                 updateExercise(se.exerciseId, {
-                                  customSets: parseInt(e.target.value) || undefined,
+                                  sets: parseInt(e.target.value) || undefined,
                                 })
                               }
                             />
@@ -376,10 +376,10 @@ export function ProgramBuilder({ exercises, userId }: ProgramBuilderProps) {
                                 type="number"
                                 min={1}
                                 className="w-16 h-8 text-sm"
-                                value={se.customReps || se.exercise.reps}
+                                value={se.reps || se.exercise.reps}
                                 onChange={(e) =>
                                   updateExercise(se.exerciseId, {
-                                    customReps: parseInt(e.target.value) || undefined,
+                                    reps: parseInt(e.target.value) || undefined,
                                   })
                                 }
                               />

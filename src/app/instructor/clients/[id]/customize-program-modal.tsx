@@ -34,10 +34,10 @@ import { cn } from "@/lib/utils";
 interface Exercise {
   id: string;
   name: string;
-  sets: number;
+  sets: number | null;
   reps: number | null;
   holdSeconds: number | null;
-  durationMinutes: number;
+  durationMinutes: number | null;
 }
 
 interface ProgramItem {
@@ -71,7 +71,7 @@ interface CustomizeProgramModalProps {
   programName: string;
   programItems: ProgramItem[];
   existingCustomItems: CustomItem[];
-  allExercises: { id: string; name: string; sets: number; reps: number | null; holdSeconds: number | null; durationMinutes: number }[];
+  allExercises: { id: string; name: string; sets: number | null; reps: number | null; holdSeconds: number | null; durationMinutes: number | null }[];
 }
 
 export function CustomizeProgramModal({
@@ -216,9 +216,9 @@ export function CustomizeProgramModal({
     setCustomizations((prev) => ({
       ...prev,
       [key]: {
-        customSets: exercise.sets.toString(),
+        customSets: exercise.sets?.toString() || "",
         customReps: exercise.reps?.toString() || "",
-        customDuration: exercise.durationMinutes.toString(),
+        customDuration: exercise.durationMinutes?.toString() || "",
         notes: "",
         isRemoved: false,
         isAdded: true,
@@ -512,7 +512,7 @@ export function CustomizeProgramModal({
                           {isAdded && <Badge className="bg-green-500 text-xs">Nieuw</Badge>}
                         </div>
                         <p className="text-xs text-gray-500">
-                          Standaard: {exercise.sets} sets, {exercise.reps ? `${exercise.reps} reps` : `${exercise.holdSeconds}s`}, {exercise.durationMinutes} min
+                          Standaard: {exercise.sets ?? "—"} sets, {exercise.reps ? `${exercise.reps} reps` : `${exercise.holdSeconds}s`}, {exercise.durationMinutes ?? "—"} min
                         </p>
                       </div>
                     </div>
@@ -561,7 +561,7 @@ export function CustomizeProgramModal({
                           <Input
                             type="number"
                             min={1}
-                            placeholder={exercise.sets.toString()}
+                            placeholder={(exercise.sets ?? 0).toString()}
                             value={customization.customSets}
                             onChange={(e) => updateCustomization(orderedItem.key, "customSets", e.target.value)}
                             className="h-8 text-sm"
@@ -584,7 +584,7 @@ export function CustomizeProgramModal({
                           <Input
                             type="number"
                             min={1}
-                            placeholder={exercise.durationMinutes.toString()}
+                            placeholder={(exercise.durationMinutes ?? 0).toString()}
                             value={customization.customDuration}
                             onChange={(e) => updateCustomization(orderedItem.key, "customDuration", e.target.value)}
                             className="h-8 text-sm"
@@ -662,7 +662,7 @@ export function CustomizeProgramModal({
                               <div className="flex flex-col">
                                 <span>{exercise.name}</span>
                                 <span className="text-xs text-gray-500">
-                                  {exercise.sets} sets, {exercise.reps ? `${exercise.reps} reps` : `${exercise.holdSeconds}s`}, {exercise.durationMinutes} min
+                                  {exercise.sets ?? "—"} sets, {exercise.reps ? `${exercise.reps} reps` : `${exercise.holdSeconds}s`}, {exercise.durationMinutes ?? "—"} min
                                 </span>
                               </div>
                             </CommandItem>

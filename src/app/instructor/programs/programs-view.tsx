@@ -17,7 +17,7 @@ import {
 interface Exercise {
   id: string;
   name: string;
-  durationMinutes: number;
+  durationMinutes: number | null;
 }
 
 interface ProgramItem {
@@ -94,7 +94,7 @@ export function ProgramsView({ activePrograms, archivedPrograms }: ProgramsViewP
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {programs.map((program) => {
         const totalDuration = program.items.reduce(
-          (acc, item) => acc + item.exercise.durationMinutes,
+          (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
           0
         );
 
@@ -176,7 +176,7 @@ export function ProgramsView({ activePrograms, archivedPrograms }: ProgramsViewP
     <div className={`space-y-2 ${isArchived ? "opacity-60" : ""}`}>
       {programs.map((program) => {
         const totalDuration = program.items.reduce(
-          (acc, item) => acc + item.exercise.durationMinutes,
+          (acc, item) => acc + (item.exercise.durationMinutes ?? 0),
           0
         );
 

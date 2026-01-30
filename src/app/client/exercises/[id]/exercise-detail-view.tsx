@@ -47,11 +47,11 @@ type Exercise = {
   youtubeUrl: string | null;
   imageUrl: string | null;
   audioUrl: string | null;
-  durationMinutes: number;
-  sets: number;
+  durationMinutes: number | null;
+  sets: number | null;
   reps: number | null;
   holdSeconds: number | null;
-  restSeconds: number;
+  restSeconds: number | null;
   caloriesPerSet: number | null;
   requiresEquipment: boolean;
   equipment: string | null;
@@ -296,13 +296,13 @@ export default function ExerciseDetailView({
           <div className="bg-gray-50 rounded-xl p-3 text-center">
             <Clock className="w-5 h-5 text-blue-500 mx-auto mb-1" />
             <p className="text-sm font-semibold">
-              {exercise.durationMinutes} min
+              {exercise.durationMinutes ?? 0} min
             </p>
             <p className="text-xs text-gray-500">Duur</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-3 text-center">
             <Dumbbell className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-            <p className="text-sm font-semibold">{exercise.sets} sets</p>
+            <p className="text-sm font-semibold">{exercise.sets ?? 0} sets</p>
             <p className="text-xs text-gray-500">Sets</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-3 text-center">

@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
     exercises: {
       exerciseId: string;
       order: number;
-      customSets?: number;
-      customReps?: number;
+      sets?: number;
+      reps?: number;
     }[];
   };
 
@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
   exercises.forEach((e) => {
     const exercise = exerciseDetails.find((ed) => ed.id === e.exerciseId);
     if (exercise) {
-      const sets = e.customSets || exercise.sets;
-      totalDuration += exercise.durationMinutes + (sets - 1) * (exercise.restSeconds / 60);
+      const sets = e.sets || exercise.sets || 1;
+      totalDuration += (exercise.durationMinutes ?? 0) + (sets - 1) * ((exercise.restSeconds ?? 60) / 60);
       totalCalories += (exercise.caloriesPerSet || 0) * sets;
     }
   });
@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
         create: exercises.map((e) => ({
           exerciseId: e.exerciseId,
           order: e.order,
-          customSets: e.customSets,
-          customReps: e.customReps,
+          sets: e.sets,
+          reps: e.reps,
         })),
       },
     },

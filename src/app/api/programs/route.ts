@@ -46,9 +46,32 @@ export async function POST(req: NextRequest) {
       creatorId: session.user.id,
       items: {
         create: body.exercises.map(
-          (item: { exerciseId: string; order: number }) => ({
+          (item: {
+            exerciseId: string;
+            order: number;
+            section?: string;
+            sets?: number;
+            reps?: string;
+            holdSeconds?: number;
+            durationMinutes?: number;
+            restSeconds?: number;
+            exerciseType?: string;
+            weightPerSet?: string;
+            intensity?: string;
+            notes?: string;
+          }) => ({
             exerciseId: item.exerciseId,
             order: item.order,
+            section: item.section || null,
+            sets: item.sets || null,
+            reps: item.reps || null,
+            holdSeconds: item.holdSeconds || null,
+            durationMinutes: item.durationMinutes || null,
+            restSeconds: item.restSeconds || null,
+            exerciseType: item.exerciseType || null,
+            weightPerSet: item.weightPerSet || null,
+            intensity: item.intensity || null,
+            notes: item.notes || null,
           })
         ),
       },

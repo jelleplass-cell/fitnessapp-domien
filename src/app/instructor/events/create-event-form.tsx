@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaPicker } from "@/components/media/media-picker";
 import {
   Dialog,
   DialogContent,
@@ -377,14 +378,14 @@ export function CreateEventForm() {
             </div>
           )}
 
-          {/* Image URL */}
+          {/* Image */}
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Afbeelding URL (optioneel)</Label>
-            <Input
-              id="imageUrl"
+            <Label>Afbeelding (optioneel)</Label>
+            <MediaPicker
               value={formData.imageUrl}
-              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              placeholder="https://example.com/image.jpg"
+              onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+              accept="image/*"
+              label="Afbeelding"
             />
             <p className="text-xs text-gray-500">
               Wordt getoond als header afbeelding bij het event

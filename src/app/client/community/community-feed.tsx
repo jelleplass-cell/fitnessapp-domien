@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaPicker } from "@/components/media/media-picker";
 import {
   Select,
   SelectContent,
@@ -739,47 +740,39 @@ export function CommunityFeed({ initialPosts, currentUserId, canCreatePosts = fa
                   className="border-0 px-0 resize-none placeholder:text-gray-300 focus-visible:ring-0"
                 />
                 {/* Media toolbar */}
-                <div className="flex items-center gap-1 pt-2 border-t border-gray-100">
-                  <button
-                    className="p-2 rounded-xl hover:bg-[#E8F5F0] transition-colors"
-                    onClick={() => {
-                      const url = prompt("Afbeelding URL:");
-                      if (url) setNewPost({ ...newPost, imageUrl: url });
-                    }}
-                    title="Afbeelding toevoegen"
-                  >
-                    <ImageIcon className="w-5 h-5 text-[#2D7A5F]" />
-                  </button>
-                  <button
-                    className="p-2 rounded-xl hover:bg-[#FCE8F0] transition-colors"
-                    onClick={() => {
-                      const url = prompt("Video URL (YouTube, Loom, etc.):");
-                      if (url) setNewPost({ ...newPost, videoUrl: url });
-                    }}
-                    title="Video toevoegen"
-                  >
-                    <Video className="w-5 h-5 text-[#9B3A5A]" />
-                  </button>
+                <div className="pt-2 border-t border-gray-100 space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Afbeelding</p>
+                    <MediaPicker
+                      value={newPost.imageUrl}
+                      onChange={(url) => setNewPost({ ...newPost, imageUrl: url })}
+                      accept="image/*"
+                      label="Afbeelding"
+                    />
+                  </div>
+                  {/* Video URL */}
+                  {newPost.videoUrl ? (
+                    <div className="flex items-center gap-2 p-2 bg-[#FCE8F0] rounded-xl text-sm text-[#9B3A5A]">
+                      <Video className="w-4 h-4" />
+                      <span className="truncate flex-1">{newPost.videoUrl}</span>
+                      <button onClick={() => setNewPost({ ...newPost, videoUrl: "" })}>
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="flex items-center gap-2 p-2 rounded-xl hover:bg-[#FCE8F0] transition-colors text-sm text-[#9B3A5A]"
+                      onClick={() => {
+                        const url = prompt("Video URL (YouTube, Loom, etc.):");
+                        if (url) setNewPost({ ...newPost, videoUrl: url });
+                      }}
+                      title="Video toevoegen"
+                    >
+                      <Video className="w-5 h-5" />
+                      Video toevoegen
+                    </button>
+                  )}
                 </div>
-                {/* Media previews */}
-                {newPost.imageUrl && (
-                  <div className="flex items-center gap-2 p-2 bg-[#E8F5F0] rounded-xl text-sm text-[#2D7A5F]">
-                    <ImageIcon className="w-4 h-4" />
-                    <span className="truncate flex-1">{newPost.imageUrl}</span>
-                    <button onClick={() => setNewPost({ ...newPost, imageUrl: "" })}>
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-                {newPost.videoUrl && (
-                  <div className="flex items-center gap-2 p-2 bg-[#FCE8F0] rounded-xl text-sm text-[#9B3A5A]">
-                    <Video className="w-4 h-4" />
-                    <span className="truncate flex-1">{newPost.videoUrl}</span>
-                    <button onClick={() => setNewPost({ ...newPost, videoUrl: "" })}>
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
                 {/* Community Selector - only show if there are multiple communities */}
                 {communities.length > 1 && (
                   <div>

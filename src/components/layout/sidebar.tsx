@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Calendar,
   Home,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -31,6 +32,7 @@ interface SubLink {
   href: string;
   label: string;
   color?: string;
+  isChild?: boolean; // visually indent as sub-item of the previous link
 }
 
 interface NavLink {
@@ -101,9 +103,10 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
             label: "Trainingen",
             icon: Dumbbell,
             subLinks: [
-              { href: "/instructor/trainingen", label: "Alle programma's" },
-              { href: "/instructor/trainingen/categorieen", label: "Categorieën" },
+              { href: "/instructor/trainingen", label: "Programma's" },
+              { href: "/instructor/trainingen/categorieen", label: "Programmacategorieën", isChild: true },
               { href: "/instructor/trainingen/oefeningen", label: "Oefeningen" },
+              { href: "/instructor/trainingen/oefeningen/categorieen", label: "Oefeningencategorieën", isChild: true },
               { href: "/instructor/trainingen/materialen", label: "Materialen" },
             ],
           },
@@ -138,6 +141,11 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
           },
         ]
       : []),
+    {
+      href: "/instructor/media",
+      label: "Media",
+      icon: ImageIcon,
+    },
     {
       href: "/instructor/settings",
       label: "Instellingen",
@@ -273,7 +281,7 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                     )}
                   </button>
                   {isExpanded && (
-                    <ul className="mt-1 ml-4 space-y-1">
+                    <ul className="mt-1 ml-4 space-y-0.5">
                       {link.subLinks!.map((subLink) => {
                         // Check if this sublink is active (handle query params for community)
                         const isSubLinkActive = subLink.href.includes("?")
@@ -286,10 +294,17 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                               href={subLink.href}
                               onClick={onNavigate}
                               className={cn(
-                                "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm",
+                                "flex items-center gap-3 rounded-xl transition-all",
+                                subLink.isChild
+                                  ? "ml-6 px-4 py-1.5 text-xs"
+                                  : "px-4 py-2.5 text-sm",
                                 isSubLinkActive
-                                  ? "bg-blue-50 text-blue-600 font-medium"
-                                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                  ? subLink.isChild
+                                    ? "text-blue-500 font-medium"
+                                    : "bg-blue-50 text-blue-600 font-medium"
+                                  : subLink.isChild
+                                    ? "text-gray-400 hover:text-gray-600"
+                                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                               )}
                             >
                               {subLink.color ? (
@@ -297,6 +312,8 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
                                   className="w-3 h-3 rounded-full"
                                   style={{ backgroundColor: subLink.color }}
                                 />
+                              ) : subLink.isChild ? (
+                                <span className="w-1 h-1 rounded-full bg-current opacity-40" />
                               ) : (
                                 <span className="w-3" />
                               )}
