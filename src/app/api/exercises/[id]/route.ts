@@ -70,6 +70,7 @@ export async function PUT(
         sets: body.sets ?? null,
         reps: body.reps ?? null,
         holdSeconds: body.holdSeconds ?? null,
+        restSeconds: body.restSeconds ?? null,
         requiresEquipment: body.requiresEquipment,
         equipment: body.equipment || null,
         locations: body.locations,

@@ -66,6 +66,7 @@ export default async function AdminInstructorDetailPage({
     fitnessEnabled: true,
     communityEnabled: true,
     eventsEnabled: true,
+    classroomEnabled: true,
   };
 
   return (
@@ -132,6 +133,7 @@ export default async function AdminInstructorDetailPage({
             fitnessEnabled: modules.fitnessEnabled,
             communityEnabled: modules.communityEnabled,
             eventsEnabled: modules.eventsEnabled,
+            classroomEnabled: modules.classroomEnabled,
           }}
         />
       </div>

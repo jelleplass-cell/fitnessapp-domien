@@ -10,6 +10,7 @@ interface InstructorModules {
   fitnessEnabled: boolean;
   communityEnabled: boolean;
   eventsEnabled: boolean;
+  classroomEnabled: boolean;
 }
 
 interface ResponsiveLayoutProps {

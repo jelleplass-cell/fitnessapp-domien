@@ -253,7 +253,7 @@ function WeightPerSetEditor({
               step={0.5}
               value={w || ""}
               onChange={(e) => updateWeight(i, parseFloat(e.target.value) || 0)}
-              className="w-20 h-8 text-sm"
+              className="w-20 h-8 text-sm bg-white"
               placeholder="0"
             />
           </div>
@@ -968,7 +968,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                                       updateExerciseField(item.id, "sets", e.target.value === "" ? null : parseInt(e.target.value))
                                     }
                                     placeholder={`${item.exercise.sets ?? "—"}`}
-                                    className="h-8 text-sm"
+                                    className="h-8 text-sm bg-white"
                                   />
                                 </div>
 
@@ -983,7 +983,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                                         updateExerciseField(item.id, "reps", e.target.value === "" ? null : parseInt(e.target.value))
                                       }
                                       placeholder={`${item.exercise.reps ?? "—"}`}
-                                      className="h-8 text-sm"
+                                      className="h-8 text-sm bg-white"
                                     />
                                   </div>
                                 ) : (
@@ -997,7 +997,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                                         updateExerciseField(item.id, "holdSeconds", e.target.value === "" ? null : parseInt(e.target.value))
                                       }
                                       placeholder={`${item.exercise.holdSeconds ?? "—"}`}
-                                      className="h-8 text-sm"
+                                      className="h-8 text-sm bg-white"
                                     />
                                   </div>
                                 )}
@@ -1012,7 +1012,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                                       updateExerciseField(item.id, "durationMinutes", e.target.value === "" ? null : parseInt(e.target.value))
                                     }
                                     placeholder={`${item.exercise.durationMinutes ?? "—"}`}
-                                    className="h-8 text-sm"
+                                    className="h-8 text-sm bg-white"
                                   />
                                 </div>
 
@@ -1026,7 +1026,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                                       updateExerciseField(item.id, "restSeconds", e.target.value === "" ? null : parseInt(e.target.value))
                                     }
                                     placeholder={`${item.exercise.restSeconds ?? "60"}`}
-                                    className="h-8 text-sm"
+                                    className="h-8 text-sm bg-white"
                                   />
                                 </div>
                               </div>
@@ -1049,7 +1049,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                                     updateExerciseField(item.id, "intensity", e.target.value || null)
                                   }
                                   placeholder="bijv. 70% max HR, zwaar, matig"
-                                  className="h-8 text-sm"
+                                  className="h-8 text-sm bg-white"
                                 />
                               </div>
 
@@ -1063,7 +1063,7 @@ export default function ProgramForm({ program, categories = [] }: ProgramFormPro
                                   }
                                   placeholder="Extra instructies voor deze oefening..."
                                   rows={2}
-                                  className="text-sm"
+                                  className="text-sm bg-white"
                                 />
                               </div>
                             </div>

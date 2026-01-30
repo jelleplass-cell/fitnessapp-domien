@@ -47,6 +47,7 @@ interface ExerciseFormProps {
     sets: number | null;
     reps: number | null;
     holdSeconds: number | null;
+    restSeconds: number | null;
     requiresEquipment: boolean;
     equipment: string | null;
     locations: string[];
@@ -313,6 +314,7 @@ export function ExerciseForm({ exercise, onSave, inModal }: ExerciseFormProps) {
     sets: exercise?.sets ?? "",
     reps: exercise?.reps ?? "",
     holdSeconds: exercise?.holdSeconds ?? "",
+    restSeconds: exercise?.restSeconds ?? "",
     locations: exercise?.locations || ["GYM"],
   });
 
@@ -394,6 +396,7 @@ export function ExerciseForm({ exercise, onSave, inModal }: ExerciseFormProps) {
       sets: formData.sets !== "" ? Number(formData.sets) : null,
       reps: exerciseType === "reps" && formData.reps !== "" ? Number(formData.reps) : null,
       holdSeconds: exerciseType === "hold" && formData.holdSeconds !== "" ? Number(formData.holdSeconds) : null,
+      restSeconds: formData.restSeconds !== "" ? Number(formData.restSeconds) : null,
       requiresEquipment: selectedEquipment.length > 0,
       equipment: selectedNames.length > 0 ? selectedNames.join(", ") : null,
       equipmentLinks,
@@ -571,42 +574,6 @@ export function ExerciseForm({ exercise, onSave, inModal }: ExerciseFormProps) {
           </p>
         </div>
         <div className="p-6 space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="durationMinutes">Geschatte duur (minuten)</Label>
-              <Input
-                id="durationMinutes"
-                type="number"
-                min={1}
-                value={formData.durationMinutes}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    durationMinutes: e.target.value === "" ? "" : parseInt(e.target.value) || "",
-                  })
-                }
-                placeholder="—"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sets">Aantal sets</Label>
-              <Input
-                id="sets"
-                type="number"
-                min={1}
-                value={formData.sets}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    sets: e.target.value === "" ? "" : parseInt(e.target.value) || "",
-                  })
-                }
-                placeholder="—"
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label>Type oefening</Label>
             <div className="flex gap-4 mt-1">
@@ -631,41 +598,94 @@ export function ExerciseForm({ exercise, onSave, inModal }: ExerciseFormProps) {
             </div>
           </div>
 
-          {exerciseType === "reps" ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="reps">Aantal herhalingen per set</Label>
+              <Label htmlFor="sets">Sets</Label>
               <Input
-                id="reps"
+                id="sets"
                 type="number"
                 min={1}
-                value={formData.reps}
+                value={formData.sets}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    reps: e.target.value === "" ? "" : parseInt(e.target.value) || "",
+                    sets: e.target.value === "" ? "" : parseInt(e.target.value) || "",
                   })
                 }
                 placeholder="—"
               />
             </div>
-          ) : (
+
+            {exerciseType === "reps" ? (
+              <div className="space-y-2">
+                <Label htmlFor="reps">Reps</Label>
+                <Input
+                  id="reps"
+                  type="number"
+                  min={1}
+                  value={formData.reps}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      reps: e.target.value === "" ? "" : parseInt(e.target.value) || "",
+                    })
+                  }
+                  placeholder="—"
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="holdSeconds">Vasthouden (s)</Label>
+                <Input
+                  id="holdSeconds"
+                  type="number"
+                  min={1}
+                  value={formData.holdSeconds}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      holdSeconds: e.target.value === "" ? "" : parseInt(e.target.value) || "",
+                    })
+                  }
+                  placeholder="—"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="holdSeconds">Vasthoudtijd (seconden)</Label>
+              <Label htmlFor="durationMinutes">Duur (min)</Label>
               <Input
-                id="holdSeconds"
+                id="durationMinutes"
                 type="number"
                 min={1}
-                value={formData.holdSeconds}
+                value={formData.durationMinutes}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    holdSeconds: e.target.value === "" ? "" : parseInt(e.target.value) || "",
+                    durationMinutes: e.target.value === "" ? "" : parseInt(e.target.value) || "",
                   })
                 }
                 placeholder="—"
               />
             </div>
-          )}
+
+            <div className="space-y-2">
+              <Label htmlFor="restSeconds">Rust (s)</Label>
+              <Input
+                id="restSeconds"
+                type="number"
+                min={0}
+                value={formData.restSeconds}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    restSeconds: e.target.value === "" ? "" : parseInt(e.target.value) || "",
+                  })
+                }
+                placeholder="60"
+              />
+            </div>
+          </div>
         </div>
       </div>
 

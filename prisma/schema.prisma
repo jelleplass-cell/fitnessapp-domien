@@ -41,6 +41,13 @@ enum EquipmentType {
   ACCESSORY   // Losse materialen (dumbbells, kettlebells, bands, etc.)
 }
 
+enum CourseAccessType {
+  OPEN        // All clients have access
+  SEQUENTIAL  // Must complete prerequisite course first
+  COMMUNITY   // Only members of linked community
+  PRIVATE     // Only manually enrolled clients
+}
+
 // ============ USER & AUTH ============
 
 model User {
@@ -96,6 +103,9 @@ model User {
   createdEquipment      Equipment[]
   createdExerciseCategories ExerciseCategory[]
   mediaUploads          Media[]
+  createdCourses        Course[]           @relation("CreatedCourses")
+  courseEnrollments      CourseEnrollment[]
+  lessonProgress        LessonProgress[]
 
   @@index([instructorId])
 }
@@ -427,6 +437,7 @@ model Community {
   creator      User              @relation("CreatedCommunities", fields: [creatorId], references: [id], onDelete: Cascade)
   members      CommunityMember[]
   posts        CommunityPost[]
+  courses      Course[]
 
   @@index([creatorId])
   @@index([isDefault])
@@ -621,6 +632,7 @@ model InstructorModules {
   fitnessEnabled  Boolean  @default(true)  // Programs & Exercises
   communityEnabled Boolean @default(true)  // Community posts
   eventsEnabled   Boolean  @default(true)  // Events management
+  classroomEnabled Boolean @default(true)  // Courses & Lessons
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -709,4 +721,87 @@ model ClientProgramItem {
 
   @@unique([clientProgramId, exerciseId])
   @@index([clientProgramId])
+}
+
+// ============ CLASSROOM / COURSES ============
+
+model Course {
+  id              String           @id @default(cuid())
+  title           String
+  description     String?
+  imageUrl        String?
+  accessType      CourseAccessType  @default(OPEN)
+  order           Int              @default(0)
+  isPublished     Boolean          @default(false)
+  isArchived      Boolean          @default(false)
+
+  // Sequential: which course must be completed first
+  prerequisiteId  String?
+  prerequisite    Course?          @relation("CoursePrerequisite", fields: [prerequisiteId], references: [id])
+  dependents      Course[]         @relation("CoursePrerequisite")
+
+  // Community-linked access
+  communityId     String?
+  community       Community?       @relation(fields: [communityId], references: [id])
+
+  creatorId       String
+  creator         User             @relation("CreatedCourses", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  lessons         Lesson[]
+  enrollments     CourseEnrollment[]
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([creatorId])
+  @@index([isPublished])
+}
+
+model Lesson {
+  id              String   @id @default(cuid())
+  title           String
+  content         String?
+  videoUrl        String?
+  imageUrl        String?
+  attachments     String?  // JSON array of URLs
+  order           Int
+  isPublished     Boolean  @default(false)
+
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  progress         LessonProgress[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([courseId])
+}
+
+model CourseEnrollment {
+  id              String    @id @default(cuid())
+  enrolledAt      DateTime  @default(now())
+  completedAt     DateTime?
+
+  clientId        String
+  client          User      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  courseId         String
+  course           Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, courseId])
+  @@index([clientId])
+  @@index([courseId])
+}
+
+model LessonProgress {
+  id              String    @id @default(cuid())
+  completedAt     DateTime  @default(now())
+
+  clientId        String
+  client          User      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  lessonId        String
+  lesson          Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, lessonId])
+  @@index([clientId])
 }

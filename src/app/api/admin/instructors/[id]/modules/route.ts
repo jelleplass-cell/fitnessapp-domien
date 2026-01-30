@@ -23,10 +23,11 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { fitnessEnabled, communityEnabled, eventsEnabled } = body as {
+  const { fitnessEnabled, communityEnabled, eventsEnabled, classroomEnabled } = body as {
     fitnessEnabled?: boolean;
     communityEnabled?: boolean;
     eventsEnabled?: boolean;
+    classroomEnabled?: boolean;
   };
 
   // Upsert the modules record
@@ -37,11 +38,13 @@ export async function PATCH(
       fitnessEnabled: fitnessEnabled ?? true,
       communityEnabled: communityEnabled ?? true,
       eventsEnabled: eventsEnabled ?? true,
+      classroomEnabled: classroomEnabled ?? true,
     },
     update: {
       fitnessEnabled: fitnessEnabled ?? true,
       communityEnabled: communityEnabled ?? true,
       eventsEnabled: eventsEnabled ?? true,
+      classroomEnabled: classroomEnabled ?? true,
     },
   });
 
@@ -69,6 +72,7 @@ export async function GET(
       fitnessEnabled: true,
       communityEnabled: true,
       eventsEnabled: true,
+      classroomEnabled: true,
     });
   }
 

@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
         sets: body.sets || null,
         reps: body.reps || null,
         holdSeconds: body.holdSeconds || null,
+        restSeconds: body.restSeconds ?? null,
         requiresEquipment: body.requiresEquipment || false,
         equipment: body.equipment || null,
         locations: body.locations || ["GYM"],

@@ -17,6 +17,7 @@ import {
   Calendar,
   Home,
   ImageIcon,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -46,6 +47,7 @@ interface InstructorModules {
   fitnessEnabled: boolean;
   communityEnabled: boolean;
   eventsEnabled: boolean;
+  classroomEnabled: boolean;
 }
 
 interface SidebarProps {
@@ -87,6 +89,7 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
     fitnessEnabled: modules?.fitnessEnabled ?? true,
     communityEnabled: modules?.communityEnabled ?? true,
     eventsEnabled: modules?.eventsEnabled ?? true,
+    classroomEnabled: modules?.classroomEnabled ?? true,
   };
 
   const instructorLinks: NavLink[] = [
@@ -141,6 +144,16 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
           },
         ]
       : []),
+    // Classroom module link
+    ...(enabledModules.classroomEnabled
+      ? [
+          {
+            href: "/instructor/classroom",
+            label: "Classroom",
+            icon: BookOpen,
+          },
+        ]
+      : []),
     {
       href: "/instructor/media",
       label: "Media",
@@ -190,6 +203,11 @@ export function Sidebar({ role, userName, onNavigate, modules }: SidebarProps) {
       href: "/client/events",
       label: "Events",
       icon: Calendar,
+    },
+    {
+      href: "/client/classroom",
+      label: "Classroom",
+      icon: BookOpen,
     },
     {
       href: "/client/settings",

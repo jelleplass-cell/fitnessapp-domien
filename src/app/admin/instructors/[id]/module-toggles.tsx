@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Dumbbell, MessageSquare, Calendar, Loader2 } from "lucide-react";
+import { Dumbbell, MessageSquare, Calendar, BookOpen, Loader2 } from "lucide-react";
 
 interface ModuleTogglesProps {
   instructorId: string;
@@ -12,6 +12,7 @@ interface ModuleTogglesProps {
     fitnessEnabled: boolean;
     communityEnabled: boolean;
     eventsEnabled: boolean;
+    classroomEnabled: boolean;
   };
 }
 
@@ -24,7 +25,7 @@ export function ModuleToggles({
   const [saving, setSaving] = useState<string | null>(null);
 
   const handleToggle = async (
-    module: "fitnessEnabled" | "communityEnabled" | "eventsEnabled",
+    module: "fitnessEnabled" | "communityEnabled" | "eventsEnabled" | "classroomEnabled",
     value: boolean
   ) => {
     setSaving(module);
@@ -132,6 +133,33 @@ export function ModuleToggles({
           <Switch
             checked={modules.eventsEnabled}
             onCheckedChange={(checked) => handleToggle("eventsEnabled", checked)}
+            disabled={saving !== null}
+          />
+        </div>
+      </div>
+
+      {/* Classroom Module */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <Label className="text-base font-medium cursor-pointer">
+              Classroom
+            </Label>
+            <p className="text-sm text-gray-500">
+              Cursussen en lessen beheren
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {saving === "classroomEnabled" && (
+            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+          )}
+          <Switch
+            checked={modules.classroomEnabled}
+            onCheckedChange={(checked) => handleToggle("classroomEnabled", checked)}
             disabled={saving !== null}
           />
         </div>

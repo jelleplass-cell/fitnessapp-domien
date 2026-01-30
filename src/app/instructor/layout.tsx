@@ -27,6 +27,7 @@ export default async function InstructorLayout({
         fitnessEnabled: modules.fitnessEnabled,
         communityEnabled: modules.communityEnabled,
         eventsEnabled: modules.eventsEnabled,
+        classroomEnabled: modules.classroomEnabled,
       } : null}
     >
       {children}
